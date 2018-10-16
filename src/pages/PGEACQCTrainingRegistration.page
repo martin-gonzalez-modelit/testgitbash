@@ -1,0 +1,55 @@
+<apex:page showheader="false" sidebar="false" cache="false" standardstylesheets="false" doctype="html-5.0"
+        applyHtmlTag="false">
+<html>
+<head>
+    <title>PG&amp;E AC Quality Care Training</title>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bayrenhupcoretrainig, '/style/core.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bigutopia.css')}"/>
+
+    <style>
+        body {
+           padding-top: 0px;
+           padding-left: 50px;
+           font-family: arial, tahoma, verdana;
+           font-size: 13px;
+        }
+
+        .agreement {
+           font-size:11px;
+           padding-left: 8px;
+        }
+
+        .submit {
+           padding-left: 300px;
+        }
+    </style>
+</head>
+<body>
+    <img src="/registration/servlet/servlet.ImageServer?id=015A0000001ejXK&oid=00DA0000000CLtI"/>
+    <h2 style="margin-bottom:0px;padding-bottom:0px;">PG&amp;E AC Quality Care Technician Training</h2>
+    <flow:interview name="Training_Registration_PGE_ACQC"/>
+    <p style="color:silver; font-size:10pt">
+        <br /><br />Copyright © 2011 Build It Green - The trademarks used herein are the property of their respective owners. All rights reserved
+    </p>
+    <script>
+        var elems = document.getElementsByClassName("FlowNextBtn");
+        var showAgreement = false;
+        if (elems != null) {
+            for (var i=0; i<elems.length; i++) {
+              elems[i].style.position = "absolute";
+              elems[i].style.left = "220px";
+              elems[i].style.width = "150px";
+
+              if (elems[i].value == "Next") {
+                  elems[i].value = "Submit";
+                  showAgreement = true;
+              }
+           }
+        }
+    </script>
+</body>
+</html>
+</apex:page>

@@ -1,0 +1,15 @@
+<apex:page controller="et4ae5.QAMode">
+	<b><apex:pageMessages id="messageDisplay"/></b>	
+		<apex:form id="pageBlock">
+		    <apex:pageblock >
+		        <apex:pageBlockSection >		        
+			            <apex:panelGrid columns="2">
+			            	QAMode:			                
+			                <apex:inputCheckbox value="{!QAMode}">
+			                	<apex:actionSupport event="onchange" action="{!Save}"  reRender="messageDisplay"/>                     
+			                </apex:inputCheckbox>
+			            </apex:panelGrid>            			            
+		        </apex:pageBlockSection>        
+		    </apex:pageblock>		   
+		</apex:form>
+</apex:page>

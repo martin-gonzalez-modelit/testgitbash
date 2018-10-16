@@ -1,0 +1,49 @@
+<apex:page controller="ACQCApplicationSearchController" standardStylesheets="false" action="{!checkUserAccess}"
+    showheader="false" sidebar="false" cache="false" applyBodyTag="false" applyHtmlTag="false" docType="html-5.0">
+
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+
+<head>
+    <title>PG&amp;E Portal - Application Search</title>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/style.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <apex:includeLightning />
+
+<style>
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+    #lightningComponent {
+      width: 100%;
+    }
+</style>
+
+<script>
+    $Lightning.use("c:ACQCApplicationSearchApp", function() {
+        $Lightning.createComponent("c:ACQCApplicationSearchCmp",
+            { applicationUrl: "{!$Page.BIGACQCRebateApplicationForm}"},
+             "lightningComponent", function(cmp) {})
+    });
+</script>
+</head>
+
+<body>
+    <div id="main-container" class="container main">
+        <c:BIGACQCHeader />
+        <div id="mainContent">
+            <div class="cushion">
+                <div id="lightningComponent" />
+            </div>
+        </div>
+        <c:BIGPortalFooter />
+        <c:BIGPortalAHUSurvey />
+    </div>
+</body>
+
+</html>
+</apex:page>

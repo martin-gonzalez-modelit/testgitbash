@@ -1,0 +1,42 @@
+<aura:component controller="AttachmentUploadCmpController" implements="lightning:availableForFlowScreens,flexipage:availableForAllPageTypes"
+        access="public">
+    <!-- Attributes -->
+    <aura:attribute name="parentId" type="String" default=""/>
+    <aura:attribute name="reason" type="String" default=""/>
+    <aura:attribute name="appFileId" type="String" default=""/>
+    <aura:attribute name="attachId" type="String" default=""/>
+    <aura:attribute name="attachmentURL" type="String" default=""/>
+    <aura:attribute name="filesErrorMessage" type="String" default=""/>
+    <aura:attribute name="totalUploadedFiles" type="Integer" default="0"/>
+    <aura:attribute name="filesCountPerUpload" type="Integer" default="1"/>
+    <aura:attribute name="showSpinner" type="Boolean" default="false"/>
+    <aura:attribute name="disabledButtons" type="Boolean" default="false"/>
+    <aura:attribute name="fileToBeUploaded" type="Object[]"/>
+    <!-- Handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <!-- Methods -->
+    <aura:method name="uploadFiles" action="{!c.handleFilesChange}" description="Method used to test the functionality of handleFilesChange"/>
+
+    <!-- File Upload -->
+    <label class="slds-form-element__label">
+        <abbr class="slds-required" title="required">*</abbr>Please upload a photo(s).
+    </label>
+    <lightning:input type="file"
+        aura:id="fileId"
+        files="{!v.fileToBeUploaded}"
+        label=" "
+        accept=".pdf, .png, .jpg, .jpeg, .gif"
+        multiple="true"
+        onchange="{!c.handleFilesChange}"/>
+    <div class="slds-text-body_small slds-text-color_error">{!v.filesErrorMessage}</div>
+    <aura:if isTrue="{!v.showSpinner}">
+        <div class="slds-text-body_small slds-text-color_success">Uploading...
+            <img src="/auraFW/resources/aura/images/spinner.gif" class="spinner-img" alt="Loading"/>
+        </div>
+    </aura:if>
+
+    <!-- Pills -->
+    <div class="slds-m-vertical_small">
+        {!v.body}
+    </div>
+</aura:component>

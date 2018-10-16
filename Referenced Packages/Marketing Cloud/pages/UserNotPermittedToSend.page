@@ -1,0 +1,19 @@
+<apex:page controller="et4ae5.initialConfigControl" tabStyle="ExactTargetPhoenix__tab" action="{!initializeUserNotPermittedToSend}">
+    <apex:composition template="et4ae5__UserErrorTemplate">
+        <apex:define name="customMessage">
+            <div align="right">
+                <apex:outputpanel >
+	                <apex:commandlink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__changemcuser}" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"
+	                                  action="{!goToChangeMcUser}" />
+	                <apex:outputtext value="  | " rendered="{!isConfigEnabled}" />
+                    <apex:commandLink rendered="{!isConfigEnabled}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__configint}" onMouseOver="this.style.textDecoration='underline'"
+                    onMouseOut="this.style.textDecoration='none'" action="{!configure}" />&nbsp;&nbsp;&nbsp;
+                </apex:outputpanel>
+            </div>
+            <br />
+            <apex:pageBlock title="{!$Label.et4ae5__insufusprm}">
+                {!$Label.et4ae5__msg0080}
+            </apex:pageBlock>
+        </apex:define>
+    </apex:composition>
+</apex:page>

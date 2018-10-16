@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>MobileSendFailed</fullName>
+        <ccEmails>pge@modelit.xyz</ccEmails>
+        <description>Send Email Notification of Failed Mobile Send</description>
+        <protected>false</protected>
+        <recipients>
+            <type>owner</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>ExactTarget/ETMobileSendDone</template>
+    </alerts>
+    <alerts>
+        <fullName>MobileSendStatus</fullName>
+        <ccEmails>pge@modelit.xyz</ccEmails>
+        <description>Send Email Notification of Completed Mobile Send</description>
+        <protected>false</protected>
+        <recipients>
+            <type>owner</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>ExactTarget/ETMobileSendDone</template>
+    </alerts>
+    <fieldUpdates>
+        <fullName>DelayedMobileSend</fullName>
+        <field>TriggerDelayedSend__c</field>
+        <literalValue>1</literalValue>
+        <name>DelayedMobileSend</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>FailBackupSMSWorkflowM</fullName>
+        <field>Messages__c</field>
+        <formula>$Label.errorNoRes</formula>
+        <name>FailBackupSMSWorkflowM</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>true</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>FailBackupSmsWorkflow</fullName>
+        <field>SendStatus__c</field>
+        <literalValue>Failed</literalValue>
+        <name>FailBackupSmsWorkflow</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>true</protected>
+        <reevaluateOnChange>true</reevaluateOnChange>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>MobileSendStatusDateTime</fullName>
+        <field>Status_Date_Time__c</field>
+        <formula>now()</formula>
+        <name>MobileSendStatusDateTime</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>PopulateBackupSmsWorkflow</fullName>
+        <field>BackupWorkflow__c</field>
+        <formula>IF(
+HasEnteredRetry__c ,
+IF(
+OR(ISBLANK(Scheduled_Date_Time__c),Scheduled_Date_Time__c &lt; now()),
+now()+(1/48),
+Scheduled_Date_Time__c+(1/48)
+),
+IF(
+OR(ISBLANK(Scheduled_Date_Time__c),Scheduled_Date_Time__c &lt; now()),
+now()+(1/288),
+Scheduled_Date_Time__c+(1/288)
+))</formula>
+        <name>PopulateBackupSmsWorkflow</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+        <reevaluateOnChange>true</reevaluateOnChange>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>SetMobileConversationId</fullName>
+        <field>ConversationId__c</field>
+        <formula>$Organization.Id+Id</formula>
+        <name>SetMobileConversationId</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>UnpopulateBackupSmsWorkflow</fullName>
+        <field>BackupWorkflow__c</field>
+        <name>UnpopulateBackupSmsWorkflow</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Null</operation>
+        <protected>false</protected>
+        <reevaluateOnChange>true</reevaluateOnChange>
+    </fieldUpdates>
+    <rules>
+        <fullName>FailBackupSmsWorkflow</fullName>
+        <actions>
+            <name>FailBackupSMSWorkflowM</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>FailBackupSmsWorkflow</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>! CONTAINS( Send_Status_View__c , &quot;Fail&quot;) &amp;&amp; ! CONTAINS( Send_Status_View__c , &quot;Complete&quot;) &amp;&amp; ! CONTAINS( Send_Status_View__c , &quot;Cancel&quot;) &amp;&amp; ! TrackingOnly__c &amp;&amp; ISBLANK( BackupWorkflow__c ) &amp;&amp; IF( ISBLANK(Scheduled_Date_Time__c) , ( NOW()-(1/2) ) &gt;= Created_Date_Time__c , ( NOW()-(1/2) ) &gt;= Scheduled_Date_Time__c ) &amp;&amp; ! HasBeenQueued__c</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>MobileSendComplete</fullName>
+        <actions>
+            <name>MobileSendStatus</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>SMSDefinition__c.SendStatus__c</field>
+            <operation>equals</operation>
+            <value>Completed</value>
+        </criteriaItems>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>MobileSendFailed</fullName>
+        <actions>
+            <name>MobileSendFailed</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <formula>Send_Status_View__c = &apos;Fail&apos; || Send_Status_View__c = &apos;Failed&apos; || Send_Status_View__c = &apos;Error&apos; || Send_Status_View__c = &apos;Errored&apos; || Send_Status_View__c = &apos;Canceled&apos;</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>MobileSendStatusDateTime</fullName>
+        <actions>
+            <name>MobileSendStatusDateTime</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>ISCHANGED( SendStatus__c )</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>PopulateBackupSmsWorkflow</fullName>
+        <actions>
+            <name>PopulateBackupSmsWorkflow</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>! CONTAINS( Send_Status_View__c , &quot;Fail&quot;) &amp;&amp; ! CONTAINS( Send_Status_View__c , &quot;Complete&quot;) &amp;&amp; ! CONTAINS( Send_Status_View__c , &quot;Cancel&quot;) &amp;&amp; ! TrackingOnly__c &amp;&amp; ISBLANK( BackupWorkflow__c ) &amp;&amp; ( IF( ISBLANK(Scheduled_Date_Time__c) , ( NOW()-(1/2) ) &lt; Created_Date_Time__c , ( NOW()-(1/2) ) &lt; Scheduled_Date_Time__c ) || HasBeenQueued__c )</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>SetMobileConversationId</fullName>
+        <actions>
+            <name>SetMobileConversationId</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>!ISNULL( ConversationId__c )</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+</Workflow>

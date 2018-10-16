@@ -1,0 +1,35 @@
+.THIS.slds-card {
+    border-width: 0;
+}
+.THIS.slds-card table {
+    border-top: 0 !important;
+}
+.THIS.slds-card .slds-combobox__form-element .slds-form-element {
+    display: inline-block;
+    width: 50%;
+}
+.THIS.slds-card .slds-table_striped {
+    background-color: #dfecf2
+}
+.THIS tr:hover > td {
+    background-color: lightgoldenrodyellow !important;
+}
+.THIS a.address {
+    color: #393939;
+}
+.THIS a.address:hover, .THIS a.address.selected {
+    color: #fff;
+    background: #0081c2 !important;
+}
+.THIS input[type="search"] {
+    -webkit-appearance: none !important;
+}
+.THIS button.slds-button {
+    -webkit-margin-before: -.8rem !important;
+    -webkit-min-logical-width: 20px !important;
+    -webkit-min-logical-height: 25px !important;
+}
+.THIS svg.slds-button__icon {
+    -webkit-min-logical-width: 15px !important;
+    -webkit-min-logical-height: 15px !important;
+}

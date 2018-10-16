@@ -1,0 +1,2153 @@
+<apex:page controller="et4ae5.phoenixSendControl" extensions="et4ae5.abTestControl" tabStyle="et4ae5__SendDefinition__c" action="{!abInitialize}"
+docType="html-5.0">
+<apex:composition template="et4ae5__SendTemplate">
+  <apex:define name="customCSS">
+    <style>
+      .picWrapper {
+        display: inline-block;
+        vertical-align: bottom;
+        background-color: #E98300;
+        border-radius: 8px;
+        margin-right: 7px;
+      }
+
+      .pbBody .abtestselectborder fieldset table {
+        width: 100%;
+        border-spacing: 25px 5px;
+        border-collapse: separate;
+      }
+
+      .pbBody .subjectselectborder fieldset table {
+        margin-left: auto;
+        margin-right: auto;
+        border-spacing: 200px 0px;
+        border-collapse: separate;
+      }
+
+      .pbBody .subjectselectborder fieldset table .emailSubjectButton {
+        width: 130px;
+      }
+      /* Button Style for email type radio buttons */
+
+      .pbBody .radioselect fieldset table tbody tr td {
+        max-width: 125px;
+        min-width: 125px;
+        text-align: center;
+        color: #fef4e9;
+        border: solid 1px #da7c0c;
+        border-radius: 10px;
+        background: #f78d1d;
+        background: -webkit-gradient(linear, left top, left bottom, from(#faa51a), to(#EE6B0A));
+        background: -moz-linear-gradient(top, #faa51a, #EE6B0A);
+        filter: progid: DXImageTransform.Microsoft.gradient(startColorstr='#faa51a', endColorstr='#EE6B0A');
+      }
+
+      .pbBody .radioselect fieldset table tbody tr td:hover {
+        background: #f4b120;
+        background: -webkit-gradient(linear, left top, left bottom, from(#f88e11), to(#f06015));
+        background: -moz-linear-gradient(top, #f88e11, #f06015);
+        filter: progid: DXImageTransform.Microsoft.gradient(startColorstr='#f88e11', endColorstr='#f06015');
+        cursor: pointer;
+        cursor: hand;
+      }
+
+      .pbBody .radioselect fieldset table tbody tr td label:hover {
+        cursor: pointer;
+        cursor: hand;
+      }
+
+      .pbBody .radioselect fieldset table tbody tr td.abTestSelected {
+        color: #fff;
+        background: #FCCB7C;
+        background: -webkit-gradient(linear, left top, left bottom, from(#FDDFAE), to(#EE6B0A));
+        background: -moz-linear-gradient(top, #FDDFAE, #EE6B0A);
+        filter: progid: DXImageTransform.Microsoft.gradient(startColorstr='#FDDFAE', endColorstr='#EE6B0A');
+        border: solid #009DDC 2px;
+      }
+      /* General Button Styling */
+
+      .pbBody .radioselect fieldset table tbody tr td label.radioselectoptions {
+        font-weight: bold;
+        vertical-align: middle;
+      }
+
+      .pbBody .radioselect fieldset table tbody tr td input {
+        display: none;
+      }
+
+      .greytext {
+        color: grey;
+      }
+      /* Slider Styles */
+
+      input[type='range'] {
+        -webkit-appearance: none;
+        border-radius: 5px;
+        box-shadow: inset 0 0 2px #FFF;
+        background-color: #FFA100;
+        height: 15px;
+        width: 100%;
+        vertical-align: middle;
+      }
+
+      input[type='range']::-moz-range-track {
+        -moz-appearance: none;
+        border-radius: 5px;
+        box-shadow: inset 0 0 2px #FFF;
+        background-color: #FFA100;
+        height: 15px;
+        width: 100%;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none !important;
+        border-radius: 20px;
+        background-color: #FFF;
+        box-shadow: inset 0 0 10px rgba(233, 131, 000, 0.6);
+        border: 1px solid #EA0;
+        height: 20px;
+        width: 20px;
+      }
+
+      input[type='range']::-moz-range-thumb {
+        -moz-appearance: none;
+        border-radius: 20px;
+        background-color: #FFF;
+        box-shadow: inset 0 0 10px rgba(233, 131, 000, 0.6);
+        border: 1px solid #EA0;
+        height: 20px;
+        width: 20px;
+      }
+      /*JQuery Slider Styles*/
+
+      #slider .ui-slider-range {
+        background: #FFA100;
+      }
+
+      #slider .ui-slider-handle {
+        border-color: #FFA100;
+      }
+      /*Subject Styles*/
+
+      div[id*='abSubjectPanel'] input[type='text'] {
+        width: 250px;
+      }
+
+      input[name*='emailsubject'] {
+        width: 250px;
+      }
+
+      input[name*='abEmailSingleSubjectPanel'] {
+        width: 250px;
+      }
+      /*Prevents Email Selector popup from appearing behind text*/
+
+      .popup {
+        z-index: 3;
+      }
+
+      .ui-widget-header {
+        background-image: url({!JSENCODE(URLFOR( $Resource.ExactTargetImages, 'sliderBackground.png' ))
+      }
+
+      );
+      background-size:100% 100%;
+    }
+    /*alignment for the radio buttons that appear in email split, one subject tests*/
+    .aOrBPicker {
+      vertical-align: bottom;
+    }
+    </style>
+    <apex:includeScript value="{!$Resource.et4ae5__MciLogin}" />
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__jQueryUI, 'jquery-ui-1.9.2.custom/js/jquery-1.8.3.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__bootstrap, 'dist/js/bootstrap.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__bootstrap, 'dist/js/bootstrap.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__jQueryUI, 'jquery-ui-1.9.2.custom/js/jquery-ui-1.9.2.custom.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.et4ae5__jQueryUISlider, 'jquery-ui-1.10.4.custom/css/etSlider/jquery-ui-1.10.4.custom.min.css')}"
+    />
+    <script type="text/javascript">
+      $(document).ready(function () {
+        /*
+         *   When the page loads, hideAllAbTest hides all page elements that can be toggled,
+         *   showAbSubject then shows any elements related to a subject split test (the default test),
+         *   and initialize sets a number of watchers and default values.
+         */
+        hideAllAbTest();
+        showAbSubject();
+        initialize();
+      })
+
+      function initialize() {
+        /* Set the default selected radio buttons */
+        jQuery("input[value='SUBJECT']").closest("td").addClass("abTestSelected");
+        jQuery("input[value='TWOSUBJECTS']").closest("td").addClass("abTestSelected");
+        jQuery("input[value='ONESUBJECT']").closest("td").addClass("emailSubjectButton");
+        jQuery("input[value='TWOSUBJECTS']").closest("td").addClass("emailSubjectButton");
+        jQuery('#aOrBPicker-A').attr('checked', 'checked');
+        /* Add watchers to page elements and associate the events with the appropriate functions */
+        jQuery("input[name*='fromSelector']").change(function () {
+          clearFromPicklistValue()
+        });
+        jQuery("#fromSelectorIm").on("click", function () {
+          callChangeSendDateTimeType('imm')
+        });
+        jQuery("#fromSelectorDT").on("click", function () {
+          callChangeSendDateTimeType('fut')
+        });
+        jQuery(".aOrBPicker").on("change", function () {
+          setChosenSingleSubjectEmailSubject()
+        });
+        jQuery(document).on("click", ".pbBody .absubjectoptions fieldset table tbody tr td",
+          changeAbSubjectAppearance);
+        jQuery(document).on("click", ".pbBody .abtestoptions fieldset table tbody tr td", changeAbTestRadioAppearance);
+        jQuery("select[id*='automatictransmissionselection']").on("change", function () {
+          toggleautomaticsenddate();
+        });
+        jQuery("select[id*='transmissiontype']").on("change", function () {
+          toggleautomaticsendselector();
+          toggleautomaticsenddate();
+        });
+        /* Set default values for fields */
+        jQuery("select[id*='transmissiontype']").val('1');
+        jQuery("select[id*='automatictransmissionselection']").val("1");
+        setFromDefaults();
+        setSendDateTimeDefaults();
+        /* Hide certain elements */
+        jQuery("select[id*='automatictransmissionselection']").hide();
+        jQuery("div[id*='enabledsend']").hide();
+        jQuery("input[id*='ScheduledSendRemainderDateTime']").closest("span").hide();
+        /* Initialize Slider */
+        jQuery(function () {
+          jQuery("#slider").slider({
+            orientation: "horizontal",
+            range: "min",
+            max: 100,
+            value: 50, // Initial value
+            step: 2, // slider will increase or decrease the value in increments of 2
+            slide: function (event, ui) {
+              /*
+               *   This is the function that is called whenever the slider is moved.  Set test percentage calls an
+               *   actionfunction that passes the slider value to the controller. The rest of the function sets values
+               *   on the page to display the user's selection.
+               */
+              setTestPercentage(ui.value);
+              jQuery("#testGroup").val(ui.value);
+              jQuery("#groupA").val(ui.value / 2);
+              jQuery("#groupB").val(ui.value / 2);
+              jQuery("#remainder").val(100 - ui.value);
+              //Set html values for IE (.val() doesn't work in IE, so .html() must be used)
+              jQuery("#testGroup").html(ui.value);
+              jQuery("#groupA").html(ui.value / 2);
+              jQuery("#groupB").html(ui.value / 2);
+              jQuery("#remainder").html(100 - ui.value);
+            }
+          });
+        });
+      }
+      /* End initialize() */
+      function callChangeSendDateTimeType(type) {
+        /*
+         *   TODO - Calls an action function passing in either 'imm' or 'fut' depending on if the user selects to send
+         *   immediately or in the future. This function used to do more, but now it can probably be removed and
+         *   changeSendDateTimeType can be called directly from the page.
+         */
+        changeSendDateTimeType(type);
+      }
+
+      function changeAbTestRadioAppearance(event) {
+        /* changeAbTestRadioAppearance is called when the user clicks on one of the test split radio buttons.
+         *   the variable target is set to whichever page element the user clicked on (event.target) and then
+         *   the first parent input element is found and 'checked' is set.  This is done because the styling
+         *   on the radio buttons prevents them from being checked and unchecked by the user with regular clicks.
+         *   After the correct button is checked, depending on which button it is, the styling of the button is
+         *   changed and the appropriate page elemnts are hidden and shown.
+         */
+        var target = jQuery(event.target);
+        target.find("input").prop('checked', true);
+        jQuery(".pbBody .abtestoptions fieldset table tbody tr td").removeClass("abTestSelected");
+        target.closest("td").addClass("abTestSelected");
+        if (target.text().indexOf("{!$Label.et4ae5__sbjctln}") > -1) {
+          showAbSubject();
+        }
+        if (target.text().indexOf("{!$Label.et4ae5__email}") > -1) {
+          showAbEmail();
+        }
+        if (target.text().indexOf("{!$Label.et4ae5__contentarea}") > -1) {
+          showAbContent();
+        }
+        if (target.text().indexOf("{!$Label.et4ae5__fromname}") > -1) {
+          showAbFrom();
+        }
+        if (target.text().indexOf("{!$Label.et4ae5__snddslst}") > -1) {
+          showAbDate();
+        }
+      }
+
+      function toggleautomaticsendselector() {
+        /*
+         *   The value for the transmissiontype selector comes from abTestSend.class in the function getTransmissionTypeOptions where
+         *   '1' is for a manual send and '2' is for an automatic send.  These values were selected to match what ET expects in the
+         *   AB Test request field for tranmission type.  In this function, if manual transmission type is selected by the user,
+         *   the options for sending immediately after a winner is declared or chooseing a date/time in the future to send are hidden,
+         *   otherwise they are shown.
+         */
+        if (jQuery("select[id*='transmissiontype']").val() == 1) {
+          jQuery("select[id*='automatictransmissionselection']").hide();
+          jQuery("select[id*='automatictransmissionselection']").val("1");
+        } else {
+          jQuery("select[id*='automatictransmissionselection']").show();
+        }
+      }
+
+      function toggleautomaticsenddate() {
+        /*
+         *   The value for the automatictransmissionselection selector comes from abTestSend.class in the function getAutomaticTransmissionTypeOptions
+         *   where '1' is for sending when a winner is declared send and '2' is choosing a date/time in the future to send.  These values were
+         *   selected to match what ET expects in the AB Test request field for tranmission type.  In this function, if manual transmission
+         *   type is selected by the user, the date/time selector is hidden, otherwise it is shown.
+         */
+        if (jQuery("select[id*='automatictransmissionselection']").val() == 1) {
+          jQuery("input[id*='ScheduledSendRemainderDateTime']").closest("span").hide();
+        } else {
+          jQuery("input[id*='ScheduledSendRemainderDateTime']").closest("span").show();
+        }
+      }
+
+      function showAbSubject() {
+        /* Hides all optional ab test page elements, then shows the ones related to a subject split test */
+        hideAllAbTest();
+        jQuery("[id*='abSubjectPanel']").closest('tr').show();
+        jQuery("[id*='emailTemplate']").closest('tr').show();
+        jQuery("[id*='selectedFrom']").closest('tr').show();
+        jQuery("[id*='sendDateTimeRadios']").closest('tr').show();
+        jQuery("div[id*='saveWinningTest']").show();
+        jQuery(".dataCol.first.last.subjectB").find("input:first-child").prop("disabled", false);
+        jQuery(".aOrBPicker").closest('div').hide();
+        /* Resets any user input back to the page defaults so that when a new test type is chosen, the user has a fresh form */
+        clearSubjectLines();
+        changeTestTypePageReset();
+      }
+
+      function showAbEmail() {
+        /* Hides all optional ab test page elements, then shows the ones related to a email split test */
+        hideAllAbTest();
+        jQuery("[id*='abEmailPanel']").closest('tr').show();
+        jQuery("[id*='absubjectbuttons']").closest('tr').show();
+        jQuery("[id*='abSubjectPanel']").closest('tr').show();
+        jQuery("[id*='selectedFrom']").closest('tr').show();
+        jQuery("[id*='sendDateTimeRadios']").closest('tr').show();
+        /*
+         *   Checks to see if the user has chosen a single subject email split test.  If they have, it shows the appropriate
+         *   page elements.
+         */
+        if (jQuery("input[value='ONESUBJECT']").prop("checked")) {
+          showOneSubject();
+        } else {
+          showTwoSubjects();
+        }
+        /* Resets any user input back to the page defaults in the controller and resets the view */
+        clearSubjectLines();
+        changeTestTypePageReset();
+      }
+
+      function showAbContent() {
+        /* Hides all optional ab test page elements, then shows the ones related to a content split test */
+        hideAllAbTest();
+        clearSubjectLines();
+        jQuery("[id*='emailTemplate']").closest('tr').show();
+        jQuery("[id*='selectedFrom']").closest('tr').show();
+        jQuery("[id*='sendDateTimeRadios']").closest('tr').show();
+        jQuery("[id*='emailsubject']").closest('tr').show();
+        jQuery("[id*='abContentAreaInfo']").closest('tr').show();
+        /* Resets any user input back to the page defaults in the controller and resets the view */
+        clearSubjectLines();
+        changeTestTypePageReset();
+      }
+
+      function showAbFrom() {
+        /* Hides all optional ab test page elements, then shows the ones related to a email split test */
+        hideAllAbTest();
+        jQuery("[id*='emailTemplate']").closest('tr').show();
+        jQuery("[id*='abFromNamePanel']").closest('tr').show();
+        jQuery("[id*='sendDateTimeRadios']").closest('tr').show();
+        jQuery("[id*='emailsubject']").closest('tr').show();
+        /* Resets any user input back to the page defaults in the controller and resets the view */
+        clearSubjectLines();
+        changeTestTypePageReset();
+      }
+
+      function showAbDate() {
+        hideAllAbTest();
+        clearSubjectLines();
+        jQuery("[id*='emailTemplate']").closest('tr').show();
+        jQuery("[id*='abSendDateTimePanel']").closest('tr').show();
+        jQuery("[id*='selectedFrom']").closest('tr').show();
+        jQuery("[id*='emailsubject']").closest('tr').show();
+        jQuery('[id$=idFromSelectorDTA]').show();
+        jQuery('[id$=idFromSelectorDTB]').show();
+        /* Resets any user input back to the page defaults in the controller and resets the view */
+        clearSubjectLines();
+        changeTestTypePageReset();
+      }
+
+      function hideAllAbTest() {
+        /* Hides every optional element associated with a particular ab test type */
+        jQuery("[id*='abSubjectPanel']").closest('tr').hide();
+        jQuery("[id*='abEmailSingleSubjectPanel']").closest('tr').hide();
+        jQuery("[id*='EmailPreviewSingle']").closest('tr').hide();
+        jQuery("[id*='absubjectbuttons']").closest('tr').hide();
+        jQuery("[id*='emailTemplate']").closest('tr').hide();
+        jQuery("[id*='abEmailPanel']").closest('tr').hide();
+        jQuery("[id*='abFromNamePanel']").closest('tr').hide();
+        jQuery("[id*='abSendDateTimePanel']").closest('tr').hide();
+        jQuery("[id*='emailsubject']").closest('tr').hide();
+        jQuery("[id*='selectedFrom']").closest('tr').hide();
+        jQuery("[id*='sendDateTimeRadios']").closest('tr').hide();
+        jQuery("[id*='abContentAreaInfo']").closest('tr').hide();
+        jQuery("div[id*='saveWinningTest']").hide();
+      }
+
+      function clearSubjectLines() {
+        /* Sets all the subject input fields to empty strings */
+        jQuery("input[name*='emailSubectSingleText']").val('');
+        jQuery("input[name*='abEmailSingleSubject']").val('');
+        jQuery("input[name*='emailsubjecta']").val('');
+        jQuery("input[name*='emailsubjectb']").val('');
+      }
+
+      function changeAbSubjectAppearance(event) {
+        /*
+         *   changeAbSubjectAppearance() works the same as changeAbTestRadioAppearance().  Event.target passes in the page element
+         *   that the user clicked.  It is used to determine which button was selected.  The styling on the button is changed and
+         *   then, depending on which button is clicked, a follow up function is called to provide the appropriate page elements
+         *   to support a single subject email test or a two subject email test.
+         */
+        var target = jQuery(event.target);
+        target.find("input").prop('checked', true);
+        jQuery(".pbBody .absubjectoptions fieldset table tbody tr td").removeClass("abTestSelected");
+        target.closest("td").addClass("abTestSelected");
+        if (target.text().indexOf('Use one subject line') > -1) {
+          showOneSubject();
+        }
+        if (target.text().indexOf('Use two subject lines') > -1) {
+          showTwoSubjects();
+        }
+      }
+
+      function showOneSubject() {
+        /*
+         *   showOneSubject() shows the radio buttons for the user to select whether they want to use subject A
+         *   or Subject B in a single subject email test.  Depending on if the A or B radio button is selected,
+         *   the opposite subject text input is disabled and the associated subject text input is enabled.
+         */
+        jQuery(".aOrBPicker").closest('div').show();
+        if (jQuery('#aOrBPicker-A').attr('checked') === 'checked') {
+          jQuery('input[name*="emailsubjecta"]').attr('disabled', false);
+          jQuery('input[name*="emailsubjectb"]').attr('disabled', true);
+        } else {
+          jQuery('input[name*="emailsubjecta"]').attr('disabled', true);
+          jQuery('input[name*="emailsubjectb"]').attr('disabled', false);
+        }
+      }
+
+      function showTwoSubjects() {
+        /*
+         *   showTwoSubjects() hides the radio buttons that allow the user to select whether they want to use subject A
+         *   or Subject B in a single subject email test.  It then enables both the A and B subject text inputs.
+         */
+        jQuery(".aOrBPicker").closest('div').hide();
+        jQuery('input[name*="emailsubjecta"]').attr('disabled', false);
+        jQuery('input[name*="emailsubjectb"]').attr('disabled', false);
+      }
+      //From Test Functions
+      function setFromDefaults() {
+        /*
+         *   Called from initialize(). This function sets default values for all the "From" field selectors.
+         */
+        
+        jQuery("#fromSelectorEmailA").prop('checked', true);
+        swapFromSource('testA');
+        jQuery("#fromSelectorEmailB").prop('checked', true);
+        swapFromSource('testB')
+        jQuery("#fromSelectorEmail").prop('checked', true);
+      }
+      //Send Date/Time Functions
+      function setSendDateTimeDefaults() {
+        /*
+         *   Called from initialize(). This function sets default values for all the "Send Date/Time" field selectors.
+         */
+        jQuery("#fromSelectorImA").prop('checked', true);
+        jQuery("#fromSelectorDTB").prop('checked', true);
+        jQuery("#fromSelectorIm").prop('checked', true);
+      }
+
+      function clearFromPicklistValue() {
+        /*
+         *   When the user changes their selection for the "From" input between a name and a send classification, this
+         *   function is called.  It sets the picklist values back to an empty string so that the page will not appear to
+         *   remember previous selections.
+         */
+        if (jQuery("#fromSelectorEmail").prop('checked')) {
+          jQuery("select[id*='sendClassificationSingle']").val("");
+        } else {
+          jQuery("select[id*='fromSingle']").val("");
+        }
+      }
+
+      function callSetTestPercentage() {
+        /*
+         *   callSetTestPercentage() finds the value that the user has chosen with the slider for the test group percentage,
+         *   and then passes it to the function setTestPercentage() which is an action function that passes the value to the
+         *   controller.  The action function cannot be called directly from the page because of the extra jQuery code needed
+         *   to parse out the user's selection.
+         */
+        var testp = jQuery("#testGroup").val();
+        /* This if statement is needed for IE users since certian versions of IE do not support the .val() function */
+        if (testp === '') {
+          testp = jQuery("#testGroup").html();
+        }
+        setTestPercentage(testp);
+      }
+
+      function setSingleEmailTitle(emailSubject) {
+        /*
+         *   This funciton takes an argument for the email subject and then passes the value into the subject text input.
+         *   It is called after the users selects an email from the email selection popup window.
+         *   TODO - Note: emailSubjectSingleText may have been deprecated and removed from the page.
+         */
+        emailSubject = uriDecodeSubject(emailSubject);
+        jQuery("input[name*='emailSubectSingleText']").val(emailSubject);
+        jQuery("input[name*='abEmailSingleSubject']").val(emailSubject);
+        jQuery("input[name*='emailsubjecta']").val(emailSubject);
+      }
+
+      function setEmailATitle(emailSubject) {
+        /*
+         *   This funciton takes an argument for the email subject and then passes the value into the subject text input.
+         *   It is called after the users selects an email from the email selection popup window.
+         */
+        emailSubject = uriDecodeSubject(emailSubject);
+        jQuery("input[name*='abEmailSingleSubject']").val(emailSubject);
+        jQuery("input[name*='emailsubjecta']").val(emailSubject);
+      }
+
+      function setEmailBTitle(emailSubject) {
+        /*
+         *   This funciton takes an argument for the email subject and then passes the value into the subject text input.
+         *   It is called after the users selects an email from the email selection popup window.
+         */
+        emailSubject = uriDecodeSubject(emailSubject);
+        jQuery("input[name*='emailsubjectb']").val(emailSubject);
+      }
+
+      function uriDecodeSubject(subject) {
+        subject = subject.replace(/\+/g, ' ');
+        subject = decodeURIComponent(subject);
+        subject = subject.replace(/\\\"/g, "\"");
+        return subject;
+      }
+
+      function setChosenSingleSubjectEmailSubject() {
+        /*
+         *   This function calls an action function that sets a controller field (selectSubjectAorB)
+         *   to A or B depending on which radio button is selected when choosing to do an email test
+         *   with only one subject.
+         */
+        if (jQuery('#aOrBPicker-A').attr('checked') === 'checked') {
+          setSelectSubjectAorB('A');
+          jQuery('input[name*="emailsubjectb"]').attr('disabled', true);
+          jQuery('input[name*="emailsubjecta"]').attr('disabled', false);
+        } else {
+          setSelectSubjectAorB('B');
+          jQuery('input[name*="emailsubjectb"]').attr('disabled', false);
+          jQuery('input[name*="emailsubjecta"]').attr('disabled', true);
+        }
+      }
+    </script>
+  </apex:define>
+  <apex:define name="sendTypeImage">
+    <div class="picWrapper">
+      <img style="height:45px;" src="{!URLFOR( $Resource.ExactTargetImages, 'custom90.svg' )}" />
+    </div>
+  </apex:define>
+  <apex:define name="buManagementImage">
+    <img height="45" src="{!URLFOR( $Resource.ExactTargetImages, 'bumgmtemail.png' )}" />
+  </apex:define>
+  <apex:define name="sendTypeLabel">
+    {!$Label.et4ae5__etabtest}
+  </apex:define>
+</apex:composition>
+<apex:form styleClass="fieldForm">
+  <apex:actionFunction name="setSelectSubjectAorB" rerender="">
+    <apex:param name="aOrBChosen" value="" assignTo="{!selectSubjectAorB}" />
+  </apex:actionFunction>
+  <apex:actionFunction name="setTestPercentage" action="{!setTestPercentage}" rerender="sendbutton">
+    <apex:param name="testPercent" value="" assignTo="{!testGroupPercent}" />
+  </apex:actionFunction>
+  <!-- TODO - Consolodate populateABContent, selectEmailJSA, & selectEmailJSB -->
+  <apex:actionFunction name="populateABContent" action="{!populateABContent}" rerender="emailName,exactTargetEmails,recipientReportWrapper,sendEmailForm,listChoosers,abContentAreaInfo,emailPreviewLinkWrapper">
+    <apex:param name="emailId" value="" />
+    <apex:param name="emailName" value="" />
+    <apex:param name="emailSubject" value="" />
+    <apex:param name="test" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="selectEmailJSA" action="{!selectEmailAB}" onComplete="setSyncRequest({!syncPayload});" rerender="abEmailPanel,emailAName,exactTargetEmailsA,emailAPreviewLinkWrapper,recipientReportWrapper,sendEmailForm,listChoosers"
+    status="listEmailsStatusA">
+    <apex:param name="emailId" value="" />
+    <apex:param name="emailName" value="" />
+    <apex:param name="emailSubject" value="" />
+    <apex:param name="test" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="selectEmailJSB" action="{!selectEmailAB}" onComplete="setSyncRequest({!syncPayload});" rerender="abEmailPanel,emailBName,exactTargetEmailsB,emailBPreviewLinkWrapper,recipientReportWrapper,sendEmailForm,listChoosers"
+    status="listEmailsStatusB">
+    <apex:param name="emailId" value="" />
+    <apex:param name="emailName" value="" />
+    <apex:param name="emailSubject" value="" />
+    <apex:param name="test" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="changeTestTypePageReset" action="{!changeTestTypePageReset}" onComplete="setSyncRequest({!syncPayload});"
+    rerender="abContentAreaInfo,emailName,emailAName,emailBName,exactTargetEmails,exactTargetEmailsA,exactTargetEmailsB,emailPreviewLinkWrapper,emailAPreviewLinkWrapper,emailBPreviewLinkWrapper,recipientReportWrapper,sendEmailForm,listChoosers"
+    status="PageResetStatus">
+  </apex:actionFunction>
+  <apex:actionFunction name="selectReportJS" action="{!selectReport}" rerender="pageMessages,emailName,exactTargetEmails,recipientReportWrapper,sendEmailForm,recipientReportsZ,recipSourcePicklists,listChoosers"
+    status="recipPicklistStatus">
+    <apex:param name="ReportId" value="" />
+    <apex:param name="ReportName" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="selectExcluReportJS" action="{!selectExcluReport}" rerender="pageMessages,emailName,exactTargetEmails,recipientReportWrapper,sendEmailForm,recipientReportsZ,recipSourcePicklists,listChoosers"
+    status="exclusionRecipPicklistStatus">
+    <apex:param name="ReportId" value="" />
+    <apex:param name="ReportName" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="selectExclusionReportJS" action="{!selectExclusionReport}" rerender="emailName,exactTargetEmails,exclusionReportWrapper,sendEmailForm"
+    status="listExclusionReportsStatus">
+    <apex:param name="ExclusionReportId" value="" />
+    <apex:param name="ExclusionReportName" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="getFolderInfo" action="{!expandFolderGeneral}" rerender="absubjectpanel,pageMessages,emailName,exactTargetEmails,recipientReportWrapper"
+    status="listEmailsStatus">
+    <apex:param name="folderId" value="" />
+    <apex:param name="sdl" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="getFolderInfoA" action="{!expandFolderGeneral}" rerender="absubjectpanel,pageMessages,emailAName,emailASubject,exactTargetEmailsA,emailAPreviewLinkWrapper,recipientReportWrapper"
+    status="listEmailsStatusA">
+    <apex:param name="folderId" value="" />
+    <apex:param name="sdl" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="getFolderInfoB" action="{!expandFolderGeneral}" rerender="absubjectpanel,pageMessages,emailBName,exactTargetEmailsB,emailBPreviewLinkWrapper,recipientReportWrapper"
+    status="listEmailsStatusB">
+    <apex:param name="folderId" value="" />
+    <apex:param name="sdl" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="openReportFolder" action="{!expandReportFolder}" rerender="pageMessages,emailName,exactTargetEmails,recipientReportWrapper,recipientReportsZ"
+    status="recipPicklistStatus">
+    <apex:param name="reportFolderId" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="openExcluReportFolder" action="{!expandReportFolder}" rerender="pageMessages,emailName,exactTargetEmails,recipientReportWrapper,recipientReportsZ,listChoosers"
+    status="exclusionRecipPicklistStatus">
+    <apex:param name="reportFolderId" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="toggleSort" action="{!toggleSort}" rerender="results">
+    <apex:param name="tsSortField" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="openExclusionReportFolder" action="{!expandExclusionReportFolder}" rerender="emailName,exactTargetEmails,exclusionReportWrapper"
+    status="listExclusionReportsStatus">
+    <apex:param name="exclusionReportFolderId" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="openSubscriberListFolder" action="{!expandSubscriberListFolder}" rerender="emailName,exactTargetEmails,subscriberListWrapper"
+    status="listSubscriberListsStatus">
+    <apex:param name="subscriberListFolderId" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="inclusionAdd" action="{!inclusionAdd}" onComplete="setSyncRequest({!syncPayload});" rerender="sendEmailForm,emailWrapper,emailName,exactTargetEmails,subscriberListWrapper,inclusionCampaignsZ,recipientReportsZ,listChoosers"
+    status="recipPicklistStatus" />
+  <apex:actionFunction name="inclusionRemove" action="{!removeCampaignList}" onComplete="setSyncRequest({!syncPayload});" rerender="sendEmailForm,emailName,exactTargetEmails,subscriberListWrapper,inclusionCampaignsZ,recipSourcePicklists,listChoosers"
+    status="removeRecipientStatus">
+    <apex:param name="removeCampaignListId" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="exclusionAdd" action="{!exclusionAdd}" onComplete="setSyncRequest({!syncPayload});" rerender="sendEmailForm,emailWrapper,emailName,exactTargetEmails,subscriberListWrapper,inclusionCampaignsZ,recipientReportsZ,listChoosers"
+    status="exclusionRecipPicklistStatus" />
+  <apex:actionFunction name="exclusionRemove" action="{!removeExcluCampaignList}" onComplete="setSyncRequest({!syncPayload});"
+    rerender="emailName,exactTargetEmails,subscriberListWrapper,inclusionCampaignsZ,recipSourcePicklists,listChoosers">
+    <apex:param name="removeCampaignListId" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="selectLuBu" action="{!selectLuBu}" onComplete="hidepopup();setFromDefaults();" rerender="TestManagementTop,exactTargetEmails,pageMessages,sendEmailForm,fromBlock,recipientReports,recipientReportsZ,exclusionReports,exclusionReportsZ,sendClassificationWrapperA,sendClassificationWrapperB"
+    status="wholePageBlock">
+    <apex:param name="luBuId" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="checkSendEmailReadiness" action="{!sendEnabler}" rerender="" />
+  <apex:actionFunction name="isSSon" action="{!isSSon}" rerender="" />
+  <apex:actionFunction name="isSSoff" action="{!isSSoff}" rerender="" />
+  <apex:actionFunction name="createBuFilter" action="{!createBuFilter}" oncomplete="showpopup();" status="wholePageBlock" rerender="TestManagementTop,popupOP,exactTargetEmails,pageMessages,sendEmailForm,fromBlock,recipientReports,recipientReportsZ,exclusionReports,exclusionReportsZ"
+  />
+  <apex:actionFunction name="refreshPopup" action="{!voidReturn}" rerender="popupOP,opaqueOP" />
+  <apex:stylesheet value="{!$Resource.et4ae5__ExactTargetStyles}" />
+  <apex:actionFunction name="changeSendDateTimeType" action="{!changeSendDateTimeType}" rerender="none">
+    <apex:param name="selectedSendDateTimeOption" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="setSendImmediately" action="{!setSendImmediately}" rerender="none" />
+  <apex:actionFunction name="setSendFuture" action="{!setSendFuture}" rerender="none" />
+  <apex:actionFunction name="searchServer" action="{!runFolderSearch}" rerender="foldersReturned,pageMessages">
+    <apex:param name="folderSearch" value="" />
+  </apex:actionFunction>
+  <apex:actionFunction name="searchServerExc" action="{!runFolderSearch}" rerender="foldersReturnedExc,pageMessages">
+    <apex:param name="folderSearchExc" value="" />
+  </apex:actionFunction>
+  <div align="right">
+    <apex:outputpanel >
+      <apex:commandLink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__emailsend}" onMouseOver="this.style.textDecoration='underline'"
+        onMouseOut="this.style.textDecoration='none'" action="{!goToEmail}" />
+      <apex:outputText value="{!pipe}" rendered="{!showDeepLinks}" />
+      <apex:outputLink style="text-decoration:none;color:#015ba7;" value="javascript:void(0)" onMouseOver="this.style.textDecoration='underline'"
+        onMouseOut="this.style.textDecoration='none'" onclick="return iLoginHome('{!JSENCODE(etLink)}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');"
+        rendered="{!showDeepLinks}">
+        {!$Label.et4ae5__gotoet}
+      </apex:outputLink>
+      <apex:outputText rendered="{!hasMobile}" value="{!pipe}" />
+      <apex:commandLink rendered="{!hasMobile}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__mobilesend}"
+        onMouseOver="this.style.textDecoration='underline'" onMouseOut="this.style.textDecoration='none'" action="{!goToMobile}"
+      />
+      <apex:outputText value="{!pipe}" rendered="{!hasTriggered}" />
+      <apex:commandLink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__sendatmtn}" onMouseOver="this.style.textDecoration='underline'"
+        onMouseOut="this.style.textDecoration='none'" action="{!goToTriggeredSends}" rendered="{!hasTriggered}" />
+      <apex:outputText value="  | " />
+      <apex:commandLink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__changemcuser}" onMouseOver="this.style.textDecoration='underline'"
+        onMouseOut="this.style.textDecoration='none'" action="{!goToChangeMcUser}" />
+      <apex:outputText rendered="{!isAdmin}" value="{!isAdminPipe}" />
+      <apex:commandLink rendered="{!isAdmin}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__configint}" onMouseOver="this.style.textDecoration='underline'"
+        onMouseOut="this.style.textDecoration='none'" action="{!goToSettings}" />&nbsp;&nbsp;&nbsp;
+    </apex:outputpanel>
+  </div>
+  <br />
+  <apex:outputPanel id="pageMessages">
+    <c:pageMessages closableErrors="true" />
+  </apex:outputPanel>
+  <apex:actionStatus id="wholePageBlock">
+    <apex:facet name="start">
+      <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+    </apex:facet>
+    <apex:facet name="stop">
+      <apex:pageBlock mode="view">
+        <!-- Apex Radio Buttons -->
+        <apex:outputPanel styleClass="abtestselectborder radioselect abtestoptions">
+          <apex:selectRadio enabledClass="radioselectoptions" value="{!abTestOption}">
+            <apex:selectOptions value="{!AbTestOptions}" />
+          </apex:selectRadio>
+        </apex:outputPanel>
+        <hr color="#FFA100" />
+        <div style="font-size: 14px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold;">
+          {!$label.testManagement}
+        </div>
+
+        <div align="right">
+          <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+          <b> = {!$label.reqdInfo} </b>
+        </div>
+        <hr color="#ececec" />
+        <apex:pageBlockSection columns="1" id="TestManagementTop">
+          <!-- Details -->
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__abnamehelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__name}" />
+            <apex:outputPanel >
+              <apex:inputText id="ABTestName" value="{!abName}" />
+              <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <!-- Label -->
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__abdescriptionhelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__description}" />
+            <apex:inputText id="ABTestDescription" value="{!abDescription}" />
+          </apex:pageBlockSectionItem>
+          <!-- Business Unit -->
+          <apex:pageBlockSectionItem rendered="{!renderBULookup}" helpText="{!$Label.et4ae5__abmrkcloudbuhelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__busunit}" />
+            <apex:outputPanel >
+              <table>
+                <tr>
+                  <td>
+                    <apex:outputText id="selectedBU" value="{!selectedBuDisp}" />
+                  </td>
+                  <td>
+                    <input type="image" onclick="javascript:createBuFilter();return false;" src="/s.gif" id="showPopBtn" />
+                  </td>
+                  <td>
+                    <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                  </td>
+                </tr>
+              </table>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection columns="1" id="TestManagementBottom">
+          <!-- Email -->
+          <apex:pageBlockSectionItem id="emailTemplate" helpText="{!$Label.et4ae5__abemailhelp}">
+            <apex:outputLabel for="emailName" value="{!$Label.et4ae5__email}" />
+            <apex:outputPanel id="emailWrapper" layout="block">
+              <apex:outputText id="emailName" value="{!localSend.email.name}" />
+              <apex:outputPanel id="emailPreviewLinkWrapper">
+                <!-- emailPreviewLink panel used to house rerendering of Edit Email. Email preview to come in the future -->
+                <apex:outputPanel id="emailPreviewLink" rendered="{!IF( NOT( ISNULL( localSend.email ) ), true, false )}">
+                  <apex:actionStatus id="previewEmailStatus">
+                    <apex:facet name="start">
+                      <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                      <apex:outputpanel >
+                        <apex:outputLink style="padding-right:10px;padding-left:10px;" value="javascript:void(0)" onclick="return iLoginEditEmail('{!localsend.email.id}','{!JSENCODE(etLink)}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');"
+                          rendered="{!showDeepLinks}">
+                          {!$Label.et4ae5__editeml}
+                        </apex:outputLink>
+                      </apex:outputpanel>
+                    </apex:facet>
+                  </apex:actionStatus>
+                </apex:outputPanel>
+              </apex:outputPanel>
+              <apex:outputPanel >
+                <apex:actionStatus id="listEmailsStatus">
+                  <apex:facet name="start">
+                    <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                  </apex:facet>
+                  <apex:facet name="stop">
+                    <apex:commandButton id="listEmails" value="{!$Label.et4ae5__find}" action="{!listExactTargetEmails}" rerender="exactTargetEmails,pageMessages,sendEmailForm,recipientReports,recipientReportsZ,exclusionReports,exclusionReportsZ"
+                      status="listEmailsStatus" />
+                  </apex:facet>
+                </apex:actionStatus>
+                <apex:outputText value="{!pipe}" rendered="{!showDeepLinks}" />
+                <apex:outputLink style="padding-right:10px;" value="javascript:void(0)" onclick="return iLoginNewEmail('{!JSENCODE(etLink)}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');"
+                  rendered="{!showDeepLinks}">
+                  {!$Label.et4ae5__new}
+                </apex:outputLink>
+                <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                <apex:outputPanel id="exactTargetEmails" layout="block">
+                  <apex:actionStatus id="clickEmailStatus">
+                    <apex:facet name="start">
+                      <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                      <apex:outputPanel styleClass="popup" layout="block" rendered="{!ShowEmailChooser }">
+                        <script type="text/javascript">
+                          function toggleFolderDisplay(folderId) {
+                            // Identify folder div.
+                            var folderDiv = document.getElementById(folderId);
+
+                            // Pull the folder class.
+                            var folderClass = folderDiv.className;
+
+                            // Determine if the folder is open or closed.
+                            var newFolderClass = 'emailFolder closed';
+                            if (folderClass.indexOf('closed') > -1) {
+                              newFolderClass = 'emailFolder open';
+                            }
+
+                            // Assing new class.
+                            folderDiv.className = newFolderClass;
+                          }
+                        </script>
+                        <apex:pageBlock >
+                          <apex:pageBlockButtons location="both">
+                            <apex:commandButton action="{!selectEmailCancel}" value="{!$Label.et4ae5__cancel}" rerender="exactTargetEmails" status="clickEmailStatus"
+                            />
+                          </apex:pageBlockButtons>
+                          <apex:repeat value="{!localSend.emails}" var="emailFolder1">
+                            +
+                            <a href="#" onclick="javascript:getFolderInfo('{!emailFolder1.Id}', 'pscLocalsend'); javascript:toggleFolderDisplay( 'emailFolder_{!emailFolder1.Id}' )">
+                              <b> {!emailFolder1.name} </b>
+                            </a>
+                            <br />
+                            <div class="emailFolder closed" id="emailFolder_{!emailFolder1.Id}">
+                              <apex:repeat value="{!emailFolder1.subfolders}" var="emailFolder2" rendered="{!NOT( ISBLANK( emailFolder1.subfolders ) )}">
+                                +
+                                <a href="#" onclick="javascript:getFolderInfo('{!emailFolder2.Id}', 'pscLocalsend'); javascript:toggleFolderDisplay( 'emailFolder_{!emailFolder2.Id}' )">
+                                  <b> {!emailFolder2.name} </b>
+                                </a>
+                                <br />
+                                <div class="emailFolder closed" id="emailFolder_{!emailFolder2.Id}">
+                                  <apex:repeat value="{!emailFolder2.subfolders}" var="emailFolder3" rendered="{!NOT( ISBLANK( emailFolder2.subfolders ) )}">
+                                    +
+                                    <a href="#" onclick="javascript:getFolderInfo('{!emailFolder3.Id}', 'pscLocalsend'); javascript:toggleFolderDisplay( 'emailFolder_{!emailFolder3.Id}' )">
+                                      <b> {!emailFolder3.name} </b>
+                                    </a>
+                                    <br />
+                                    <div class="emailFolder closed" id="emailFolder_{!emailFolder3.Id}">
+                                      <apex:repeat value="{!emailFolder3.subfolders}" var="emailFolder4" rendered="{!NOT( ISBLANK( emailFolder3.subfolders ) )}">
+                                        +
+                                        <a href="#" onclick="javascript:getFolderInfo('{!emailFolder4.Id}', 'pscLocalsend'); javascript:toggleFolderDisplay( 'emailFolder_{!emailFolder4.Id}' )">
+                                          <b> {!emailFolder4.name} </b>
+                                        </a>
+                                        <br />
+                                        <div class="emailFolder closed" id="emailFolder_{!emailFolder4.Id}">
+                                          <apex:repeat value="{!emailFolder4.subfolders}" var="emailFolder5" rendered="{!NOT( ISBLANK( emailFolder4.subfolders ) )}">
+                                            +
+                                            <a href="#" onclick="javascript:getFolderInfo('{!emailFolder5.Id}', 'pscLocalsend'); javascript:toggleFolderDisplay( 'emailFolder_{!emailFolder5.Id}' )">
+                                              <b> {!emailFolder5.name} </b>
+                                            </a>
+                                            <br />
+                                            <div class="emailFolder closed" id="emailFolder_{!emailFolder5.Id}">
+                                              <apex:repeat value="{!emailFolder5.emails}" var="email5">
+                                                &nbsp;-&nbsp;
+                                                <a href="#" onclick="javascript:populateABContent( '{!email5.id}', uriDecodeSubject('{!JSENCODE(email5.encName)}'), '{!JSENCODE(email5.encTitle)}', '' ); setSingleEmailTitle('{!JSENCODE(email5.encTitle)}');"
+                                                  status="sendButtonStatus">
+                                                  {!email5.name}
+                                                </a>
+                                                <br />
+                                              </apex:repeat>
+                                            </div>
+                                          </apex:repeat>
+                                          <apex:repeat value="{!emailFolder4.emails}" var="email4">
+                                            &nbsp;-&nbsp;
+                                            <a href="#" onclick="javascript:populateABContent( '{!email4.id}', uriDecodeSubject('{!JSENCODE(email4.encName)}'), '{!JSENCODE(email4.encTitle)}', '' ); setSingleEmailTitle('{!JSENCODE(email4.encTitle)}');"
+                                              status="sendButtonStatus"> {!email4.name} </a>
+                                            <br />
+                                          </apex:repeat>
+                                        </div>
+                                      </apex:repeat>
+                                      <apex:repeat value="{!emailFolder3.emails}" var="email3">
+                                        &nbsp;-&nbsp;
+                                        <a href="#" onclick="javascript:populateABContent( '{!email3.id}', uriDecodeSubject('{!JSENCODE(email3.encName)}'), '{!JSENCODE(email3.encTitle)}', '' ); setSingleEmailTitle('{!JSENCODE(email3.encTitle)}');"
+                                          status="sendButtonStatus"> {!email3.name} </a>
+                                        <br />
+                                      </apex:repeat>
+                                    </div>
+                                  </apex:repeat>
+                                  <apex:repeat value="{!emailFolder2.emails}" var="email2">
+                                    &nbsp;-&nbsp;
+                                    <a href="#" onclick="javascript:populateABContent( '{!email2.id}', uriDecodeSubject('{!JSENCODE(email2.encName)}'), '{!JSENCODE(email2.encTitle)}', '' ); setSingleEmailTitle('{!JSENCODE(email2.encTitle)}');"
+                                      status="sendButtonStatus"> {!email2.name} </a>
+                                    <br />
+                                  </apex:repeat>
+                                </div>
+                              </apex:repeat>
+                              <apex:repeat value="{!emailFolder1.emails}" var="email1">
+                                &nbsp;-&nbsp;
+                                <a href="#" onclick="javascript:populateABContent( '{!email1.id}', uriDecodeSubject('{!JSENCODE(email1.encName)}'), '{!JSENCODE(email1.encTitle)}', '' ); setSingleEmailTitle('{!JSENCODE(email1.encTitle)}');"
+                                  status="sendButtonStatus"> {!email1.name} </a>
+                                <br />
+                              </apex:repeat>
+                            </div>
+                          </apex:repeat>
+                        </apex:pageBlock>
+                      </apex:outputPanel>
+                    </apex:facet>
+                  </apex:actionStatus>
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <!-- Email A -->
+          <apex:pageBlockSection id="abEmailPanel">
+            <apex:pageBlockSectionItem id="emailATemplate" helpText="{!$Label.et4ae5__abemailhelp}">
+              <apex:outputLabel for="emailAName" value="{!$Label.et4ae5__email_a}" />
+              <apex:outputPanel id="emailAWrapper" layout="block">
+                <apex:outputText id="emailAName" value="{!localSendA.email.name}" />
+                <apex:outputPanel id="emailAPreviewLinkWrapper">
+                  <!-- emailPreviewLink panel used to house rerendering of Edit Email. Email preview to come in the future -->
+                  <apex:outputPanel id="emailAPreviewLink" rendered="{!IF( NOT( ISNULL( localSendA.email.id ) ), true, false )}">
+                    <apex:actionStatus id="previewEmailAStatus">
+                      <apex:facet name="start">
+                        <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                      </apex:facet>
+                      <apex:facet name="stop">
+                        <apex:outputpanel >
+                          <apex:outputLink style="padding-right:10px;padding-left:10px;" value="javascript:void(0)" onclick="return iLoginEditEmail('{!localSendA.email.id}','{!JSENCODE(etLink)}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');"
+                            rendered="{!showDeepLinks}">
+                            {!$Label.et4ae5__editeml}
+                          </apex:outputLink>
+                        </apex:outputpanel>
+                      </apex:facet>
+                    </apex:actionStatus>
+                  </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel >
+                  <apex:actionStatus id="listEmailsStatusA">
+                    <apex:facet name="start">
+                      <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                      <apex:commandButton id="listEmailsA" value="{!$Label.et4ae5__find}" action="{!listExactTargetEmailsA}" rerender="exactTargetEmailsA,pageMessages,sendEmailForm,recipientReports,recipientReportsZ,exclusionReports,exclusionReportsZ"
+                        status="listEmailsStatusA" />
+                    </apex:facet>
+                  </apex:actionStatus>
+                  <apex:outputText value="{!pipe}" rendered="{!showDeepLinks}" />
+                  <apex:outputLink target="_blank" style="padding-right:10px;" value="javascript:void(0)" onclick="return iLoginNewEmail('{!JSENCODE(etLink)}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');"
+                    rendered="{!showDeepLinks}">
+                    {!$Label.et4ae5__new}
+                  </apex:outputLink>
+                  <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                  <apex:outputPanel id="exactTargetEmailsA" layout="block">
+                    <apex:actionStatus id="clickEmailStatusA">
+                      <apex:facet name="start">
+                        <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                      </apex:facet>
+                      <apex:facet name="stop">
+                        <apex:outputPanel styleClass="popup" layout="block" rendered="{!ShowEmailChooserA }">
+                          <script type="text/javascript">
+                            function toggleFolderDisplayA(folderId) {
+                              // Identify folder div.
+                              var folderDiv = document.getElementById(folderId);
+
+                              // Pull the folder class.
+                              var folderClass = folderDiv.className;
+
+                              // Determine if the folder is open or closed.
+                              var newFolderClass = 'emailFolder closed';
+                              if (folderClass.indexOf('closed') > -1) {
+                                newFolderClass = 'emailFolder open';
+                              }
+
+                              // Assing new class.
+                              folderDiv.className = newFolderClass;
+                            }
+                          </script>
+                          <apex:pageBlock >
+                            <apex:pageBlockButtons location="both">
+                              <apex:commandButton action="{!selectEmailCancelA}" value="{!$Label.et4ae5__cancel}" rerender="exactTargetEmailsA" status="clickEmailStatusA"
+                              />
+                            </apex:pageBlockButtons>
+                            <apex:repeat value="{!localSendA.emails}" var="emailFolder1">
+                              +
+                              <a href="#" onclick="javascript:getFolderInfoA('{!emailFolder1.Id}', 'localsendA'); javascript:toggleFolderDisplayA( 'emailFolder_{!emailFolder1.Id}' )">
+                                <b> {!emailFolder1.name} </b>
+                              </a>
+                              <br />
+                              <div class="emailFolder closed" id="emailFolder_{!emailFolder1.Id}">
+                                <apex:repeat value="{!emailFolder1.subfolders}" var="emailFolder2" rendered="{!NOT( ISBLANK( emailFolder1.subfolders ) )}">
+                                  +
+                                  <a href="#" onclick="javascript:getFolderInfoA('{!emailFolder2.Id}', 'localsendA'); javascript:toggleFolderDisplayA( 'emailFolder_{!emailFolder2.Id}' )">
+                                    <b> {!emailFolder2.name} </b>
+                                  </a>
+                                  <br />
+                                  <div class="emailFolder closed" id="emailFolder_{!emailFolder2.Id}">
+                                    <apex:repeat value="{!emailFolder2.subfolders}" var="emailFolder3" rendered="{!NOT( ISBLANK( emailFolder2.subfolders ) )}">
+                                      +
+                                      <a href="#" onclick="javascript:getFolderInfoA('{!emailFolder3.Id}', 'localsendA'); javascript:toggleFolderDisplayA( 'emailFolder_{!emailFolder3.Id}' )">
+                                        <b> {!emailFolder3.name} </b>
+                                      </a>
+                                      <br />
+                                      <div class="emailFolder closed" id="emailFolder_{!emailFolder3.Id}">
+                                        <apex:repeat value="{!emailFolder3.subfolders}" var="emailFolder4" rendered="{!NOT( ISBLANK( emailFolder3.subfolders ) )}">
+                                          +
+                                          <a href="#" onclick="javascript:getFolderInfoA('{!emailFolder4.Id}', 'localsendA'); javascript:toggleFolderDisplayA( 'emailFolder_{!emailFolder4.Id}' )">
+                                            <b> {!emailFolder4.name} </b>
+                                          </a>
+                                          <br />
+                                          <div class="emailFolder closed" id="emailFolder_{!emailFolder4.Id}">
+                                            <apex:repeat value="{!emailFolder4.subfolders}" var="emailFolder5" rendered="{!NOT( ISBLANK( emailFolder4.subfolders ) )}">
+                                              +
+                                              <a href="#" onclick="javascript:getFolderInfoA('{!emailFolder5.Id}', 'localsendA'); javascript:toggleFolderDisplayA( 'emailFolder_{!emailFolder5.Id}' )">
+                                                <b> {!emailFolder5.name} </b>
+                                              </a>
+                                              <br />
+                                              <div class="emailFolder closed" id="emailFolder_{!emailFolder5.Id}">
+                                                <apex:repeat value="{!emailFolder5.emails}" var="email5">
+                                                  &nbsp;-&nbsp;
+                                                  <a href="#" onclick="javascript:selectEmailJSA( '{!email5.id}', uriDecodeSubject('{!JSENCODE(email5.encName)}'), '{!JSENCODE(email5.encTitle)}', 'A'); setEmailATitle('{!JSENCODE(email5.encTitle)}');"
+                                                    status="sendButtonStatus">
+                                                    {!email5.name}
+                                                  </a>
+                                                  <br />
+                                                </apex:repeat>
+                                              </div>
+                                            </apex:repeat>
+                                            <apex:repeat value="{!emailFolder4.emails}" var="email4">
+                                              &nbsp;-&nbsp;
+                                              <a href="#" onclick="javascript:selectEmailJSA( '{!email4.id}', uriDecodeSubject('{!JSENCODE(email4.encName)}'), '{!JSENCODE(email4.encTitle)}', 'A'); setEmailATitle('{!JSENCODE(email4.encTitle)}');"
+                                                status="sendButtonStatus"> {!email4.name} </a>
+                                              <br />
+                                            </apex:repeat>
+                                          </div>
+                                        </apex:repeat>
+                                        <apex:repeat value="{!emailFolder3.emails}" var="email3">
+                                          &nbsp;-&nbsp;
+                                          <a href="#" onclick="javascript:selectEmailJSA( '{!email3.id}', uriDecodeSubject('{!JSENCODE(email3.encName)}'), '{!JSENCODE(email3.encTitle)}', 'A' ); setEmailATitle('{!JSENCODE(email3.encTitle)}');"
+                                            status="sendButtonStatus"> {!email3.name} </a>
+                                          <br />
+                                        </apex:repeat>
+                                      </div>
+                                    </apex:repeat>
+                                    <apex:repeat value="{!emailFolder2.emails}" var="email2">
+                                      &nbsp;-&nbsp;
+                                      <a href="#" onclick="javascript:selectEmailJSA( '{!email2.id}', uriDecodeSubject('{!JSENCODE(email2.encName)}'), '{!JSENCODE(email2.encTitle)}', 'A' ); setEmailATitle('{!JSENCODE(email2.encTitle)}');"
+                                        status="sendButtonStatus"> {!email2.name} </a>
+                                      <br />
+                                    </apex:repeat>
+                                  </div>
+                                </apex:repeat>
+                                <apex:repeat value="{!emailFolder1.emails}" var="email1">
+                                  &nbsp;-&nbsp;
+                                  <a href="#" onclick="javascript:selectEmailJSA( '{!email1.id}', uriDecodeSubject('{!JSENCODE(email1.encName)}'), '{!JSENCODE(email1.encTitle)}', 'A' ); setEmailATitle('{!JSENCODE(email1.encTitle)}');"
+                                    status="sendButtonStatus"> {!email1.name} </a>
+                                  <br />
+                                </apex:repeat>
+                              </div>
+                            </apex:repeat>
+                          </apex:pageBlock>
+                        </apex:outputPanel>
+                      </apex:facet>
+                    </apex:actionStatus>
+                  </apex:outputPanel>
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+
+            <!-- Email B -->
+            <apex:pageBlockSectionItem id="emailBTemplate" helpText="{!$Label.et4ae5__abemailhelp}">
+              <apex:outputLabel for="emailBName" value="{!$Label.et4ae5__email_b}" />
+              <apex:outputPanel id="emailBWrapper" layout="block">
+                <apex:outputText id="emailBName" value="{!localSendB.email.name}" />
+                <apex:outputPanel id="emailBPreviewLinkWrapper">
+                  <!-- emailPreviewLink panel used to house rerendering of Edit Email. Email preview to come in the future -->
+                  <apex:outputPanel id="emailBPreviewLink" rendered="{!IF( NOT( ISNULL( localSendB.email.id ) ), true, false )}">
+                    <apex:actionStatus id="previewEmailAStatus">
+                      <apex:facet name="start">
+                        <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                      </apex:facet>
+                      <apex:facet name="stop">
+                        <apex:outputpanel >
+                          <apex:outputLink target="_blank" style="padding-right:10px;padding-left:10px;" value="javascript:void(0)" onclick="return iLoginEditEmail('{!localSendB.email.id}','{!JSENCODE(etLink)}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');"
+                            rendered="{!showDeepLinks}">
+                            {!$Label.et4ae5__editeml}
+                          </apex:outputLink>
+                        </apex:outputpanel>
+                      </apex:facet>
+                    </apex:actionStatus>
+                  </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel >
+                  <apex:actionStatus id="listEmailsStatusB">
+                    <apex:facet name="start">
+                      <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                      <apex:commandButton id="listEmailsB" value="{!$Label.et4ae5__find}" action="{!listExactTargetEmailsB}" rerender="exactTargetEmailsB,pageMessages,sendEmailForm,recipientReports,recipientReportsZ,exclusionReports,exclusionReportsZ"
+                        status="listEmailsStatusB" />
+                    </apex:facet>
+                  </apex:actionStatus>
+                  <apex:outputText value="{!pipe}" rendered="{!showDeepLinks}" />
+                  <apex:outputLink target="_blank" style="padding-right:10px;" value="javascript:void(0)" onclick="return iLoginNewEmail('{!JSENCODE(etLink)}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');"
+                    rendered="{!showDeepLinks}">
+                    {!$Label.et4ae5__new}
+                  </apex:outputLink>
+                  <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                  <apex:outputPanel id="exactTargetEmailsB" layout="block">
+                    <apex:actionStatus id="clickEmailStatusB">
+                      <apex:facet name="start">
+                        <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                      </apex:facet>
+                      <apex:facet name="stop">
+                        <apex:outputPanel styleClass="popup" layout="block" rendered="{!ShowEmailChooserB }">
+                          <script type="text/javascript">
+                            function toggleFolderDisplayB(folderId) {
+                              // Identify folder div.
+                              var folderDiv = document.getElementById(folderId);
+
+                              // Pull the folder class.
+                              var folderClass = folderDiv.className;
+
+                              // Determine if the folder is open or closed.
+                              var newFolderClass = 'emailFolder closed';
+                              if (folderClass.indexOf('closed') > -1) {
+                                newFolderClass = 'emailFolder open';
+                              }
+
+                              // Assing new class.
+                              folderDiv.className = newFolderClass;
+                            }
+                          </script>
+                          <apex:pageBlock >
+                            <apex:pageBlockButtons location="both">
+                              <apex:commandButton action="{!selectEmailCancelB}" value="{!$Label.et4ae5__cancel}" rerender="exactTargetEmailsB" status="clickEmailStatusB"
+                              />
+                            </apex:pageBlockButtons>
+                            <apex:repeat value="{!localSendB.emails}" var="emailFolder1">
+                              +
+                              <a href="#" onclick="javascript:getFolderInfoB('{!emailFolder1.Id}', 'localsendB'); javascript:toggleFolderDisplayB( 'emailFolder_{!emailFolder1.Id}' )">
+                                <b> {!emailFolder1.name} </b>
+                              </a>
+                              <br />
+                              <div class="emailFolder closed" id="emailFolder_{!emailFolder1.Id}">
+                                <apex:repeat value="{!emailFolder1.subfolders}" var="emailFolder2" rendered="{!NOT( ISBLANK( emailFolder1.subfolders ) )}">
+                                  +
+                                  <a href="#" onclick="javascript:getFolderInfoB('{!emailFolder2.Id}', 'localsendB'); javascript:toggleFolderDisplayB( 'emailFolder_{!emailFolder2.Id}' )">
+                                    <b> {!emailFolder2.name} </b>
+                                  </a>
+                                  <br />
+                                  <div class="emailFolder closed" id="emailFolder_{!emailFolder2.Id}">
+                                    <apex:repeat value="{!emailFolder2.subfolders}" var="emailFolder3" rendered="{!NOT( ISBLANK( emailFolder2.subfolders ) )}">
+                                      +
+                                      <a href="#" onclick="javascript:getFolderInfoB('{!emailFolder3.Id}', 'localsendB'); javascript:toggleFolderDisplayB( 'emailFolder_{!emailFolder3.Id}' )">
+                                        <b> {!emailFolder3.name} </b>
+                                      </a>
+                                      <br />
+                                      <div class="emailFolder closed" id="emailFolder_{!emailFolder3.Id}">
+                                        <apex:repeat value="{!emailFolder3.subfolders}" var="emailFolder4" rendered="{!NOT( ISBLANK( emailFolder3.subfolders ) )}">
+                                          +
+                                          <a href="#" onclick="javascript:getFolderInfoB('{!emailFolder4.Id}', 'localsendB'); javascript:toggleFolderDisplayB( 'emailFolder_{!emailFolder4.Id}' )">
+                                            <b> {!emailFolder4.name} </b>
+                                          </a>
+                                          <br />
+                                          <div class="emailFolder closed" id="emailFolder_{!emailFolder4.Id}">
+                                            <apex:repeat value="{!emailFolder4.subfolders}" var="emailFolder5" rendered="{!NOT( ISBLANK( emailFolder4.subfolders ) )}">
+                                              +
+                                              <a href="#" onclick="javascript:getFolderInfoB('{!emailFolder5.Id}', 'localsendB'); javascript:toggleFolderDisplayB( 'emailFolder_{!emailFolder5.Id}' )">
+                                                <b> {!emailFolder5.name} </b>
+                                              </a>
+                                              <br />
+                                              <div class="emailFolder closed" id="emailFolder_{!emailFolder5.Id}">
+                                                <apex:repeat value="{!emailFolder5.emails}" var="email5">
+                                                  &nbsp;-&nbsp;
+                                                  <a href="#" onclick="javascript:selectEmailJSB( '{!email5.id}', uriDecodeSubject('{!JSENCODE(email5.encName)}'), '{!JSENCODE(email5.encTitle)}', 'B' ); setEmailBTitle('{!JSENCODE(email5.encTitle)}');"
+                                                    status="sendButtonStatus">
+                                                    {!email5.name}
+                                                  </a>
+                                                  <br />
+                                                </apex:repeat>
+                                              </div>
+                                            </apex:repeat>
+                                            <apex:repeat value="{!emailFolder4.emails}" var="email4">
+                                              &nbsp;-&nbsp;
+                                              <a href="#" onclick="javascript:selectEmailJSB( '{!email4.id}', uriDecodeSubject('{!JSENCODE(email4.encName)}'), '{!JSENCODE(email4.encTitle)}', 'B' ); setEmailBTitle('{!JSENCODE(email4.encTitle)}');"
+                                                status="sendButtonStatus"> {!email4.name} </a>
+                                              <br />
+                                            </apex:repeat>
+                                          </div>
+                                        </apex:repeat>
+                                        <apex:repeat value="{!emailFolder3.emails}" var="email3">
+                                          &nbsp;-&nbsp;
+                                          <a href="#" onclick="javascript:selectEmailJSB( '{!email3.id}', uriDecodeSubject('{!JSENCODE(email3.encName)}'), '{!JSENCODE(email3.encTitle)}', 'B' ); setEmailBTitle('{!JSENCODE(email3.encTitle)}');"
+                                            status="sendButtonStatus"> {!email3.name} </a>
+                                          <br />
+                                        </apex:repeat>
+                                      </div>
+                                    </apex:repeat>
+                                    <apex:repeat value="{!emailFolder2.emails}" var="email2">
+                                      &nbsp;-&nbsp;
+                                      <a href="#" onclick="javascript:selectEmailJSB( '{!email2.id}', uriDecodeSubject('{!JSENCODE(email2.encName)}'), '{!JSENCODE(email2.encTitle)}', 'B' ); setEmailBTitle('{!JSENCODE(email2.encTitle)}');"
+                                        status="sendButtonStatus"> {!email2.name} </a>
+                                      <br />
+                                    </apex:repeat>
+                                  </div>
+                                </apex:repeat>
+                                <apex:repeat value="{!emailFolder1.emails}" var="email1">
+                                  &nbsp;-&nbsp;
+                                  <a href="#" onclick="javascript:selectEmailJSB( '{!email1.id}', uriDecodeSubject('{!JSENCODE(email1.encName)}'), '{!JSENCODE(email1.encTitle)}', 'B' ); setEmailBTitle('{!JSENCODE(email1.encTitle)}');"
+                                    status="sendButtonStatus"> {!email1.name} </a>
+                                  <br />
+                                </apex:repeat>
+                              </div>
+                            </apex:repeat>
+                          </apex:pageBlock>
+                        </apex:outputPanel>
+                      </apex:facet>
+                    </apex:actionStatus>
+                  </apex:outputPanel>
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+          </apex:pageBlockSection>
+          <!-- AB Subject Panel -->
+          <apex:outputPanel id="absubjectbuttons" styleClass="subjectselectborder radioselect absubjectoptions">
+            <apex:selectRadio enabledClass="radioselectoptions" value="{!selectedSubjectOption}">
+              <apex:selectOptions value="{!SubjectOptions}" />
+            </apex:selectRadio>
+          </apex:outputPanel>
+          <apex:pageBlockSection id="abEmailSingleSubjectPanel">
+            <apex:pageBlockSectionItem id="abEmailSingleSubject" helpText="{!$Label.et4ae5__msg0051}">
+              <apex:outputLabel value="{!$Label.et4ae5__subject}" />
+              <apex:outputPanel >
+                <apex:inputText style="margin-right:10px; width=200px;" value="{!localSendA.email.title}" />
+                <span>
+                  <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                </span>
+              </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+          </apex:pageBlockSection>
+          <apex:pageBlockSection id="abSubjectPanel">
+            <apex:pageBlockSectionItem id="emailsubjecta" helpText="{!$Label.et4ae5__msg0051}">
+              <apex:outputLabel value="{!$Label.et4ae5__ab_test_subject_a}" />
+              <apex:outputPanel >
+                <apex:inputText style="margin-right:10px; margin-bottom: 5px; width=200px;" value="{!localSendA.email.title}" />
+                <span>
+                  <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                </span>
+                <div>
+                  <input id="aOrBPicker-A" class="aOrBPicker" type="radio" name="useSubjectAorB" value="A">{!$Label.useSubjectA}</input>
+                </div>
+              </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem id="emailsubjectb" dataStyleClass="subjectB" labelStyleClass="subjectB" helpText="{!$Label.et4ae5__msg0051}">
+              <apex:outputLabel style="margin-right:10px" value="{!$Label.et4ae5__ab_test_subject_b}" />
+              <apex:outputPanel >
+                <apex:inputText style="margin-right:10px; margin-bottom: 5px; width=200px;" value="{!localSendB.email.title}" />
+                <span>
+                  <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                </span>
+                <div>
+                  <input id="aOrBPicker-B" class="aOrBPicker" type="radio" name="useSubjectAorB" value="B">{!$Label.useSubjectB}</input>
+                </div>
+              </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+          </apex:pageBlockSection>
+          <!-- Subject -->
+          <apex:pageBlockSectionItem id="emailsubject" helpText="{!$Label.et4ae5__absubjecthelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__subject}" />
+            <apex:outputPanel >
+              <apex:inputText id="emailSubectSingleText" style="margin-right:20px; width=200px;" value="{!localSend.email.title}" />
+              <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <!-- AB Content Area Info Panel -->
+          <apex:pageBlockSection id="abContentAreaInfo">
+            <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__abcontentareahelp}">
+              <apex:outputLabel value="{!$Label.et4ae5__abcontentareaa}" />
+              <apex:outputPanel >
+                <table>
+                  <tbody>
+                    <tr>
+                      <td>{!contentAreaA.name}</td>
+                    </tr>
+                    <tr>
+                      <td>{!$Label.et4ae5__created}: {!contentAreaA.createdDate}</td>
+                    </tr>
+                    <tr>
+                      <td>{!$Label.et4ae5__lastmodified}: {!contentAreaA.modifiedDate}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__abcontentareahelp}">
+              <apex:outputLabel value="{!$Label.et4ae5__abcontentareab}" />
+              <apex:outputPanel >
+                <table>
+                  <tbody>
+                    <tr>
+                      <td>{!contentAreaB.name}</td>
+                    </tr>
+                    <tr>
+                      <td>{!$Label.et4ae5__created}: {!contentAreaB.createdDate}</td>
+                    </tr>
+                    <tr>
+                      <td>{!$Label.et4ae5__lastmodified}: {!contentAreaB.modifiedDate}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+          </apex:pageBlockSection>
+          <!-- From A -->
+          <apex:pageBlockSection id="abFromNamePanel">
+            <apex:pageBlockSectionitem id="selectedFromA" helptext="{!$Label.et4ae5__abfromnamehelp}">
+              <apex:outputLabel for="fromBlockA" value="{!$Label.et4ae5__ab_test_from_name_a}" />
+              <apex:outputPanel id="fromBlockA" layout="block">
+                <apex:outputPanel layout="block">
+                  <input type="radio" id="fromSelectorEmailA" name="fromSelectorA" value="{!fromSelectorAStatus}" onclick="swapFromSource('testA');"
+                    status="sendButtonStatus" />
+                  <apex:outputLabel for="fromA" value="{!$Label.et4ae5__emailaddr}" />
+                  <br />
+                  <apex:outputPanel id="fromPicklistA">
+                    <table>
+                      <tr>
+                        <td>
+                          <apex:selectList id="fromA" value="{!localSendA.fromEmailSelected}" size="1">
+                            <apex:selectOptions value="{!abFromOptions}" />
+                          </apex:selectList>
+                        </td>
+                        <td>
+                          <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                        </td>
+                      </tr>
+                    </table>
+                  </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel id="sendClassificationWrapperA" layout="block" rendered="true">
+                  <input type="radio" id="fromSelectorSCA" name="fromSelectorA" value="{!localSendA.SendClassOption}" onclick="swapFromSource('testA');"
+                    status="sendButtonStatus" />
+                  <apex:outputLabel for="sendClassificationA" value="{!$Label.et4ae5__sendclass}" />
+                  <br />
+                  <apex:outputPanel id="scPicklistA">
+                    <apex:selectList id="sendClassificationA" value="{!localSendA.sendClassificationSelected}" size="1">
+                      <apex:selectOptions value="{!localSend.sendClassificationOptions}" />
+                    </apex:selectList>
+                    <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                  </apex:outputPanel>
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:pageBlockSectionitem>
+
+            <!-- From B -->
+            <apex:pageBlockSectionitem id="selectedFromB" helptext="{!$Label.et4ae5__abfromnamehelp}">
+              <apex:outputLabel for="fromBlockB" value="{!$Label.et4ae5__ab_test_from_name_b}" />
+              <apex:outputPanel id="fromBlockB" layout="block">
+                <apex:outputPanel layout="block">
+                  <input type="radio" id="fromSelectorEmailB" name="fromSelectorB" value="{!fromSelectorBStatus}" onclick="swapFromSource('testB');"
+                    status="sendButtonStatus" />
+                  <apex:outputLabel for="fromB" value="{!$Label.et4ae5__emailaddr}" />
+                  <br />
+                  <apex:outputPanel id="fromPicklistB">
+                    <table>
+                      <tr>
+                        <td>
+                          <apex:selectList id="fromB" value="{!localSendB.fromEmailSelected}" size="1">
+                            <apex:selectOptions value="{!abFromOptions}" />
+                          </apex:selectList>
+                        </td>
+                        <td>
+                          <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                        </td>
+                      </tr>
+                    </table>
+                  </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel id="sendClassificationWrapperB" layout="block" rendered="true">
+                  <input type="radio" id="fromSelectorSCB" name="fromSelectorB" value="{!localSendB.SendClassOption}" onclick="swapFromSource('testB');"
+                    status="sendButtonStatus" />
+                  <apex:outputLabel for="sendClassificationB" value="{!$Label.et4ae5__sendclass}" />
+                  <br />
+                  <apex:outputPanel id="scPicklistB">
+                    <apex:selectList id="sendClassificationB" value="{!localSendB.sendClassificationSelected}" size="1">
+                      <apex:selectOptions value="{!localSend.sendClassificationOptions}" />
+                    </apex:selectList>
+                    <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                  </apex:outputPanel>
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:pageBlockSectionitem>
+          </apex:pageBlockSection>
+
+          <!-- AB Send Date/Time -->
+          <apex:pageBlockSection id="abSendDateTimePanel">
+            <apex:pageBlockSectionItem id="sendDateTimeRadiosA" helpText="{!$Label.et4ae5__abdatetimehelp}">
+              <apex:outputLabel for="dateBlockA" value="{!$Label.et4ae5__ab_test_send_date_a}" />
+              <apex:outputPanel id="dateBlockA" layout="block">
+                <apex:outputPanel id="sendDateTimeWrapperA" layout="block" rendered="true">
+                  <apex:outputPanel id="schCalendarA">
+                    <apex:inputField id="sendDateTimeA" value="{!sendA.et4ae5__Scheduled_Date_Time__c}" />
+                    <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                  </apex:outputPanel>
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:pageBlockSectionitem>
+            <apex:pageBlockSectionItem id="sendDateTimeRadiosB" helpText="{!$Label.et4ae5__abdatetimehelp}">
+              <apex:outputLabel for="dateBlockB" value="{!$Label.et4ae5__ab_test_send_date_b}" />
+              <apex:outputPanel id="dateBlockB" layout="block">
+                <apex:outputPanel id="sendDateTimeWrapperB" layout="block" rendered="true">
+                  <apex:outputPanel id="schCalendarB">
+                    <apex:inputField id="sendDateTimeB" value="{!sendB.et4ae5__Scheduled_Date_Time__c}" />
+                    <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                  </apex:outputPanel>
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:pageBlockSectionitem>
+          </apex:pageBlockSection>
+        </apex:pageBlockSection>
+        <!-- End of Test Management Block -->
+
+        <!-- Recipients -->
+        <br />
+        <hr color="#FFA100" />
+        <div style="font-size: 14px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold;">
+          {!$Label.et4ae5__recipients}
+        </div>
+        <hr color="#ececec" />
+
+        <apex:pageblocksection id="listChoosers" columns="1">
+          <!-- Recipient Sources -->
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__abaudiencehelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__recipients}" />
+            <apex:outputPanel layout="block">
+              <apex:outputPanel id="recipSourcePicklists">
+                <table>
+                  <tr>
+                    <td>
+                      <apex:actionStatus id="recipPicklistStatus">
+                        <apex:facet name="start">
+                          <apex:outputPanel >
+                            <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                          </apex:outputPanel>
+                        </apex:facet>
+                        <apex:facet name="stop">
+                          <apex:outputPanel >
+                            <apex:selectList id="recipSourceDropdown" value="{!recipientType}" size="1">
+                              <apex:selectOptions value="{!recipSource}" />
+                              <apex:actionSupport event="onchange" action="{!changeRecipientType}" rerender="listChoosers" status="recipPicklistStatus"
+                              />
+                            </apex:selectList>
+                            <apex:image value="/s.gif" style="width: 5px;" />
+                            <apex:outputPanel id="campaignInput" rendered="{!renderRecipCampaign}">
+                              <apex:inputField id="campaignRecip" value="{!send.et4ae5__Campaign__c}" style="width: 300px;" />
+                            </apex:outputPanel>
+                          </apex:outputPanel>
+                        </apex:facet>
+                      </apex:actionStatus>
+                    </td>
+                    <td>
+                      <apex:outputLink value="javascript:inclusionAdd();">
+                        <apex:image value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, 'plusOn.jpg' )}" alt="{!$Label.et4ae5__add}" title="{!$Label.et4ae5__add}"
+                        />
+                      </apex:outputLink>
+                    </td>
+                  </tr>
+                </table>
+                <apex:outputPanel id="recipientReportsZ">
+                  <apex:actionStatus id="clickReportStatus">
+                    <apex:facet name="start">
+                      <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                      <apex:outputPanel styleClass="popup" rendered="{!showRecipientReportChooser}">
+                        <apex:pageBlock >
+                          <apex:pageBlockButtons location="both">
+                            <apex:commandButton action="{!selectSalesforceReportCancel}" value="{!$Label.et4ae5__cancel}" rerender="pageMessages,sendEmailForm,recipientReports,recipientReportsZ,exactTargetEmails,exclusionReports,exclusionReportsZ"
+                              status="recipPicklistStatus" />
+                          </apex:pageBlockButtons>
+                          <input type="text" placeholder="{!$Label.findFolder}" id="folderSearch" onkeyup="doReportFolderSearch();" />
+                          <br/>
+                          <apex:outputpanel id="foldersReturned">
+                            <apex:outputLabel value="{!limitMessage}" style="color:red;font-weight:bold;display:block;" />
+                            <apex:repeat value="{!localSend.reports}" var="recipientReportsFolder">
+                              +
+                              <a href="#" onclick="openReportFolder('{!recipientReportsFolder.Id}')">
+                                <b> {!recipientReportsFolder.name} </b>
+                              </a>
+                              <br />
+                              <div id="reportFolder_{recipientReportsFolder.Id}">
+                                <apex:repeat value="{!recipientReportsFolder.contents}" var="recipientReport" rendered="{!NOT(ISBLANK(recipientReportsFolder.contents))}">
+                                  &nbsp;-&nbsp;
+                                  <a href="#" onclick="javascript:selectReportJS( '{!recipientReport.id}', '{!JSENCODE(recipientReport.encName)}' );">
+                                    {!recipientReport.name}
+                                  </a>
+                                  <br />
+                                </apex:repeat>
+                              </div>
+                            </apex:repeat>
+                          </apex:outputpanel>
+                        </apex:pageBlock>
+                      </apex:outputPanel>
+                    </apex:facet>
+                  </apex:actionStatus>
+                </apex:outputPanel>
+                <table>
+                  <tr>
+                    <td valign="top">
+                      <select id="recipRightList" class="multilist" size="3" style="width: 300px;">
+                        <apex:repeat value="{!recipChosen}" var="recipChosens">
+                          <option value="{!recipChosens.value}">
+                            {!recipChosens.label}
+                          </option>
+                        </apex:repeat>
+                      </select>
+                    </td>
+                    <td>
+                      <table>
+                        <tr>
+                          <td>
+                            <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <apex:outputLink value="javascript:inclusionRemove(document.getElementById('recipRightList').options[document.getElementById('recipRightList').selectedIndex].value);">
+                              <apex:image value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, recipMinus )}" />
+                            </apex:outputLink>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </apex:outputPanel>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <!-- Exclusion Sources -->
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__abexclusionshelp}" rendered="{!showExclusionSection}" id="exclusionSection">
+            <apex:outputLabel value="{!$Label.et4ae5__exclusions}" />
+            <apex:outputPanel layout="block">
+              <apex:outputPanel id="excluSourcePicklists">
+                <table>
+                  <tr>
+                    <td>
+                      <apex:actionStatus id="exclusionRecipPicklistStatus">
+                        <apex:facet name="start">
+                          <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                        </apex:facet>
+                        <apex:facet name="stop">
+                          <apex:outputPanel >
+                            <apex:selectList id="excluSourceDropdown" value="{!exclusionType}" size="1">
+                              <apex:selectOptions value="{!excluSource}" />
+                              <apex:actionSupport event="onchange" action="{!changeExclusionType}" rerender="listChoosers" status="exclusionRecipPicklistStatus"
+                              />
+                            </apex:selectList>
+                            <apex:image value="/s.gif" style="width: 5px;" />
+                            <apex:outputPanel id="campaignExcluInput" rendered="{!renderExcluCampaign}">
+                              <apex:inputField id="campaignExclu" value="{!send.et4ae5__ExclusionCampaign__c}" style="width: 300px;" />
+                            </apex:outputPanel>
+                          </apex:outputPanel>
+                        </apex:facet>
+                      </apex:actionStatus>
+                    </td>
+                    <td>
+                      <apex:outputLink value="javascript:exclusionAdd();">
+                        <apex:image value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, 'plusOn.jpg' )}" alt="{!$Label.et4ae5__add}" title="{!$Label.et4ae5__add}"
+                        />
+                      </apex:outputLink>
+                    </td>
+                  </tr>
+                </table>
+                <apex:outputPanel id="exclusionReportsZ">
+                  <apex:actionStatus id="clickExcluReportStatus">
+                    <apex:facet name="start">
+                      <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                      <apex:outputPanel styleClass="popup" rendered="{!showExclusionReportChooser}">
+                        <apex:pageBlock >
+                          <apex:pageBlockButtons location="both">
+                            <apex:commandButton action="{!selectSalesforceExcluReportCancel}" value="{!$Label.et4ae5__cancel}" rerender="pageMessages,sendEmailForm,exclusionReports,exclusionReportsZ,exactTargetEmails,recipientReports,recipientReportsZ"
+                              status="exclusionRecipPicklistStatus" />
+                          </apex:pageBlockButtons>
+                          <input type="text" placeholder="{!$Label.findFolder}" id="folderSearchExc" onkeyup="doReportfolderSearchExc();" />
+                          <br/>
+                          <apex:outputpanel id="foldersReturnedExc">
+                            <apex:outputLabel value="{!limitMessage}" style="color:red;font-weight:bold;display:block;" />
+                            <apex:repeat value="{!localSend.exclusionReports}" var="exclusionReportsFolder">
+                              +
+                              <a href="#" onclick="openExcluReportFolder('{!exclusionReportsFolder.Id}')">
+                                <b> {!exclusionReportsFolder.name} </b>
+                              </a>
+                              <br />
+                              <div id="excluReportFolder_{exclusionReportsFolder.Id}">
+                                <apex:repeat value="{!exclusionReportsFolder.contents}" var="exclusionReport" rendered="{!NOT(ISBLANK(exclusionReportsFolder.contents))}">
+                                  &nbsp;-&nbsp;
+                                  <a href="#" onclick="javascript:selectExcluReportJS( '{!exclusionReport.id}', '{!JSENCODE(exclusionReport.encName)}' );">
+                                    {!exclusionReport.name}
+                                  </a>
+                                  <br />
+                                </apex:repeat>
+                              </div>
+                            </apex:repeat>
+                          </apex:outputpanel>
+                        </apex:pageBlock>
+                      </apex:outputPanel>
+                    </apex:facet>
+                  </apex:actionStatus>
+                </apex:outputPanel>
+                <table>
+                  <tr>
+                    <td valign="top">
+                      <select id="excluRightList" class="multilist" size="3" style="width: 300px;">
+                        <apex:repeat value="{!excluChosen}" var="excluChosens">
+                          <option value="{!excluChosens.value}">
+                            {!excluChosens.label}
+                          </option>
+                        </apex:repeat>
+                      </select>
+                    </td>
+                    <td>
+                      <table>
+                        <tr>
+                          <td height="18px" />
+                        </tr>
+                        <tr>
+                          <td>
+                            <apex:outputLink value="javascript:exclusionRemove(document.getElementById('excluRightList').options[document.getElementById('excluRightList').selectedIndex].value);">
+                              <apex:image value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, excluMinus )}" />
+                            </apex:outputLink>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </apex:outputPanel>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+        </apex:pageblocksection>
+        <hr color="#ececec" />
+        <!-- Slider -->
+        <apex:pageBlockSection >
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__abaudiencesizehelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__absliderpct}" />
+            <apex:outputPanel >
+              <div id="slider"></div>
+              <div style="text-align: center">
+                <output>{!$Label.tstGroup}</output>
+                <output id="testGroup" name="testPercent">50</output>
+                <output>%</output>
+              </div>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <apex:pageBlockSectionItem >
+            <apex:outputLabel />
+            <apex:outputPanel >
+              <table>
+                <tr>
+                  <td>{!$Label.et4ae5__tsta}</td>
+                  <td>
+                    <output id="groupA">25</output>%
+                  </td>
+                </tr>
+                <tr>
+                  <td>{!$Label.et4ae5__tstb}</td>
+                  <td>
+                    <output id="groupB">25</output>%
+                  </td>
+                </tr>
+                <tr>
+                  <td>{!$Label.et4ae5__remainder}</td>
+                  <td>
+                    <output id="remainder">50</output>%
+                  </td>
+                </tr>
+              </table>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+        <!-- End of slider -->
+        <br />
+        <hr color="#FFA100" />
+        <div style="font-size: 14px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold;">
+          {!$Label.winner}
+        </div>
+        <hr color="#ececec" />
+        <apex:pageblocksection id="winnerblock" columns="1">
+          <apex:pageblocksectionitem helptext="{!$Label.et4ae5__abdeterminewinnerbyhelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__dtrmnwinner}" />
+            <apex:outputPanel >
+              <apex:selectRadio value="{!selectedChooseWinnerByOption}" layout="pageDirection">
+                <apex:selectOptions value="{!DetermineWinnerOptions}" />
+              </apex:selectRadio>
+            </apex:outputPanel>
+          </apex:pageblocksectionitem>
+          <apex:pageblocksectionitem helptext="{!$Label.et4ae5__abtestdurationhelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__abtestdeclarewinner}" />
+            <apex:outputPanel >
+              <apex:inputText id="winnerTimeNumber" value="{!declareWinnerTime}" style="width:20px; margin-right:10px;" />
+              <apex:selectList value="{!selectedWinnerDaysHours}" multiselect="false" size="1">
+                <apex:selectOptions value="{!WinnerDaysHoursOptions}" />
+              </apex:selectList>
+              <apex:outputLabel value="{!$Label.et4ae5__abtestafterwinner}" />
+              <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+            </apex:outputPanel>
+          </apex:pageblocksectionitem>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection id="saveWinningTest">
+          <apex:pageblocksectionitem helptext="{!$Label.et4ae5__absavewinningsubjecthelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__savewinopt}" />
+            <apex:outputPanel >
+              <apex:selectRadio value="{!selectedSaveWinningTest}" layout="pageDirection">
+                <apex:selectOptions value="{!SaveWinningTestOptions}" />
+              </apex:selectRadio>
+            </apex:outputPanel>
+          </apex:pageblocksectionitem>
+        </apex:pageblocksection>
+        <br />
+        <hr color="#FFA100" />
+        <div style="font-size: 14px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold;">
+          {!$Label.sendMgmt}
+        </div>
+        <hr color="#ececec" />
+        <apex:pageblocksection id="bottomBlock" columns="1">
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__absendtoremainderhelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__sendwintorem}" />
+            <apex:outputPanel >
+              <apex:selectList id="transmissiontype" value="{!transmissionType}" multiselect="false" size="1">
+                <apex:selectOptions value="{!transmissionTypeOptions}" />
+              </apex:selectList>
+              <apex:selectList id="automatictransmissionselection" value="{!automaticTransmissionType}" multiselect="false" size="1">
+                <apex:selectOptions value="{!automaticTransmissionTypeOptions}" />
+              </apex:selectList>
+              <apex:inputField id="ScheduledSendRemainderDateTime" value="{!SendRemainderFields.et4ae5__Scheduled_Date_Time__c}" />
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <!-- From -->
+          <apex:pageBlockSectionitem id="selectedFrom" helptext="{!$Label.et4ae5__abfromnameandemailhelp}">
+            <apex:outputLabel for="fromBlock" value="{!$Label.et4ae5__from}" />
+            <apex:outputPanel id="fromBlock" layout="block">
+              <apex:outputPanel layout="block">
+                <input type="radio" id="fromSelectorEmail" name="fromSelector" value="{!!localSend.SendClassOption}" onclick="swapFromSource('');"
+                  status="sendButtonStatus" />
+                <apex:outputLabel for="from" value="{!$Label.et4ae5__emailaddr}" />
+                <br />
+                <apex:outputPanel id="fromPicklist">
+                  <apex:selectList id="fromSingle" value="{!localSend.fromEmailSelected}" size="1">
+                    <apex:selectOptions value="{!abFromOptions}" />
+                  </apex:selectList>
+                  <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                </apex:outputPanel>
+              </apex:outputPanel>
+              <apex:outputPanel id="sendClassificationWrapper" layout="block" rendered="true">
+                <input type="radio" id="fromSelectorSC" name="fromSelector" value="{!localSend.SendClassOption}" onclick="swapFromSource('');"
+                  status="sendButtonStatus" />
+                <apex:outputLabel for="sendClassification" value="{!$Label.et4ae5__sendclass}" />
+                <br />
+                <apex:outputPanel id="scPicklist">
+                  <apex:selectList id="sendClassificationSingle" value="{!localSend.sendClassificationSelected}" size="1">
+                    <apex:selectOptions value="{!localSend.sendClassificationOptions}" />
+                  </apex:selectList>
+                  <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:outputPanel>
+          </apex:pageBlockSectionitem>
+
+          <!-- Reply-to -->
+          <apex:pageBlockSectionitem rendered="{!renderReplyTo}" id="selectedReplyTo" helpText="{!$Label.et4ae5__absendrepliestohelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__reply_to}" />
+            <apex:selectList id="reply-to" value="{!localSend.replyToEmailSelected}" size="1">
+              <apex:selectOptions value="{!localSend.replyToOptions}" />
+            </apex:selectList>
+          </apex:pageBlockSectionitem>
+
+          <!-- Scheduled Send Date/Time -->
+          <apex:pageBlockSectionItem id="sendDateTimeRadios" helpText="{!$Label.et4ae5__abstarttesthelp}">
+            <apex:outputLabel for="dateBlock" value="{!$Label.et4ae5__snddandt}" />
+            <apex:outputPanel id="dateBlock" layout="block">
+              <apex:outputPanel layout="block">
+                <input type="radio" id="fromSelectorIm" name="immeSelector" onclick="swapDateSource(''); setSendImmediately();" status="sendButtonStatus"
+                />
+                <apex:outputLabel for="imme" value="{!$Label.et4ae5__immedtly}" />
+              </apex:outputPanel>
+              <apex:outputPanel id="sendDateTimeWrapper" layout="block" rendered="true">
+                <input type="radio" id="fromSelectorDT" name="immeSelector" onclick="swapDateSource(''); setSendFuture();" status="sendButtonStatus"
+                />
+                <apex:outputLabel for="sendDateTime" value="{!$Label.et4ae5__schedfutsd}" />
+                <br />
+                <apex:outputPanel id="schCalendar">
+                  <apex:inputField id="sendDateTimeSingle" value="{!send.et4ae5__Scheduled_Date_Time__c}" />
+                  <img style="vertical-align: middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                </apex:outputPanel>
+              </apex:outputPanel>
+            </apex:outputPanel>
+          </apex:pageBlockSectionitem>
+
+          <!-- Dedupe Subscribers -->
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0006}">
+            <apex:outputLabel value="{!$Label.et4ae5__dedupesubs}" />
+            <apex:inputCheckbox value="{!send.et4ae5__DedupeSubscribers__c}" selected="true" />
+          </apex:pageBlockSectionItem>
+
+          <!-- Disable Individual Tracking -->
+          <apex:pageBlockSectionItem rendered="{!renderDIT}" helpText="{!$Label.et4ae5__abdisableindleveltrackinghelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__disilt}" />
+            <apex:inputCheckbox value="{!send.et4ae5__Individual_Tracking_Disabled__c}" />
+          </apex:pageBlockSectionItem>
+
+          <!-- Email Notifications -->
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__abemailnotificationshelp}">
+            <apex:outputLabel value="{!$Label.et4ae5__abtestemailnotifications}" />
+            <apex:outputPanel >
+              <div>
+                <apex:inputText value="{!emailNotifications}" />
+              </div>
+              <div>
+                <apex:outputLabel value="{!$Label.et4ae5__separatewithcomma}" />
+              </div>
+              <table>
+                <tr>
+                  <td>
+                    <apex:inputCheckbox value="{!notifyForConditions}" />
+                  </td>
+                  <td>
+                    <apex:outputLabel value="{!$Label.et4ae5__abnotificationconditions}" />
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <apex:inputCheckbox value="{!notifyForWinnerDeclared}" />
+                  </td>
+                  <td>
+                    <apex:outputLabel value="{!$Label.et4ae5__winnerisdeclared}" />
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <apex:inputCheckbox value="{!notifyForRemainderSent}" />
+                  </td>
+                  <td>
+                    <apex:outputLabel value="{!$Label.et4ae5__abnotificationremainder}" />
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <apex:inputCheckbox value="{!notifyForError}" />
+                  </td>
+                  <td>
+                    <apex:outputLabel value="{!$Label.et4ae5__abnotificationerror}" />
+                  </td>
+                </tr>
+              </table>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+
+        <apex:pageBlockSection id="optInSection">
+          <!-- Certify Opt-in -->
+          <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0058}">
+            <apex:outputLabel value="{!$Label.et4ae5__optincrtfy}" />
+            <apex:inputCheckbox id="optInCheckbox" value="{!abOptIn}" onclick="callSetTestPercentage()">
+              <apex:actionSupport event="onclick" action="{!abSendEnabler}" rerender="sendbutton" />
+            </apex:inputCheckbox>
+          </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+        <!-- Send Button -->
+        <apex:pageBlockSection id="sendbutton">
+          <!-- Send Button -->
+          <!-- Two send buttons are used to preserve styling differences between enabled and disabled states. -->
+          <apex:pageBlockSectionItem >
+            <apex:outputLabel value="" />
+            <apex:outputPanel >
+              <apex:commandButton value="{!$Label.et4ae5__send}" rendered="{!abOptIn}" onclick="return submitSend();" ondblclick="return submitSend();"
+                onmouseover="callSetTestPercentage()" action="{!abSendWasPressed}" style="background:#ff993f;color:white"
+              />
+              <apex:commandButton value="{!$Label.et4ae5__send}" disabled="true" rendered="{!NOT( abOptIn )}" />
+              <apex:commandButton value="{!$Label.et4ae5__cancel}" action="{!cancel}" />
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+      </apex:pageBlock>
+    </apex:facet>
+  </apex:actionStatus>
+</apex:form>
+<script type="text/javascript">
+  var j$ = jQuery.noConflict();
+  // Identify triggerable elements.
+  /*
+   *   These are used to set values fro the From and Date/Time selectors. The page elements are identified first and saved as
+   *   variables which are later used to assign watcher functions.
+   */
+  var fsEmail = jQuery('[id$=fromSelectorEmail]');
+  var fsSC = jQuery('[id$=fromSelectorSC]');
+  var fsImme = jQuery('[id$=fromSelectorIm]');
+  var fsDaTi = jQuery('[id$=fromSelectorDT]');
+  var abTest = jQuery('[id$=abTestDiv]');
+  var selectedABLabel = '[id$=abSubjectOn]';
+  /* TODO - It may be possible to remove this abArray.  I think it was used in prototyping and is not longer needed -MS */
+  var abArray = ['abEmailOn', 'abEmailOff', 'abSubjectOn', 'abSubjectOff', 'abFromOn', 'abFromOff', 'abDateOn',
+    'abDateOff', 'abEmailCircleA',
+    'abEmailCircleB',
+    'abSubjectCircleA', 'abSubjectCircleB'
+  ];
+  // Test A
+  var fsEmailA = jQuery('[id$=fromSelectorEmailA]');
+  var fsSCA = jQuery('[id$=fromSelectorSCA]');
+  var fsImmeA = jQuery('[id$=fromSelectorImA]');
+  var fsDaTiA = jQuery('[id$=fromSelectorDTA]');
+  var abTestA = jQuery('[id$=abTestDivA]');
+  var selectedABLabelA = '[id$=abSubjectOnA]';
+  // Test B
+  var fsEmailB = jQuery('[id$=fromSelectorEmailB]');
+  var fsSCB = jQuery('[id$=fromSelectorSCB]');
+  var fsImmeB = jQuery('[id$=fromSelectorImB]');
+  var fsDaTiB = jQuery('[id$=fromSelectorDTB]');
+  var abTestB = jQuery('[id$=abTestDivB]');
+  var selectedABLabelB = '[id$=abSubjectOnB]';
+
+  // Assign event actions.
+  /*
+   *   swapFromSource was copied from the normal etSend page. An argument was added for AB Test so that it could be used
+   *   for the A, B and common from source inputs
+   */
+  fsEmail.onclick = swapFromSource('');
+  fsSC.onclick = swapFromSource('');
+  fsImme.onclick = swapDateSource('');
+  fsDaTi.onclick = swapDateSource('');
+
+  // Test A Assign event actions.
+  fsEmailA.onclick = swapFromSource('testA');
+  fsSCA.onclick = swapFromSource('testA');
+
+  // Test B Assign event actions.
+  fsEmailB.onclick = swapFromSource('testB');
+  fsSCB.onclick = swapFromSource('testB');
+  /* TODO - sendBtnEnabled is another variable that might be able to be removed */
+  var sendBtnEnabled = true;
+
+  /* TODO this function is deprecated and can be removed */
+  function submitSend() {
+    if (sendBtnEnabled) {
+      sendBtnEnabled = false;
+      return true;
+    }
+    return false;
+  }
+
+  function swapDateSource(testType) {
+    /*
+     *   swapDateSource is used to handle switching between "Send Immediately" and a user chosed date/time.  At one point, it was modified
+     *   so that it could be used with date/time split tests, but later the "Send Immediately" functionality was removed from date/time splits.
+     *   Any code associated with an A or B type test can be removed from this function.
+     *
+     */
+    var idFromSelectorIm, idFromSelectorDT,
+      idSchCalendar, idSendDateTime;
+
+    j$ = jQuery.noConflict();
+    if (testType === 'testA') {
+      idFromSelectorIm = 'fromSelectorImA';
+      idFromSelectorDT = 'fromSelectorDTA';
+      idSchCalendar = 'schCalendarA';
+      idSendDateTime = 'sendDateTimeA';
+    } else if (testType === 'testB') {
+      idFromSelectorIm = 'fromSelectorImB';
+      idFromSelectorDT = 'fromSelectorDTB';
+      idSchCalendar = 'schCalendarB';
+      idSendDateTime = 'sendDateTimeB';
+    } else {
+      idFromSelectorIm = 'fromSelectorIm';
+      idFromSelectorDT = 'fromSelectorDT';
+      idSchCalendar = 'schCalendar';
+      idSendDateTime = 'sendDateTime';
+    }
+
+    fsImme = jQuery('[id$=' + idFromSelectorIm + ']');
+    fsDaTi = jQuery('[id$=' + idFromSelectorDT + ']');
+    // Identify picklists.
+    var SDT = jQuery('[id$=' + idSchCalendar + ']');
+    var calChoice = jQuery('[id$=' + idSendDateTime + ']');
+
+    // Disable both picklists.
+    SDT.hide();
+
+    if (jQuery('[id$=' + idFromSelectorDT + ']').is(':checked') == true)
+      fsDaTi.attr("checked", "checked");
+    if (jQuery('[id$=' + idFromSelectorDT + ']').is(':checked') == false && jQuery('[id$=' + idFromSelectorIm + ']').is(
+        ':checked') == false) {
+      fsImme.attr("checked", "checked");
+    }
+    /*
+     *   TODO - isSSon and isSSoff call actionFunctions that call functions in pheonixSendControl which set a flag indicating whether or not
+     *   a send is a scheduled send.  I'm not sure if this is required for AB Tests, but it's possible this can be removed.
+     */
+    if (fsDaTi.is(":checked") == true) {
+      SDT.show(); // SDT is the date/time calendar
+      isSSon();
+    } else {
+      calChoice.val(null);
+      isSSoff();
+    }
+
+    checkSendEmailReadiness();
+    //alert('fromList.disabled: ' + fromList.attr);
+    //alert('scList.disabled: ' + scList.attr);
+  }
+
+  function swapFromSource(testType) {
+    /*
+     *   Used to swap between sending from a single name (or sender profile) and a send classification.
+     */
+
+    var idFromSelectorEmail, idFromSelectorSC, idFrom,
+      idSendClassification, idFromPicklist, idScPicklist;
+
+    if (testType === 'testA') {
+      idFromSelectorEmail = 'fromSelectorEmailA';
+      idFromSelectorSC = 'fromSelectorSCA';
+      idFrom = 'fromA';
+      idSendClassification = 'sendClassificationA';
+      idFromPicklist = 'fromPicklistA';
+      idScPicklist = 'scPicklistA';
+    } else if (testType === 'testB') {
+      idFromSelectorEmail = 'fromSelectorEmailB';
+      idFromSelectorSC = 'fromSelectorSCB';
+      idFrom = 'fromB';
+      idSendClassification = 'sendClassificationB';
+      idFromPicklist = 'fromPicklistB';
+      idScPicklist = 'scPicklistB';
+    } else {
+      idFromSelectorEmail = 'fromSelectorEmail';
+      idFromSelectorSC = 'fromSelectorSC';
+      idFrom = 'from';
+      idSendClassification = 'sendClassification';
+      idFromPicklist = 'fromPicklist';
+      idScPicklist = 'scPicklist';
+    }
+
+    fsEmail = jQuery('[id$=' + idFromSelectorEmail + ']');
+    fsSC = jQuery('[id$=' + idFromSelectorSC + ']');
+    // Identify picklists.
+    var fromList = jQuery('[id$=' + idFrom + ']');
+    var scList = jQuery('[id$=' + idSendClassification + ']');
+    var fromOP = jQuery('[id$=' + idFromPicklist + ']');
+    var scOP = jQuery('[id$=' + idScPicklist + ']');
+    
+
+    // Disable both picklists.
+    if (fromList != null) fromList.attr("disabled", true);
+    if (scList != null) scList.attr("disabled", true);
+    fromOP.hide();
+    scOP.hide();
+
+    if (jQuery('[id$=' + idFromSelectorEmail + ']').is(':checked') == true || (jQuery('[id$=theHiddenInput1]').val() ==
+        "true" && jQuery('[id$=' +
+          idFromSelectorSC + ']').is(':checked') == false))
+      fsEmail.attr("checked", "checked");
+    if (jQuery('[id$=' + idFromSelectorSC + ']').is(':checked') == true || (jQuery('[id$=theHiddenInput2]').val() ==
+        "true" && jQuery('[id$=' +
+          idFromSelectorEmail + ']').is(':checked') == false))
+      fsSC.attr("checked", "checked");
+    if (fsEmail.is(":checked") == false && fsSC.is(":checked") == false)
+      fsEmail.attr("checked", "checked");
+
+    // Enable the correct picklist.
+    if (fsEmail.is(":checked") == true) {
+      if (scList != null) scList.val("");
+      if (fromList != null) fromList.removeAttr("disabled");
+      fromOP.show();
+    }
+    if (fsSC.is(":checked") == true) {
+      if (fromList != null) fromList.val("");
+      if (scList != null) scList.removeAttr("disabled");
+      scOP.show();
+    }
+  }
+
+  // Initial swap execution.
+  swapFromSource('');
+  swapFromSource('testA');
+  swapFromSource('testB');
+  swapDateSource('');
+
+  // TODO MAYBE changeTargetAudience is not used anywhere on this page. It can be removed.
+  function changeTargetAudience() {
+    changeTargetAudienceJS(jQuery('[id$=fromSelectorEmail]').is(':checked'), jQuery('[id$=fromSelectorSC]').is(
+      ':checked'));
+  }
+
+  // TODO MAYBE changeBusinessUnit is not used anywhere on this page. It can be removed.
+  function changeBusinessUnit() {
+    changeBusinessUnitJS(jQuery('[id$=fromSelectorEmail]').is(':checked'), jQuery('[id$=fromSelectorSC]').is(
+      ':checked'));
+  }
+
+  function showpopup() {
+    fsEmail.attr("checked", "checked");
+    fsImme.attr("checked", "checked");
+    swapFromSource('');
+    swapDateSource('');
+    var scOP = jQuery('[id$=scPicklist]');
+    scOP.hide();
+    document.getElementById('opaque').style.display = 'block';
+    var popUp = document.getElementById("popupcontent");
+    popUp.style.display = "block";
+  }
+
+  function hidepopup() {
+    fsEmail.attr("checked", "checked");
+    fsImme.attr("checked", "checked");
+    swapFromSource('');
+    swapDateSource('');
+    var scOP = jQuery('[id$=scPicklist]');
+    scOP.hide();
+    var popUp = document.getElementById("popupcontent");
+    popUp.style.display = "none";
+    document.getElementById('opaque').style.display = 'none';
+  }
+
+  function doReportFolderSearch() {
+    searchServer(document.getElementById("folderSearch").value);
+  }
+
+  function doReportfolderSearchExc() {
+    searchServerExc(document.getElementById("folderSearchExc").value);
+  }
+</script>
+</apex:page>

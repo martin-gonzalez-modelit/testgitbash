@@ -1,0 +1,19 @@
+<apex:page cache="false" showHeader="false" standardStyleSheets="false">
+
+<style>
+body{
+   font-family:"Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
+   font-size:14px;
+   height: 300px;
+}
+ 
+</style>
+<body onload="location.href='#top';">
+
+<h2>Multifamily Interest Form</h2> 
+<p>
+Thank you for your interest in the Multifamily Pilot Program! We will review your information and respond within two business days to
+let you know if your proposed energy upgrade project meets our preliminary review criteria.
+</p>
+</body>
+</apex:page>

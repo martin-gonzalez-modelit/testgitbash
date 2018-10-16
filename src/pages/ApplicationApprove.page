@@ -1,0 +1,5 @@
+<apex:page standardController="Application__c" showHeader="false" sidebar="false">
+    <flow:interview name="Application_Approve" finishLocation="{!URLFOR('/apex/AppRedirect?id=' & Application__c.Id)}" >
+        <apex:param name="vID" value="{!Application__c.Id}" />
+    </flow:interview>
+</apex:page>

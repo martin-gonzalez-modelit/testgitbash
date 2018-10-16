@@ -1,0 +1,53 @@
+<apex:page >
+  <!--
+    <style>
+        #hoverCircle
+        {
+            opacity: 0.5;
+            filter: alpha(opacity=50);
+        }
+        #hoverCircle:hover
+        {
+            opacity: 1;
+            filter: alpha(opacity=100);
+        }
+    </style>
+    <apex:outputPanel >
+        <br />
+        <div style="width:100%;position:absolute;left:0px;" align="center" >
+            <table >
+                <tr >
+                    <td>
+                        <apex:outputPanel rendered="{!hasEmail}" >
+                                <a href="{!goToEmail}" title="{!$Label.goToES}" style="text-decoration:none;padding:0px 20px;" >
+                                    <img id="hoverCircle" height="60" src="{!URLFOR( $Resource.ExactTargetImages, 'emailCircle.png' )}" />
+                                </a >
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!hasMobil}" >
+                                <a href="{!goToMobile}" title="{!$Label.goToMS}" style="text-decoration:none;padding:0px 20px;" >
+                                    <img id="hoverCircle" height="60" src="{!URLFOR( $Resource.ExactTargetImages, 'mobileCircle.png' )}" />
+                                </a >
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!hasAnaly}" >
+                                <a href="{!goToAnalytics}" title="{!$Label.goToSAn}" style="text-decoration:none;padding:0px 20px;" >
+                                    <img id="hoverCircle" height="60" src="{!URLFOR( $Resource.ExactTargetImages, 'analyticCircle.png' )}" />
+                                </a >
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!hasAutom}" >
+                                <a href="{!goToAutomation}" title="{!$Label.goToSAu}" style="text-decoration:none;padding:0px 20px;" >
+                                    <img id="hoverCircle" height="60" src="{!URLFOR( $Resource.ExactTargetImages, 'automationCircle.png' )}" />
+                                </a >
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!hasConfg}" >
+                                <a href="{!goToConfig}" title="{!$Label.goToCf}" style="text-decoration:none;padding:0px 20px;" >
+                                    <img id="hoverCircle" height="60" src="{!URLFOR( $Resource.ExactTargetImages, 'configCircle.png' )}" />
+                                </a >
+                        </apex:outputPanel>
+                    </td>
+                </tr >
+            </table >
+        </div >
+        <div style="height:60px;background-color:white;" />
+    </apex:outputPanel>
+  -->
+</apex:page>

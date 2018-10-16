@@ -1,0 +1,9 @@
+<apex:page tabStyle="ExactTargetPhoenix__tab">
+    <apex:composition template="et4ae5__UserErrorTemplate">
+        <apex:define name="customMessage" >
+            <apex:pageBlock title="{!$Label.et4ae5__intnotcnfg}">
+                {!$Label.et4ae5__msg0056}
+            </apex:pageBlock>
+        </apex:define>
+    </apex:composition>
+</apex:page>

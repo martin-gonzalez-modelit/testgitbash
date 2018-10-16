@@ -1,0 +1,54 @@
+<aura:component access="global">
+<!-- Attributes -->
+<aura:attribute name="application" type="Application__c" />
+<aura:attribute name="measures" type="Measure__c[]" />
+<aura:attribute name="appDate" type="Date" default="2010-01-10"/>
+<aura:attribute name="appDateLabel" type="String" default="Submission Date"/>
+<aura:attribute name="appAddress" type="String" default=""/>
+<aura:attribute name="accountId" type="String"/>
+<aura:attribute name="applicationUrl" type="String" />
+<aura:attribute name="showAppDate" type="Boolean" default="false"/>
+<!-- Handlers -->
+<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+<div aura:id="applicationDetails">
+    <ul class="slds-grid slds-wrap">
+        <li class="slds-list__item slds-size_5-of-8">
+            <div>
+                <span class="slds-text-color_weak slds-m-right_small">
+                    {!v.appAddress}
+                </span>
+            </div>
+        </li>
+    </ul>
+    <ul class="slds-grid slds-wrap">
+        <li class="slds-list__item slds-size_5-of-8">
+            <div>
+                <span class="slds-text-color_weak slds-m-right_small">Status:</span> {!v.application.Status__c}
+                <aura:if isTrue="{!v.accountId == v.application.Contractor__c}">
+                    &nbsp;|&nbsp;<a aura:id="applicationLink" target="_blank" href="{!v.applicationUrl +'?appId='+ v.application.Id}" class="slds-text-link">{!v.application.Name}</a>
+                </aura:if>
+            </div>
+        </li>
+        <aura:if isTrue="{!v.showAppDate}">
+            <li class="slds-list__item slds-size_3-of-8 slds-text-align_right slds-p-right_xx-large">
+                <span class="slds-text-color_weak slds-m-right_small">{!v.appDateLabel}:</span>
+                <lightning:formattedDateTime value="{!v.appDate}" year="numeric" month="2-digit" day="2-digit"/>
+            </li>
+        </aura:if>
+    </ul>
+    <aura:iteration items="{!v.measures}" var="measure" indexVar="i">
+        <ul class="slds-grid slds-wrap slds-p-left_large">
+            <li class="slds-list__item slds-size_5-of-8">{!measure.Name}</li>
+            <aura:if isTrue="{!measure.Installation_Date__c}">
+                <li class="slds-list__item slds-size_3-of-8 slds-text-align_right slds-p-right_xx-large">
+                    <span class="slds-text-color_weak slds-m-right_small">{!measure.Rebate_Type__r.Date_Label__c}:</span>
+                    <lightning:formattedDateTime value="{!measure.InstallDate}" year="numeric" month="2-digit" day="2-digit" timeZone="UTC"/>
+                </li>
+            </aura:if>
+        </ul>
+    </aura:iteration>
+
+</div>
+
+</aura:component>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexComponent xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>37.0</apiVersion>
+    <description>Use this component to integrate Google Analytics to track and analyze site usage. The standard component used to integrate Google Analytics make use of the ga.js which is a legacy library and it was deprecated. For new implementations Google does recommend the use of the latest version of it&apos;s library (analytics.js). Attention: This component works on pages used in a Force.com site or standalone. Sites must be enabled for your organization and the Analytics Tracking Code field must be populated. In case of standalone a trackingID attribute and value must be provided. Also includes the autotrack.js library in order to track URL changes for single page applications.</description>
+    <label>GoogleAnalyticsTracking</label>
+</ApexComponent>

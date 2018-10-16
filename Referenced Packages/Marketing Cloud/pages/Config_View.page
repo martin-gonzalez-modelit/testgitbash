@@ -1,0 +1,276 @@
+<apex:page controller="et4ae5.initialConfigControl" tabStyle="ExactTargetPhoenix__tab" action="{!settingsInitialize}">
+    <c:ConfigIncludes />
+    <style>
+        ul.a {
+            list-style-type: none;
+        }
+    </style>
+    <c:ETHeader message="{!$Label.et4ae5__etconfig}" image="configuration.png" trailingBR="false" />
+    <apex:pageMessages />
+    <apex:form id="mainPB">
+        <div align="right">
+            <apex:outputpanel >
+                <apex:commandLink rendered="{!hasEmail}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__emailsend}" onMouseOver="this.style.textDecoration='underline'"
+                onMouseOut="this.style.textDecoration='none'" action="{!gotoSend}" />
+                <apex:outputText rendered="{!hasEmailAndMobile}" value="{!pipe}" />
+                <apex:commandLink rendered="{!hasMobile}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__mobilesend}" onMouseOver="this.style.textDecoration='underline'"
+                onMouseOut="this.style.textDecoration='none'" action="{!gotoMobileSend}" />
+                <apex:outputText rendered="{!hasEmailOrMobile}" value="{!pipe}" />
+                <apex:commandLink rendered="{!hasBUs}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__managebus}" onMouseOver="this.style.textDecoration='underline'"
+                onMouseOut="this.style.textDecoration='none'" action="{!manageBUs}" />
+                <apex:outputText rendered="{!hasBUs}" value="{!pipe}" />
+                <apex:commandLink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__manageus}" onMouseOver="this.style.textDecoration='underline'" onMouseOut="this.style.textDecoration='none'"
+                action="{!manageUs}" />{!pipe}
+                <apex:commandLink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__manageels}" onMouseOver="this.style.textDecoration='underline'" onMouseOut="this.style.textDecoration='none'"
+                action="{!manageELs}" />{!pipe}
+                <apex:commandLink rendered="{!hasEmailOrMobile}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__ecleanup}" onMouseOver="this.style.textDecoration='underline'"
+                onMouseOut="this.style.textDecoration='none'" action="{!goToCleanup}" />
+                <apex:outputText rendered="{!hasEmailOrMobile}" value="{!pipe}" />
+                <apex:commandLink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__changeapiu}" onMouseOver="this.style.textDecoration='underline'" onMouseOut="this.style.textDecoration='none'"
+                action="{!changeIU}" />&nbsp;&nbsp;&nbsp;
+            </apex:outputpanel>
+        </div>
+        <br />
+        <div align="center">
+            <apex:outputpanel >
+                <apex:commandButton value="{!$Label.et4ae5__edit}" tabindex="20" action="{!configEdit}" />
+            </apex:outputpanel>
+        </div>
+        <br />
+        <apex:outputPanel id="pageMessages">
+            <c:pageMessages closableErrors="true" />
+        </apex:outputPanel>
+        <apex:pageBlock mode="view">
+            <table width="100%">
+                <tr height="25px">
+                    <td style="vertical-align: middle">
+                        <b>
+                            {!$label.acctInform}
+                            <hr color="#f0f0f0" />
+                        </b>
+                    </td>
+                </tr>
+            </table>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0018}">
+                    <apex:outputLabel value="{!$Label.et4ae5__username}" />
+                    <apex:outputLabel value="{!$Setup.ET4AE_Int_Creds__c.Username__c}" style="width:250px" tabindex="1" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__etaccttype}">
+                    <apex:outputLabel value="{!$Label.et4ae5__inttype}" />
+                    <apex:outputLabel value="{!etconfig.et4ae5__Integration_Type__c}" tabindex="7" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!renderPAMID}" helpText="{!$Label.et4ae5__msg0016}">
+                    <apex:outputLabel value="{!$Label.et4ae5__intgrtdmid}" />
+                    <apex:outputLabel style="width:250px" value="{!etconfig.et4ae5__Parent_Account_MID__c}" tabindex="8" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0065}">
+                    <apex:outputLabel value="{!$Label.et4ae5__sendtypes}" />
+                    <apex:outputLabel style="width:250px" tabindex="9" value="{!sendTypeView}" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <table width="100%">
+                <tr height="25px">
+                    <td style="vertical-align: middle">
+                        <b>
+                            <hr color="#e98300" />
+                            {!$label.envirnmnt}
+                            <hr color="#f0f0f0" />
+                        </b>
+                    </td>
+                </tr>
+            </table>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0074}">
+                    <apex:outputLabel value="{!$Label.et4ae5__rootsoapau}" />
+                    <apex:outputLabel value="{!etconfig.et4ae5__Root_SOAP_API_URL__c}" style="width:250px" tabindex="5" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0073}">
+                    <apex:outputLabel value="{!$Label.et4ae5__rootrestau}" />
+                    <apex:outputLabel value="{!etconfig.et4ae5__Root_Rest_API_URL__c}" style="width:250px" tabindex="6" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0072}">
+                    <apex:outputLabel value="{!$Label.et4ae5__authapiurl}" />
+                    <apex:outputLabel value="{!etconfig.et4ae5__Auth_API_URL__c}" style="width:250px" tabindex="6" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <table width="100%">
+                <tr height="25px">
+                    <td style="vertical-align: middle">
+                        <b>
+                            <hr color="#e98300" />
+                            {!$label.sndRecips}
+                            <hr color="#f0f0f0" />
+                        </b>
+                    </td>
+                </tr>
+            </table>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0044}">
+                    <apex:outputLabel value="{!$Label.et4ae5__targetaud}" />
+                    <apex:outputLabel style="width:250px" tabindex="9" value="{!targetAudienceView}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0019}">
+                    <apex:outputLabel value="{!$Label.et4ae5__exclaudnc}" />
+                    <apex:outputLabel style="width:250px" tabindex="9" value="{!exclusionAudienceView}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0012}">
+                    <apex:outputLabel value="{!$Label.et4ae5__allowmpcr}" />
+                    <apex:image value="{!imgMPCR}" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <table width="100%">
+                <tr height="25px">
+                    <td style="vertical-align: middle">
+                        <b>
+                            <hr color="#e98300" />
+                            {!$Label.genSettings}
+                            <hr color="#f0f0f0" />
+                        </b>
+                    </td>
+                </tr>
+            </table>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0119}">
+                    <apex:outputLabel value="{!$Label.et4ae5__altrts}" />
+                    <apex:outputPanel >
+                        <apex:image value="{!imgMulR}" />&nbsp;
+                        <apex:commandLink rendered="{!etConfig.et4ae5__MultiReplyTo__c}" value="{!$Label.et4ae5__manage}" style="vertical-align:top" action="{!manageRTs}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0175}">
+                	<apex:outputLabel value="{!$Label.et4ae5__mcdplnkconfig}" />
+                    <apex:outputLabel style="width:250px" value="{!deepLinkConfigView}" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <table width="100%">
+                <tr height="25px">
+                    <td style="vertical-align: middle">
+                        <b>
+                            <hr color="#e98300" />
+                            {!$Label.sendAtmtn}
+                            <hr color="#f0f0f0" />
+                        </b>
+                    </td>
+                </tr>
+            </table>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem helptext="{!$Label.et4ae5__msg0151}" >
+                    <apex:outputLabel value="{!$Label.et4ae5__restriction}" />
+                    <apex:outputLabel value="{!trigSendRestrictLabel}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helptext="{!$Label.et4ae5__msg0152}">
+                    <apex:outputLabel value="{!$Label.et4ae5__enbldobjs}" />
+                    <apex:outputLabel style="width:250px" tabindex="9" value="{!automationObjectView}" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <table width="100%">
+                <tr height="25px">
+                    <td style="vertical-align: middle">
+                        <b>
+                            <hr color="#e98300" />
+                            {!$label.errorHndlg}
+                            <hr color="#f0f0f0" />
+                        </b>
+                    </td>
+                </tr>
+            </table>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0011}">
+                    <apex:outputLabel value="{!$Label.et4ae5__supticrecp}" />
+                    <apex:outputLabel style="width:250px" tabindex="11" value="{!etconfig.et4ae5__Support_Ticket_Recipient__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__retryhelp}">
+                    <apex:outputLabel value="{!$Label.et4ae5__retry}" />
+                    <apex:image value="{!imgRetr}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0009}" rendered="{!renderLogButton}">
+                    <apex:outputLabel value="{!$Label.et4ae5__errorlogng}" />
+                    <apex:commandButton value="{!$Label.et4ae5__initlog}" action="{!initiateLog}" rerender="" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <table width="100%">
+                <tr height="25px">
+                    <td style="vertical-align: middle">
+                        <b>
+                            <hr color="#e98300" />
+                            {!$label.trkPrefs}
+                            <hr color="#f0f0f0" />
+                        </b>
+                    </td>
+                </tr>
+            </table>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0049}">
+                    <apex:outputLabel value="{!$Label.et4ae5__trkdetail}" />
+                    <apex:outputPanel >
+                        <ul class="a" style="padding: 0; margin: 0;">
+                            <span style="padding-left:2px;" class="helpButton" id="msg0122-_help"> 
+                                <apex:image value="{!ImgAggr}" />
+                                {!$Label.aggrLvlTrc}
+                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />        
+                                <script>        
+                                    sfdcPage.setHelp('msg0122','{!JSENCODE($Label.msg0122x)}');        
+                                </script>       
+                            </span> 
+                            <ul class="a" style="padding: 0; margin: 0;">
+                                <li>
+                                    <span style="padding-left:2px;" class="helpButton" id="msg0123-_help">                              
+                                        <apex:image value="{!ImgIndi}" />
+                                        {!$Label.indlLvlTr}
+                                        <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" /> 
+                                        <script>        
+                                            sfdcPage.setHelp('msg0123','{!JSENCODE($Label.msg0123x)}');        
+                                        </script>       
+                                    </span> 
+                                    <ul class="a" style="padding: 0; margin: 0;">
+                                        <li>
+                                            <span style="padding-left:2px;" class="helpButton" id="msg0124-_help">                                      
+                                                <apex:image value="{!ImgLink}" /> 
+                                                {!$Label.trkLinkDet}
+                                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />        
+                                                <script>        
+                                                    sfdcPage.setHelp('msg0124','{!JSENCODE($Label.msg0124x)}');        
+                                                </script>       
+                                            </span> 
+                                        </li>
+                                        <li>
+                                            <span style="padding-left:2px;" class="helpButton" id="msg0125-_help">                                      
+                                                <apex:image value="{!ImgSent}" /> 
+                                                {!$Label.trkSentEvt}
+                                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />        
+                                                <script>        
+                                                    sfdcPage.setHelp('msg0125','{!JSENCODE($Label.msg0125x)}');        
+                                                </script>       
+                                            </span> 
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </ul>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0093}">
+                    <apex:outputLabel value="{!$Label.et4ae5__frequency}" />
+                    <apex:outputField value="{!etconfig.et4ae5__Frequency__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0030}">
+                    <apex:outputLabel value="{!$Label.et4ae5__numdaystrk}" />
+                    <apex:outputLabel style="width:30px" tabindex="15" value="{!etconfig.et4ae5__Days_Tracked__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                	<apex:outputLabel value="{!$Label.et4ae5__campaign_member_tracking}" />
+                	<apex:outputPanel >
+                		<apex:image value="{!imgCmConfig}" />
+                		<apex:commandLink rendered="{!cmConfig.et4ae5__CampaignMemberIntegrationEnabled__c}" value="{!$Label.et4ae5__configure}" style="vertical-align:top" action="{!cmConfigPage}" />
+                	</apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <div align="center">
+            <apex:outputpanel >
+                <apex:commandButton value="{!$Label.et4ae5__edit}" tabindex="20" action="{!configEdit}" />
+            </apex:outputpanel>
+        </div>
+    </apex:form>
+</apex:page>

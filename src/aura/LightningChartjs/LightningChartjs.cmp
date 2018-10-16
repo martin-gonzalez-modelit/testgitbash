@@ -1,0 +1,11 @@
+<aura:component controller="ChartController" implements="flexipage:availableForAllPageTypes" access="global">
+    <aura:attribute name="sObj" type="String" default=""/>
+    <aura:attribute name="field" type="String" default=""/>
+    <aura:attribute name="Charttype" type="String" default=""/>
+    <aura:attribute name="picklistvalues" type="String[]"/>
+    <ltng:require scripts="{!$Resource.Chart_bundle_min_js}" afterScriptsLoaded="{!c.doinit}"/>
+    <!--aura:handler name="init" value="{!this}" action="{!c.doinit}"/-->
+    <div class="slds-box">
+    	<canvas aura:id="doughnutChart" width="400" height="400"></canvas>
+    </div>
+</aura:component>

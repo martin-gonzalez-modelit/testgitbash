@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <description>These settings control how the Field Trip application processes your fields and data.  It is not recommended you make changes without consulting a Qandor representative.</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Batch_Size__c</fullName>
+        <defaultValue>100</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Controls how many records are processed per batch. The maximum is 200. If raised, monitor closely for failed batches in your Apex Job Queue and lower if errors are encountered.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Controls how many records are processed per batch. The maximum is 200. If raised, monitor closely for failed batches in your Apex Job Queue and lower if errors are encountered.</inlineHelpText>
+        <label>Batch Size</label>
+        <precision>3</precision>
+        <required>true</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>Field Trip Logistics</label>
+    <visibility>Public</visibility>
+</CustomObject>

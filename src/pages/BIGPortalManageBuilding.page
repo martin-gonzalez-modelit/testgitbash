@@ -1,0 +1,568 @@
+<apex:page showheader="false" sidebar="false" cache="false" applyhtmltag="false"
+    standardstylesheets="false" controller="BIGPortalManageBuildingController"
+    action="{!init}">
+<head>
+    <title>PG&amp;E EUC Portal - Building</title>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bigutopia.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/datatables.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/validatorStyle.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/BIGPortalManageBuilding.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-validate/jquery.validate.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-maskedinput/jquery.maskedinput.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-number/jquery.number.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/datatable/jquery.dataTables.min.js')}"/>
+    <style>
+        .help-icon {
+            vertical-align: text-bottom;
+        }
+        .form-horizontal .control-label.optional {
+            padding-top: 6px;
+            line-height: 17px;
+            height: 20px;
+
+        }
+    </style>
+    <script>
+        // Zip codes by city.
+        var zipCodesByCity = JSON.parse('{!PGETerritoryZipCodes}');
+        var citiesByZipCode = {};
+        // Get all the cities from the metadata.
+        var cities = Object.keys(zipCodesByCity);
+        var zipCodes = [];
+
+        Object.keys(zipCodesByCity).forEach(function (key) {
+            var zipCodesForCity = zipCodesByCity[key];
+            for (var i = 0; i < zipCodesForCity.length; i++) {
+                // City by zip codes.
+                citiesByZipCode[zipCodesForCity[i]] = [key];
+            }
+            // Get all the zip codes from the metadata.
+            zipCodes = zipCodes.concat(zipCodesForCity);
+        });
+
+        $(document).ready(function() {
+            setSameContractSigningCheckbox();
+            setZipCode();
+
+            $('[data-toggle="tooltip"]').tooltip();
+            // Set behaviour to pencil icon (show edit form on click)
+            $('#main-container').on('click', '.btn-edit', function(e) {
+                e.preventDefault();
+                // Avoid user editing more than one section at the same time.
+                if ($(this).hasClass('disabled')) { return; }
+                var formToShow = $(this).attr('rel');
+                // Hide information section
+                $('.' + formToShow + '-info').hide('fast');
+                // Set account holder information: First Name, Last Name and Phone.
+                if (formToShow === 'utility-account') {
+                    setAccountHolderInformation(false);
+                } else if (formToShow === 'property-owner') {
+                    setCustomerAddress(false);
+                }
+                // Slide down edit form
+                $('.' + formToShow + '-frm').slideDown('fast');
+                // Hide pencil
+                $(this).hide();
+                // Disable edit buttons to avoid user editing more than one form at the same time.
+                $('.btn-edit').addClass('disabled');
+            });
+
+            // Validate Building Form
+            validateBuildingFormFields();
+
+            // Set style to alert messages
+            customMsg();
+
+            //##### 2-4 units building functionality #####
+            // Set View/Edit/Delete tooltips
+            $('.edit-dw-table-row').tooltip({title:'Edit Dwelling Unit',placement:'top'});
+            $('.view-dw-table-row').tooltip({title:'Dwelling Unit Details',placement:'top'});
+            // Create new dwelling unit on add dwelling unit button click
+            $('#addDwBtn').on('click', function (e) {
+                e.preventDefault();
+                // Create dwelling unit on controller
+                createNewDwelling(null);
+                // Set Modal Title
+                $('#modalTitle').text('New Dwelling Unit');
+                // Show modal window
+                $('#newDwModal').modal('show');
+            });
+            // Save Dwelling Unit
+            $('#main-container').on('click', '#saveDwelling', function() {
+                if ($('.new-dwelling-frm').valid()) {
+                    saveNewDwellingUnit();
+                }
+            });
+            // Edit Dwelling Unit
+            $('#main-container').on('click','.edit-dw-table-row', function (e) {
+                e.preventDefault();
+                // Create dwelling unit on controller
+                createNewDwelling($(this).attr('rel'));
+                // Set Modal Title
+                $('#modalTitle').text('Edit Dwelling Unit');
+                // Show modal window
+                $('#newDwModal').modal('show');
+            });
+            // View Dwelling Unit
+            $('#main-container').on('click', '.view-dw-table-row', function(e) {
+                e.preventDefault();
+                // Create dwelling unit on controller
+                createNewDwelling($(this).attr('rel'));
+                // Set Modal Title
+                $('#modalTitle').text('Dwelling Unit Detail');
+                // Show modal window
+                $('#newDwModal').modal('show');
+            });
+            // Refresh Dwelling Units List when popup is closed
+            $('#newDwModal').on('hide', function() {
+                $('.new-dwelling-frm')[0].reset();
+            });
+            // Bind an event handler to the "click" JavaScript event of the element cancelButton
+            $('#main-container').on('click', '#cancelButton', function(e) {
+            var redirect = '{!building.Id}' === '' ? 'BIGPortalManageBuilding' : 'BIGPortalManageBuilding?action=detail&id={!building.Id}';
+            window.location.href = "{!$Site.Prefix}/" + redirect;
+            });
+            // Bind an event handler to the "click" Javascript event of the element addAplication.
+            // Binded to the body since addApplication not always exists
+            $('#main-container').on('click','#addApplication', function() {
+                window.location.href = "{!$Site.Prefix}/BIGPortalManageApplication?action=new&dwellingId={!dwellingUnit.Id}";
+            });
+
+            // Initialize autocomplete.
+            $(".inpCity").typeahead({
+                source: cities,
+                items: 10
+            }).on('keyup change', populateZipCodeOptions);
+
+            // Bind event handler to the Zip Code select.
+            $('#inputZip').on('change', function(e) {
+                var $el = $(this);
+                $('[id*=zipCodeHidden]').val($el.val());
+                $el.valid();
+            });
+
+            $('#cancelButton').on('click', function() {
+                $('.building-frm .btn').addClass('disabled');
+            });
+        });
+
+        /**
+         * Binds the value coming from the input hidden (if there's any) to the zip code input.
+         * If city is within the PG&E Service Territory enable the zip code select, otherwise disable it.
+         */
+        function setZipCode() {
+            var zipCode = $('[id*=zipCodeHidden]').val();
+            var $inputZipCode = $('#inputZip');
+            var selectedCity = $(".inpCity").val();
+            var output = ['<option value="">--None--</option>'];
+
+            // Add default value from Building Zip Code.
+            output.push('<option value="'+ zipCode +'">'+ zipCode +'</option>');
+
+            if (selectedCity && zipCodesByCity[selectedCity]) {
+                $.each(zipCodesByCity[selectedCity].sort(), function(key, value) {
+                    output.push('<option value="'+ value +'">'+ value +'</option>');
+                });
+                $inputZipCode.html(output.join('')).prop('disabled', false);
+            } else {
+                $inputZipCode.html(output.join('')).prop('disabled', true);
+            }
+
+            $inputZipCode.val(zipCode);
+        }
+
+        /**
+         * Loads the options on zip code input depending on the city entered by the user on the city input text.
+         * In case of an invalid city (not in PG&E Service Territory), removes the options from the zip code input
+         * and disables it.
+         */
+        function populateZipCodeOptions(e) {
+            // Do nothing if user press shift+tab keys to navigate through inputs.
+            var code = e.keyCode || e.which;
+            var specialKeys = [9,16];
+            if ($.inArray(code, specialKeys) > -1) {
+                 return;
+            }
+
+            var $el = $(this);
+            var selectedCity = $el.val();
+            var $inputZipCode = $('#inputZip');
+            var output = ['<option value="">--None--</option>'];
+
+            $el.valid();
+            $('[id*=zipCodeHidden]').val('');
+            // Remove css style applied by jquery validation from zip code input.
+            $('.zip-group').find('.control-group').removeClass('error success').find('label.error').remove();
+
+            if (selectedCity && zipCodesByCity[selectedCity]) {
+                $.each(zipCodesByCity[selectedCity].sort(), function(key, value) {
+                    output.push('<option value="'+ value +'">'+ value +'</option>');
+                });
+                $inputZipCode.html(output.join('')).prop('disabled', false);
+            } else {
+                $inputZipCode.html('').prop('disabled', true);
+            }
+        }
+
+        /**
+         * Checks if first/last name and phone are valid on property owner section.
+         * If any of mentioned before are invalid, disable contract signing checkbox on utility account section.
+         */
+        function setSameContractSigningCheckbox() {
+            var isValid = $(".inpFirstNameOwn").val() !== "" && $(".inpLastNameOwn").val() !== ""
+                    && $('input[id*="property_owner_form:inputPhone"]').val() !== "";
+
+            $(".contactCheckbox").prop("disabled", !isValid);
+        }
+
+        function customMsg() {
+            // Remove titles
+            $('.confirmM3 .messageCell h4').remove();
+            $('.infoM3 .messageCell h4').remove();
+            $('.errorM3 .messageCell h4').remove();
+            // Add styling to messages
+            $('.message').addClass('alert');
+            $('.confirmM3').addClass('alert-success');
+            $('.infoM3').addClass('alert-info');
+            $('.errorM3').addClass('alert-error');
+            // Troubleshoot message "flashing or flickering", briefly showing unstyled elements.
+            // Don't display messages until the element with styles is ready.
+            $('.message-container').show();
+         }
+
+        // Show Dwelling Modal Content and hides the placeholder
+        function showDwellingModalContent() {
+            $('.modal-body').show();
+            $('.modal-footer').show();
+            $('#dwAdditionalInfo').show();
+            $('#dwelling-modal-loader').hide();
+            // Hide edit controls if modal is showing dwelling unit details
+            if($('#modalTitle').text() == 'Dwelling Unit Detail') {
+                // Make inputs uneditable
+                $('#newDwModal input[type="text"]').attr('disabled','disabled');
+                $('.btn-edit').remove();
+                $('.modal-footer').remove();
+            }
+        }
+
+        // Hides Dwelling Modal Content and shows the placeholder
+        function hideDwellingModalContent() {
+            $('.modal-body').hide();
+            $('.modal-footer').hide();
+            $('#dwAdditionalInfo').hide();
+            $('#dwelling-modal-loader').show();
+        }
+
+        //Validate Form Fields
+        function validateBuildingFormFields(){
+            $('.building-frm').validate({
+                onkeyup: function(element) { $(element).valid(); },
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                rules: {
+                    '{!$Component.building_form.inputName}': {
+                        minlength: 2,
+                        required: true
+                    },
+                    '{!$Component.building_form.inputAddress}': {
+                        required: true,
+                        inpBuildingSt_check: true
+                    },
+                    '{!$Component.building_form.inputCity}': {
+                        required: true,
+                        cityWithinServiceTerritory: true
+                    },
+                    'inputZip': {
+                        required: true,
+                        zipCodeWithinServiceTerritory: true
+                    },
+                    '{!$Component.building_form.inputBuildingType}': {
+                        required: true
+                    }
+                },
+                highlight: function(element) {
+                    $(element).closest('.control-group').removeClass('success').addClass('error');
+                },
+                success: function(element) {
+                    element.text('OK!').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
+                },
+                submitHandler: function(form) {
+                    // Prevent multiple times submit form.
+                    if ($('[id*=saveButton]').hasClass('disabled')) {
+                        return false;
+                    }
+
+                    $(form).find('.btn').addClass('disabled');
+                    form.submit();
+                }
+            });
+        }
+
+        $.validator.addMethod("inpBuildingSt_check", function(value, element) {
+            //false error, true ok
+            //Please enter at least 2 characters.
+            return checkSt('.inpBuildingStAddress');
+        }, "Please enter a valid street address.");
+
+        function checkSt(pClassName) {
+            var patt = /^[a-zA-Z0-9 &#,.'-]{2,}$/;
+            return auxValidations(pClassName, patt);
+        }
+
+        function isValidZipCode(key) {
+            return key && citiesByZipCode[key];
+        }
+
+        $.validator.addMethod("zipCodeWithinServiceTerritory", function(value, element) {
+            // False error, true ok.
+            return this.optional(element) || isValidZipCode(value);
+        }, "This zip code is not within PG&E service territory.");
+
+        $.validator.addMethod("cityWithinServiceTerritory", function(value, element) {
+            // False error, true ok.
+            return this.optional(element) || isValidCity(value);
+        }, "This city is not within PG&E service territory.");
+
+        function isValidCity(key) {
+            return key && zipCodesByCity[key];
+        }
+
+        function checkBuildingOwnerCity(pClassName) {
+            var patt = /^[a-zA-Z ,.'-]{2,}$/;
+            return auxValidations(pClassName, patt);
+        }
+
+        function auxValidations(pClassName, patt) {
+            var str = $(pClassName).val();
+            var flag = true;
+            str = str.trim();
+
+            if (str != "") {
+                if (str.length >= 2) {
+                    if (allCharsInvalid(str) == true) {
+                        flag = false;
+                    }
+                    if (str[0] == "-" || str[0] == "," || str[0] == '.') {
+                        flag = false;
+                    }
+                    if (str[str.length-1] == "-" || str[str.length-1] == ",") {
+                        flag = false;
+                    }
+                }
+
+                return patt.test(str) && flag;
+            } else {
+                return false;
+            }
+        }
+
+        function allCharsInvalid(myChars) {
+            var check = 0;
+            var res = false;
+
+            for (var i = 0; i < myChars.length; i++) {
+                if (myChars[i] == "'" || myChars[i] == "-" || myChars[i] == "." || myChars[i] == ",") {
+                    check++;
+                }
+            }
+
+            if (check == myChars.length) {
+                res = true;
+            }
+
+            return res;
+        }
+
+        function validateNewDwellingUnitFields() {
+            $('.new-dwelling-frm').validate({
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                rules: {
+                  '{!$Component.dwelling_modal_form.inputDwellingName}': {
+                    minlength: 2,
+                    required: true
+                  },
+                  '{!$Component.dwelling_modal_form.inputDwellingNumber}': {
+                    number: true,
+                    required: true
+                  },
+                  '{!$Component.dwelling_modal_form.inputDwellingAddress}': {
+                    minlength: 2,
+                    required: true
+                  }
+                },
+                highlight: function(element) {
+                    $(element).closest('.control-group').removeClass('success').addClass('error');
+                },
+                success: function(element) {
+                    element.text('OK!').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+
+<div id="main-container" class="container main">
+    <c:BIGPortalHeader />
+    <div id="mainContent">
+        <div class="cushion">
+    <apex:outputPanel rendered="{!action == null}">
+        <!-- List Of Buildings -->
+        <c:BIGPortalBuildingsList portalAccId="{!accountId}" />
+    </apex:outputPanel>
+    <apex:outputPanel styleClass="message-container" style="display:none;">
+        <apex:pageMessages id="errors" escape="false" />
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!OR(action == 'edit', action == 'new')}">
+    <!-- New Building -->
+    <apex:form id="building_form" styleClass="form-horizontal building-frm">
+        <h1 class="page-header">Building Information</h1>
+
+        <div class="control-group">
+            <label class="control-label">* Building Name</label>
+            <div class="controls">
+                <apex:inputField id="inputName" styleClass="span3" value="{!building.Building_Name__c}"/>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">* Street Address</label>
+            <div class="controls">
+                <apex:inputField id="inputAddress" styleClass="input-xxlarge inpBuildingStAddress" value="{!building.Street_Address__c}"/>
+            </div>
+        </div>
+        <div class="row">
+        <div class="span4 city-group">
+            <div class="control-group">
+                <label class="control-label">* City</label>
+                <div class="controls">
+                    <apex:inputField id="inputCity" styleClass="span3 inpCity" html-autocomplete="off" value="{!building.City__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span2 state-group">
+            <div class="control-group">
+                <label class="control-label state-label">State</label>
+                <div class="controls state-input">
+                    <input type="text" id="inputState" name="inputState" disabled="true" class="span1 uneditable-input" value="CA" />
+                </div>
+            </div>
+        </div>
+        <div class="span2 zip-group">
+            <div class="control-group">
+                <label class="control-label zip-label">* ZIP Code</label>
+                <div class="controls zip-input">
+                    <apex:outputPanel rendered="{!building.ZIP_Code__c == ''}" layout="none">
+                        <select name="inputZip" size="1" id="inputZip" class="span1 inpZipCode" disabled="disabled"></select>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!building.ZIP_Code__c != ''}" layout="none">
+                        <select name="inputZip" size="1" id="inputZip" class="span1 inpZipCode" >
+                            <option value="{!building.ZIP_Code__c}">{!building.ZIP_Code__c}</option>
+                        </select>
+                    </apex:outputPanel>
+                    <apex:inputHidden value="{!building.ZIP_Code__c}" id="zipCodeHidden"/>
+                </div>
+            </div>
+        </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">* Building Type</label>
+            <div class="controls">
+                <apex:inputField id="inputBuildingType" styleClass="span3" value="{!building.Building_Type__c}" rendered="{!(action != 'edit')}" />
+                <apex:outputText id="outputBuildingType" styleClass="span3 uneditable-input" value="{!building.Building_Type__c}" rendered="{!(action == 'edit')}" />
+            </div>
+        </div>
+        <div class="form-actions" style="padding-left:25px;">
+            <button id="cancelButton" type="button" class="btn btn-default">Cancel</button>&nbsp;
+            <apex:commandButton id="saveButton" action="{!saveBuilding}" styleClass="btn btn-primary" value="Save"/>
+        </div>
+    </apex:form>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!action == 'detail'}">
+    <!-- Edit Building -->
+            <h1 class="page-header">
+                {!building.Building_Name__c}
+            <a href="{!$Site.Prefix}/BIGPortalManageBuilding?action=edit&id={!building.Id}" class="btn btn-primary right"><i class="icon-pencil icon-white"></i>&nbsp;Edit</a>
+            </h1>
+
+        <h3><small>{!building.Street_Address__c}</small></h3>
+        <h3><small>{!building.City__c},&nbsp;{!building.State__c}&nbsp;{!building.ZIP_Code__c}</small></h3>
+        <h3><small>{!building.Building_Type__c}</small></h3>
+
+    <legend style="margin-top:5px;"></legend>
+
+    <!-- Building information Single Family detach -->
+    <div class="row" style="margin-top:10px;">
+        <apex:outputPanel id="addApplicationBlock" layout="block" style="position:relative;">
+            <apex:outputPanel id="addApplicationButton">
+                <apex:outputPanel rendered="{!NOT(isDwellingUnitRequiredDataComplete)}">
+                    <button disabled="disabled" class="btn btn-large btn-primary" style="margin-left:20px; margin-bottom:20px;">
+                        <i class="icon-plus icon-white"></i>&nbsp;Add Application
+                    </button>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!isDwellingUnitRequiredDataComplete}">
+                    <div class="btn-group" style="margin-left:20px;margin-bottom:20px;">
+                         <a class="btn btn-large btn-primary dropdown-toggle {!IF(isHUSuspended && isAHUSuspended,'disabled','')}" data-toggle="dropdown" href="#">
+                            &nbsp;Add Application
+                            <span class="caret caret-big"></span>
+                         </a>
+                         <ul class="dropdown-menu">
+                            <li>
+                                <apex:outputLink styleClass="{!IF(isHUSuspended || isHuTerminated,'disabled','')}" value="{!$Site.Prefix}/BIGPortalManageApplication?action=new&dwellingId={!dwellingUnit.Id}" rendered="{!NOT(ineligibleForHUP)}" tabindex="{!IF(isHUSuspended || isHuTerminated,'-1','')}">Home Upgrade</apex:outputLink>
+                                <apex:outputLink value="#" rendered="{!ineligibleForHUP}" styleClass="hupInactiveLink">Home Upgrade</apex:outputLink>
+                            </li>
+                            <li>
+                                <apex:outputLink styleClass="{!IF(isAHUSuspended,'disabled','')}" value="{!$Site.Prefix}/BIGPortalAdvancedHUApplication?action=new&dwellingId={!dwellingUnit.Id}" rendered="{!HasAdvancedHUPProgram}" tabindex="{!IF(isAHUSuspended,'-1','')}">Advanced Home Upgrade</apex:outputLink>
+                            </li>
+                         </ul>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <apex:outputPanel id="addApplicationErrorMessage" styleClass="alert alert-block" style="margin-left: 25px; width: 68%; display: inline-block;" rendered="{!NOT(isDwellingUnitRequiredDataComplete)}">
+                Please fill out the required information below. All sections must be completed before this building/dwelling unit may proceed with a rebate application.
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <div class="span12" style="width: auto; float: none;">
+            <!-- Additional Building Information -->
+            <div class="well well-small">
+                <strong>Additional Building Information</strong>
+                <a id="edit-info-dwelling-unit" class="btn-edit btn btn-small btn-primary" href="#" rel="dwelling-unit" style="float: right; margin-top: -5px;"><i class="icon-pencil icon-white"></i>&nbsp;Edit</a>
+            </div>
+            <c:BIGPortalDwellingUnit dwbuilding="{!building}" dwdwellingunit="{!dwellingUnit}"/>
+        </div>
+        <div class="span12" style="width: auto; float: none;">
+            <!-- Property Owner Information -->
+            <div class="well well-small">
+                <strong>Contract-Signing Customer Information <small><a data-toggle="tooltip" class="help-icon" data-placement="right" title="The information entered here should be for the person who signed the work contract (a.k.a., the rebate payee/recipient, unless payee is the contractor). If the payee is the contractor, do not enter contractor information here."><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></small></strong>
+                <a id="edit-info-property-owner" class="btn-edit btn btn-small btn-primary" href="#" rel="property-owner" style="float: right; margin-top: -5px;"><i class="icon-pencil icon-white"></i>&nbsp;Edit</a>
+            </div>
+            <c:BIGPortalPropertyOwner pobuilding="{!building}" podwellingunit="{!dwellingUnit}" popropertyowner="{!propertyOwner}"/>
+        </div>
+        <div class="span12" style="width: auto; float: none;">
+            <apex:outputPanel id="utilityAccPanel" >
+            <!-- Utility Account Information -->
+            <div class="well well-small">
+                <strong>Utility Service Information</strong>
+                <a id="edit-info-utility-account" class="btn-edit btn btn-small btn-primary" href="#" rel="utility-account" style="float: right; margin-top: -5px;"><i class="icon-pencil icon-white"></i>&nbsp;Edit</a>
+            </div>
+            <c:BIGPortalUtilityAccount uabuilding="{!building}" uadwellingunit="{!dwellingUnit}" uautilityaccount="{!utilityAccount}" propowner="{!propertyOwner}" />
+            </apex:outputPanel>
+        </div>
+    </div>
+    </apex:outputPanel>
+    </div>
+    </div>
+    <c:BIGPortalFooter />
+    <c:BIGPortalAHUSurvey />
+</div>
+
+</body>
+</apex:page>

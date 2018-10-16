@@ -1,0 +1,13 @@
+<aura:component >
+    <aura:attribute name="page" type="integer"/>
+    <aura:attribute name="pages" type="integer"/>
+    <aura:attribute name="total" type="integer"/>
+
+    <div class="slds">
+        <div class="slds-form-element">
+            <button aura:id="previousPage" class="slds-button slds-button_brand" onclick="{!c.previousPage}" disabled="{!v.page &lt;= 1}">Prev</button>
+            <span class="slds-m-horizontal_large">{!v.total} records • Page {!v.page}/{!v.pages}</span>
+            <button aura:id="nextPage" class="slds-button slds-button_brand" onclick="{!c.nextPage}" disabled="{!v.page >= v.pages}">Next</button>
+        </div>
+    </div>
+</aura:component>

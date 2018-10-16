@@ -1,0 +1,1277 @@
+<apex:component controller="BIGPortalManageBuildingFormController" id="buildingFormComponent" allowDml="true">
+<style>
+    .building-frm {
+        margin-top: 25px;
+        margin: 0 0;
+    }
+    .building-frm #inputState {
+        color: #999;
+        background-color: #fcfcfc;
+        font-family: 'Open Sans', sans-serif;
+        width: 30px;
+    }
+    .sub-title {
+        margin-top: 45px;
+        margin-bottom: 25px;
+    }
+    .form-horizontal .controls {
+        margin-left: 202px;
+    }
+    .form-horizontal .control-label {
+        width: 182px;
+    }
+    .form-horizontal .control-label.optional {
+        padding-top: 6px;
+        line-height: 17px;
+        height: 20px;
+    }
+    .form-horizontal .tip-text {
+        font-size: 12px;
+        display: inline-block;
+        width: 300px;
+        margin-left: 15px;
+        line-height: 15px;
+        vertical-align: middle;
+    }
+    .form-horizontal .addressCheckbox,
+    .form-horizontal .contactCheckbox {
+        margin-bottom: 20px;
+    }
+    .optional-label {
+        font-size: 13px;
+        font-style: italic;
+    }
+    .form-actions .btn {
+        width: 100px;
+    }
+    .form-actions .btn-default {
+        margin: 0 10px;
+    }
+    .buildingName {
+        margin-top: 40px;
+    }
+    .city-group {
+        width: 470px !important;
+    }
+    .state-group {
+        width: 105px !important;
+        margin-left: 0 !important;
+    }
+    .state-label {
+        width: 35px !important;
+    }
+    .state-input {
+        margin-left: 45px !important;
+    }
+    .zip-group {
+        width: 215px !important;
+        margin-left: 0 !important;
+    }
+    .zip-label {
+        width: 65px !important;
+    }
+    .zip-input {
+        margin-left: 80px !important;
+    }
+    .zip-input select {
+        width: 91px;
+    }
+    .address-div {
+        width: 870px;
+    }
+    .help-icon {
+        vertical-align: text-bottom;
+    }
+</style>
+<script>
+    var validator;
+
+    // Zip codes by city.
+    var zipCodesByCity = JSON.parse('{!PGETerritoryZipCodes}');
+    var citiesByZipCode = {};
+    // Get all the cities from the metadata.
+    var cities = Object.keys(zipCodesByCity);
+    var zipCodes = [];
+
+    Object.keys(zipCodesByCity).forEach(function (key) {
+        var zipCodesForCity = zipCodesByCity[key];
+        for (var i = 0; i < zipCodesForCity.length; i++) {
+            // City by zip codes.
+            citiesByZipCode[zipCodesForCity[i]] = [key];
+        }
+        // Get all the zip codes from the metadata.
+        zipCodes = zipCodes.concat(zipCodesForCity);
+    });
+
+    $(document).ready(function() {
+        // Format number with 2 decimal places and commas "1,000.00".
+        $('input[id*="inputCondAr"], input[id*="inputAvCeHe"]').number(true, 2);
+
+        validateSaveBuildingFormFields();
+        setZipCode();
+
+        // Limit zip code to 5 digits
+        $('.inpCustomerZipCode').attr('maxlength','5');
+
+        // Initialize autocomplete.
+        $(".inpCity").typeahead({
+            source: cities,
+            items: 10
+        }).on('keyup change', populateZipCodeOptions);
+
+        // Bind event handler to the Zip Code select.
+        $('#inputZip').on('change', function(e) {
+            var $el = $(this);
+            $('[id*=zipCodeHidden]').val($el.val());
+            $el.valid();
+        });
+    });
+
+    /**
+     * Binds the value coming from the input hidden (if there's any) to the zip code input.
+     * If city is within the PG&E Service Territory enable the zip code select, otherwise disable it.
+     */
+    function setZipCode() {
+        var zipCode = $('[id*=zipCodeHidden]').val();
+        var $inputZipCode = $('#inputZip');
+        var selectedCity = $(".inpCity").val();
+        var output = ['<option value="">--None--</option>'];
+
+        // Add default value from Building Zip Code.
+        output.push('<option value="'+ zipCode +'">'+ zipCode +'</option>');
+
+        if (selectedCity && zipCodesByCity[selectedCity]) {
+            $.each(zipCodesByCity[selectedCity].sort(), function(key, value) {
+                output.push('<option value="'+ value +'">'+ value +'</option>');
+            });
+            $inputZipCode.html(output.join('')).prop('disabled', false);
+        } else {
+            $inputZipCode.html(output.join('')).prop('disabled', true);
+        }
+
+        $inputZipCode.val(zipCode);
+    }
+
+    /**
+     * Loads the options on zip code input depending on the city entered by the user on the city input text.
+     * In case of an invalid city (not in PG&E Service Territory), removes the options from the zip code input
+     * and disables it.
+     */
+    function populateZipCodeOptions(e) {
+        // Do nothing if user press shift+tab keys to navigate through inputs.
+        var code = e.keyCode || e.which;
+        var specialKeys = [9,16];
+        if ($.inArray(code, specialKeys) > -1) {
+             return;
+        }
+
+        var $el = $(this);
+        var selectedCity = $el.val();
+        var $inputZipCode = $('#inputZip');
+        var output = ['<option value="">--None--</option>'];
+
+        $el.valid();
+        $('[id*=zipCodeHidden]').val('');
+        // Remove css style applied by jquery validation from zip code input.
+        $('.zip-group').find('.control-group').removeClass('error success').find('label.error').remove();
+
+        if (selectedCity && zipCodesByCity[selectedCity]) {
+            $.each(zipCodesByCity[selectedCity].sort(), function(key, value) {
+                output.push('<option value="'+ value +'">'+ value +'</option>');
+            });
+            $inputZipCode.html(output.join('')).prop('disabled', false);
+        } else {
+            $inputZipCode.html('').prop('disabled', true);
+        }
+    }
+
+    // Validate Form Fields
+    function validateSaveBuildingFormFields() {
+        validateSaveBuildingFieldsAux();
+        validateFieldsNotRequired();
+    }
+
+    function validateFieldsNotRequired() {
+        var settings = $('.building-frm').validate().settings;
+
+        $.extend(true, settings, {
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                rules: {
+                    '{!$Component.building_form.inputGasAcc}': {
+                        required: false,
+                        digits: true,
+                        gas_provider_check: true,
+                        gas_provider_check_SCGC: true
+                    },
+                    '{!$Component.building_form.inputElecAcc}': {
+                        required: false,
+                        digits: true,
+                        elec_provider_check: true
+                    },
+                    '{!$Component.building_form.inputEmail}': {
+                        strictEmail: true
+                    },
+                    '{!$Component.building_form.inputPhone}': {
+                        phoneDigitsLength: 10
+                    },
+                    '{!$Component.building_form.inputOwnAddress}': {
+                        ownAddress_check: true
+                    },
+                    '{!$Component.building_form.inputOwnCity}': {
+                        ownCity_check: true
+                    },
+                    '{!$Component.building_form.inputOwnZip}': {
+                        customer_zip_code_check: true,
+                        required: false
+                    },
+                    '{!$Component.building_form.inputNumOcc}': {
+                        range: [1, 10],
+                        number: true
+                    },
+                    '{!$Component.building_form.inputNumBed}': {
+                        range: [1, 99],
+                        number: true
+                    },
+                    '{!$Component.building_form.inputCondAr}': {
+                        range: [800, 7000],
+                        number: true
+                    },
+                    '{!$Component.building_form.inputNumSto}': {
+                        range: [1, 5],
+                        number: true
+                    },
+                    '{!$Component.building_form.inputAvCeHe}': {
+                        range: [8, 36],
+                        number: true
+                    },
+                    '{!$Component.building_form.inputYearBuilt}': {
+                        year_built_check_aux: true
+                    },
+                    '{!$Component.building_form.inputAccFirstName}': {
+                        minlength: 2,
+                        accFirstName_check: true
+                    },
+                    '{!$Component.building_form.inputAccLastName}': {
+                        minlength: 2,
+                        accLastName_check: true
+                    },
+                    '{!$Component.building_form.inputAccPhone}': {
+                        phoneDigitsLength: 10
+                    }
+                },
+                messages: {
+                    '{!$Component.building_form.inputAvCeHe}': {
+                        range: "Please enter a number between 8.00 - 36.00."
+                    },
+                    '{!$Component.building_form.inputCondAr}': {
+                        range: "Please enter a number between 800.00 - 7,000.00."
+                    }
+                },
+                highlight: function(element) {
+                    var $el = $(element);
+                    $el.closest('.control-group').removeClass('success').addClass('error');
+                    // Display tip-text before error message
+                    $el.parent().find("label").appendTo($el.parent());
+                },
+                success: function(label, element) {
+                    var $el = $(element);
+                    label.text('OK!').addClass('valid').closest('.control-group').removeClass('error')
+                            .addClass('success');
+                    // Display tip-text after success label (check)
+                    label.insertAfter(element);
+
+                    if ($el.val() === ''
+                            || ($el.hasClass('phoneMaskedInput')
+                            && $el.val().replace(/[^0-9]+/g, '').length !== 10)) {
+                        $el.closest('.control-group').removeClass('success');
+                        $el.parent().find("label").remove();
+                    }
+                },
+                errorPlacement: function(error, element) {
+                    error.appendTo($(element).parent());
+                }
+        });
+        // Process error messages.
+        setMessage($('.building-frm').valid(), PAGE_ERROR.MESSAGE_SAVE);
+    }
+
+    function validateSaveBuildingFieldsAux() {
+        $('.building-frm').validate({
+                onkeyup: function(element) { $(element).valid(); },
+                onsubmit: false,
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                rules:
+                {
+                    '{!$Component.building_form.inputName}': {
+                        minlength: 2,
+                        required: true
+                    },
+                    '{!$Component.building_form.inputAddress}': {
+                        required: true,
+                        address_check: true
+                    },
+                    '{!$Component.building_form.inputCity}': {
+                        required: true,
+                        cityWithinServiceTerritory: true
+                    },
+                    'inputZip': {
+                        required: true,
+                        zipCodeWithinServiceTerritory: true
+                    },
+                    '{!$Component.building_form.inputBuildingType}': {
+                        required: true
+                    },
+                    '{!$Component.building_form.inputFirstName}': {
+                        required: true,
+                        firstNameOwner_check: true
+                    },
+                    '{!$Component.building_form.inputLastName}': {
+                        required: true,
+                        lastNameOwner_check: true
+                    }
+                },
+                highlight: function(element) {
+                    var $el = $(element);
+                    if ($el.rules().required) {
+                        $el.closest('.control-group').removeClass('success').addClass('error');
+                    }
+                },
+                success: function(element) {
+                    var $input = element.prev();
+                    if ($input.rules().required) {
+                        element.text('OK!').addClass('valid').closest('.control-group').removeClass('error')
+                                .addClass('success');
+                    }
+                }
+        });
+        // Process error messages.
+        setMessage($('.building-frm').valid(), PAGE_ERROR.MESSAGE_SAVE);
+    }
+
+    function validateNextBuildingFormFields() {
+        validateSaveBuildingFieldsAux();
+        var settings = $('.building-frm').validate().settings;
+
+        $.extend(true, settings, {
+                rules: {
+                    '{!$Component.building_form.inputEmail}': {
+                        strictEmail: true
+                    },
+                    '{!$Component.building_form.inputPhone}': {
+                        required: true,
+                        phoneDigitsLength: 10
+                    },
+                    '{!$Component.building_form.inputOwnAddress}': {
+                        required: true,
+                        ownAddress_check: true
+                    },
+                    '{!$Component.building_form.inputOwnCity}': {
+                        required: true,
+                        ownCity_check: true
+                    },
+                    '{!$Component.building_form.inputOwnZip}': {
+                        required: true,
+                        customer_zip_code_check: true
+                    },
+                    '{!$Component.building_form.inputNumOcc}': {
+                        range: [1, 10]
+                    },
+                    '{!$Component.building_form.inputNumBed}': {
+                        range: [1, 99]
+                    },
+                    '{!$Component.building_form.inputAttType}': {
+                        required: true
+                    },
+                    '{!$Component.building_form.inputCondAr}': {
+                        required: true,
+                        range: [800, 7000]
+                    },
+                    '{!$Component.building_form.inputNumSto}': {
+                        required: true,
+                        range: [1, 5]
+                    },
+                    '{!$Component.building_form.inputAvCeHe}': {
+                        required: true,
+                        range: [8, 36]
+                    },
+                    '{!$Component.building_form.inputHotWFuel}': {
+                        required: true
+                    },
+                    '{!$Component.building_form.inputHeatSys}': {
+                        required: true
+                    },
+                    '{!$Component.building_form.inputAirCond}': {
+                        required: true,
+                    },
+                    '{!$Component.building_form.inputFundType}': {
+                        required: true
+                    },
+                    '{!$Component.building_form.inputPriFu}': {
+                        required: true,
+                    },
+                    '{!$Component.building_form.inputHotWSys}': {
+                        required: true
+                    },
+                    '{!$Component.building_form.inputYearBuilt}': {
+                        required: true,
+                        year_built_check: true
+                    },
+                    '{!$Component.building_form.inputElcProv}': {
+                        required: true,
+                    },
+                    '{!$Component.building_form.inputElecAcc}': {
+                        required: true,
+                        digits: true,
+                        elec_provider_check: true
+                    },
+                    '{!$Component.building_form.inputGasProv}': {
+                        required: true,
+                    },
+                    '{!$Component.building_form.inputGasAcc}': {
+                        required: true,
+                        digits: true,
+                        gas_provider_check: true,
+                        gas_provider_check_SCGC: true
+                    },
+                    '{!$Component.building_form.inputAccFirstName}': {
+                        minlength: 2,
+                        required: true,
+                        accFirstName_check: true
+                    },
+                    '{!$Component.building_form.inputAccLastName}': {
+                        minlength: 2,
+                        required: true,
+                        accLastName_check: true
+                    },
+                    '{!$Component.building_form.inputAccPhone}': {
+                        required: true,
+                        phoneDigitsLength: 10
+                    }
+                }
+        });
+        // Process error messages.
+        setMessage($('.building-frm').valid(), PAGE_ERROR.MESSAGE_CONTINUE);
+    }
+
+    function checkValidForm() {
+        if($('.building-frm').valid()) {
+            $('html, body').animate({scrollTop: '0px'}, 400);
+        }
+    }
+    function unbindValidation(form) {
+        form.data('validator', null);
+        $('.control-group').removeClass('success error');
+        $('label.error').remove();
+    }
+
+    $.validator.addMethod("phoneDigitsLength", function(value, element, param) {
+        return (this.optional(element) || value.replace(/[^0-9]+/g, "").length === param);
+    }, function (params, element) {
+        var phoneDigits = $(element).val().replace(/[^0-9]+/g, "").length;
+        return (phoneDigits === 0 ? "This field is required." : "Please enter a valid phone number.");
+    });
+
+    $.validator.addMethod('strictEmail', function(value, element) {
+        var result = /^([^<>()\[\]\.,;:ñ¬º·¿´\s@"]([^<>()\[\],;:ñ¬º·¿´\s@"]+([^<>()\[\],;:ñº·¿´\s@"]+)*)|(".+"))@(?!-)[a-zA-Z0-9-]*?[a-zA-Z0-9]\.[a-zA-Z0-9]{2,}$/;
+        return this.optional(element) || result.test(value);
+    }, "Please enter a valid email address.");
+
+    $.validator.addMethod("year_built_check_aux", function(value, element) {
+        //false error, true ok
+        if ($('.inpYearBuilt').val() === '') {
+            return true;
+        } else {
+            return checkYearBuilt('.inpYearBuilt');
+        }
+    }, "Please enter a value between 1900 and the current year.");
+
+    $.validator.addMethod("year_built_check", function(value, element) {
+        //false error, true ok
+        return checkYearBuilt('.inpYearBuilt');
+    }, "Please enter a value between 1900 and the current year.");
+
+    function isValidZipCode(key) {
+        return key && citiesByZipCode[key];
+    }
+
+    $.validator.addMethod("customer_zip_code_check", function(value, element) {
+        //false error, true ok
+        return checkZipCode('.inpCustomerZipCode');
+    }, "Please enter a valid zip code.");
+
+    $.validator.addMethod("firstNameOwner_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return checkFirstLastName('.inpFirstNameOwn');
+    }, "Please enter a valid first name.");
+
+    $.validator.addMethod("lastNameOwner_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return checkFirstLastName('.inpLastNameOwn');
+    }, "Please enter a valid last name.");
+
+    $.validator.addMethod("zipCodeWithinServiceTerritory", function(value, element) {
+        // False error, true ok.
+        return this.optional(element) || isValidZipCode(value);
+    }, "This zip code is not within PG&E service territory.");
+
+    $.validator.addMethod("cityWithinServiceTerritory", function(value, element) {
+        // False error, true ok.
+        return this.optional(element) || isValidCity(value);
+    }, "This city is not within PG&E service territory.");
+
+    function isValidCity(key) {
+        return key && zipCodesByCity[key];
+    }
+
+    $.validator.addMethod("address_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return checkStCity('.inpStAddress');
+    }, "Please enter a valid street address");
+
+    $.validator.addMethod("ownAddress_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return this.optional(element) || checkStCity('.inpOwnStAddress');
+    }, "Please enter a valid street address");
+
+    $.validator.addMethod("ownCity_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return this.optional(element) || checkBuildingOwnerCity('.inpOwnCity');
+    }, "Please enter a valid city.");
+
+    $.validator.addMethod("accFirstName_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return this.optional(element) || checkFirstLastName('.inpAccFirstName');
+    }, "Please enter a valid first name.");
+
+    $.validator.addMethod("accLastName_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return this.optional(element) || checkFirstLastName('.inpAccLastName');
+    }, "Please enter a valid last name.");
+
+    function checkYearBuilt(pYear) {
+        var str = $(pYear).val();
+        var patt = /^\d{1,}$/;
+        var cd = new Date();
+        return patt.test(str) && str >= 1900 && str <= cd.getFullYear();
+    }
+
+    function  checkZipCode(pClassName) {
+        var str = $(pClassName).val();
+        var patt = /^\d{5}$/;
+        if (str != "") {
+            return str.length == 5 && patt.test(str);
+        }
+        return true;
+    }
+
+    function checkFirstLastName(pClassName) {
+        var patt = /^[a-zA-Z &,.'-]{2,}$/;
+        return auxValidations(pClassName, patt);
+    }
+
+    function checkStCity(pClassName) {
+        var patt = /^[a-zA-Z0-9 &#,.'-]{2,}$/;
+        return auxValidations(pClassName, patt);
+    }
+
+    function checkBuildingOwnerCity(pClassName) {
+        var patt = /^[a-zA-Z ,.'-]{2,}$/;
+        return auxValidations(pClassName, patt);
+    }
+
+    function auxValidations(pClassName, patt) {
+        /* In case that the user hit on Next the field is required, therefore the "return true" is ignored. I mean,
+         * this function is ignored entirely.
+         * I have specified this because I should control the field even if the user hit on Save but if the user
+         * leaves blank this field I should allow to save the building because this field is not required in order
+         * to save a building
+         */
+
+        var str = $(pClassName).val();
+        var flag = true;
+        str = str.trim();
+        str = str.replace(/\n/,'');
+
+        if (str.length >= 2) {
+
+            if (allCharsInvalid(str) == true) {
+                flag = false;
+            }
+            if (str[0] === "-" || str[0] === "," || str[0] === ".") {
+                flag = false;
+            }
+            if (str[str.length-1] === "-" || str[str.length-1] === ",") {
+                flag = false;
+            }
+        }
+
+        return patt.test(str) && flag;
+    }
+
+    function allCharsInvalid(myChars) {
+        var check = 0;
+        var res = false;
+
+        for (var i = 0; i < myChars.length; i++) {
+            if (myChars[i] === "'" || myChars[i] === "-" || myChars[i] === "." || myChars[i] === ",") {
+                check++;
+            }
+        }
+
+        if (check == myChars.length) {
+            res = true;
+        }
+
+        return res;
+    }
+</script>
+
+<apex:attribute name="doAction" description="Action to perform" type="String" required="true" assignTo="{!action}"/>
+    <h2 class="sub-header">1. Building Information</h2>
+    <p>
+        Begin by entering the property name and address. Please select if it is a single-family detached or 2-4 unit property.
+    </p>
+    <span style="font-size: 13px;"><i>All fields are required unless marked "optional".</i></span>
+    <!-- New Building -->
+    <apex:form id="building_form" styleClass="form-horizontal building-frm">
+    <apex:actionFunction action="{!saveBuildingInfo}" name="saveBuildingInfo" rerender="errorMsgs, dwellingUnitId" onComplete="customMsg(); checkValidForm();" status="owner-saving-status" />
+    <apex:actionFunction action="{!saveBuildingInfo}" name="nextBuildingInfo" rerender="errorMsgs, dwellingUnitId" onComplete="customMsg(); assignDwellingUnitJS(); checkValidForm();" >
+        <apex:param name="isContinueAction" assignTo="{!isContinueAction}" value="true"/>
+    </apex:actionFunction>
+        <div class="control-group buildingName">
+            <label class="control-label">Building Name</label>
+            <div class="controls">
+                <apex:inputField id="inputName" styleClass="span3" value="{!building.Building_Name__c}"/>
+            </div>
+        </div>
+        <div class="buildingAddress">
+        <div class="control-group">
+            <label class="control-label">Street Address</label>
+            <div class="controls">
+                <apex:inputField id="inputAddress" styleClass="input-xxlarge inpStAddress" value="{!building.Street_Address__c}"/>
+            </div>
+        </div>
+        <div class="row">
+        <div class="span4 city-group">
+            <div class="control-group">
+                <label class="control-label">City</label>
+                <div class="controls">
+                    <apex:inputField id="inputCity" styleClass="span3 inpCity" value="{!building.City__c}" html-autocomplete="off"/>
+                </div>
+            </div>
+        </div>
+        <div class="span2 state-group">
+            <div class="control-group">
+                <label class="control-label state-label">State</label>
+                <div class="controls state-input">
+                    <input type="text" id="inputState" name="inputState" disabled="true" class="span1 uneditable-input" value="CA" />
+                </div>
+            </div>
+        </div>
+        <div class="span2 zip-group">
+            <div class="control-group">
+                <label class="control-label zip-label">ZIP Code</label>
+                <div class="controls zip-input">
+                    <apex:outputPanel rendered="{!building.ZIP_Code__c == ''}" layout="none">
+                        <select name="inputZip" id="inputZip" class="span1" disabled="disabled"></select>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!building.ZIP_Code__c != ''}" layout="none">
+                        <select name="inputZip" id="inputZip" class="span1">
+                            <option value="{!building.ZIP_Code__c}">{!building.ZIP_Code__c}</option>
+                        </select>
+                    </apex:outputPanel>
+                    <apex:inputHidden value="{!building.ZIP_Code__c}" id="zipCodeHidden"/>
+                </div>
+            </div>
+        </div>
+        </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Building Type</label>
+            <div class="controls">
+                <apex:inputField id="inputBuildingType" styleClass="span3" value="{!building.Building_Type__c}" />
+            </div>
+        </div>
+
+        <div class="sub-title">
+            <strong>Additional Building Details</strong>
+        </div>
+
+    <!-- Edit Dwelling Unit Form -->
+    <div class="row">
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label optional">Number of Bedrooms <span class="optional-label">(optional)</span></label>
+                <div class="controls">
+                    <apex:inputField id="inputNumBed" styleClass="span3 inpNumBedrooms" value="{!dwellingUnit.Number_of_Bedrooms__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span11">
+            <div class="control-group">
+                <label class="control-label">Conditioned Area (sq ft)</label>
+                <div class="controls">
+                    <apex:inputField id="inputCondAr" styleClass="span3" value="{!dwellingUnit.Conditioned_Area__c}"/>
+                    <span class="tip-text">Enter a number between 800.00 - 7,000.00. <br/> Example: 1,960.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span11">
+            <div class="control-group">
+                <label class="control-label">Average Ceiling Height (ft)</label>
+                <div class="controls">
+                    <apex:inputField id="inputAvCeHe" styleClass="span3 inpAvgCeilingHeight" value="{!dwellingUnit.Avg_Ceiling_Height__c}"/>
+                    <span class="tip-text">Enter a number between 8.00 - 36.00.</span>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label optional">Number of Occupants <span class="optional-label">(optional)</span></label>
+                <div class="controls">
+                    <apex:inputField id="inputNumOcc" styleClass="span3 inpNumOcc" value="{!dwellingUnit.Number_of_Occupants__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span11">
+            <div class="control-group">
+                <label class="control-label">Number of Stories</label>
+                <div class="controls">
+                    <apex:inputField id="inputNumSto" styleClass="span3 inpNumSto" value="{!dwellingUnit.Number_of_Stories__c}"/>
+                    <span class="tip-text">Enter a whole number between 1 - 5.</span>
+                </div>
+            </div>
+        </div>
+        <div class="span11">
+            <div class="control-group">
+                <label class="control-label">Year Built</label>
+                <div class="controls">
+                    <apex:inputField id="inputYearBuilt" styleClass="span3 inpYearBuilt" value="{!dwellingUnit.Year_Built__c}"/>
+                    <span class="tip-text">Enter as full year. Example: 1989</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label" for="inputPriFu">Primary Heating Fuel</label>
+                <div class="controls">
+                    <apex:inputField id="inputPriFu" styleClass="span3 abiPrimaryHeatingFuel" value="{!dwellingUnit.Primary_Fuel__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Hot Water Fuel</label>
+                <div class="controls">
+                    <apex:inputField id="inputHotWFuel" styleClass="span3" value="{!dwellingUnit.Hot_Water_Fuel__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Heating System Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputHeatSys" styleClass="span3" value="{!dwellingUnit.Heating_System__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Cooling System Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputAirCond" styleClass="span3 abiCoolingSystemType" value="{!dwellingUnit.Air_Conditioning__c}"/>
+                </div>
+            </div>
+        </div>
+         <div class="span8">
+            <div class="control-group">
+                <label class="control-label" for="inputFundType">Domestic Hot Water Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputHotWSys" styleClass="span3" value="{!dwellingUnit.Hot_Water_System__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label" for="inputFundType">Foundation Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputFundType" styleClass="span3" value="{!dwellingUnit.Foundation_Type__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group" style="margin-bottom: 0;">
+                <label class="control-label">Roof-Attic Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputAttType" styleClass="span3" value="{!dwellingUnit.Attic_Type__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sub-title">
+        <strong>Contract-Signing Customer Information
+            <small>
+                <a data-toggle="tooltip" class="help-icon" data-placement="right" title="The information entered here should be for the person who signed the work contract (a.k.a., the rebate payee/recipient, unless payee is the contractor). If the payee is the contractor, do not enter contractor information here.">
+                    <img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" />
+                </a>
+            </small>
+        </strong>
+    </div>
+    <!-- Edit Dwelling Unit Form -->
+    <div class="customerContact">
+        <div class="row">
+            <div class="span9">
+                <div class="control-group">
+                    <label class="control-label">First Name</label>
+                    <div class="controls">
+                        <apex:inputField id="inputFirstName" styleClass="span3 inpFirstNameOwn" value="{!propertyOwner.FirstName}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="span9">
+                <div class="control-group">
+                    <label class="control-label">Last Name</label>
+                    <div class="controls">
+                        <apex:inputField id="inputLastName" styleClass="span3 inpLastNameOwn" required="false" value="{!propertyOwner.LastName}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <div class="control-group">
+                    <label class="control-label optional">Email <span class="optional-label">(optional)</span></label>
+                    <div class="controls">
+                        <apex:inputField id="inputEmail" styleClass="span3" value="{!propertyOwner.Email}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <div class="control-group">
+                    <label class="control-label">Phone</label>
+                    <div class="controls">
+                        <apex:inputField id="inputPhone" styleClass="span3 phoneMaskedInput" value="{!propertyOwner.Phone}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8" style="padding-left: 202px;">
+            <label class="checkbox">
+                <input type="checkbox" class="addressCheckbox"/>
+                Same as building address
+            </label>
+        </div>
+    </div>
+    <div class="customerAddress">
+        <div class="row">
+            <div class="span8 address-div">
+                <div class="control-group">
+                    <label class="control-label">Address</label>
+                    <div class="controls">
+                        <apex:inputField id="inputOwnAddress" styleClass="input-xxlarge inpOwnStAddress" value="{!propertyOwner.MailingStreet}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span8">
+                <div class="control-group">
+                    <label class="control-label">City</label>
+                    <div class="controls">
+                        <apex:inputField id="inputOwnCity" styleClass="span3 inpOwnCity" value="{!propertyOwner.MailingCity}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span8">
+                <div class="control-group">
+                    <label class="control-label">State</label>
+                    <div class="controls">
+                       <apex:selectList id="inputOwnState" value="{!propertyOwner.MailingState}" title="State" styleClass="span3 inputState" size="1">
+                            <apex:selectOptions value="{!states}"/>
+                        </apex:selectList>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span">
+                <div class="control-group" style="margin-bottom: 0;">
+                    <label class="control-label">Zip Code</label>
+                    <div class="controls">
+                        <apex:inputField id="inputOwnZip" styleClass="span3 inpCustomerZipCode inputZip" value="{!propertyOwner.MailingPostalCode}"/>
+                    </div>
+                </div>
+            </div>
+       </div>
+   </div>
+
+    <div class="sub-title">
+        <strong>Utility Account Information</strong>
+    </div>
+
+    <!-- Edit Utility Account Form -->
+    <div class="row">
+        <div class="span8" style="padding-left: 202px;">
+            <label class="checkbox">
+                <input type="checkbox" class="contactCheckbox"/>
+                Same as contract-signing customer
+            </label>
+        </div>
+    </div>
+    <div class="utilityContact">
+        <div class="row">
+            <div class="span8">
+                <div class="control-group">
+                    <label class="control-label">Account Holder First Name</label>
+                    <div class="controls">
+                        <apex:inputField id="inputAccFirstName" styleClass="span3 inpAccFirstName" value="{!utilityAccount.Account_Holder_First_Name__c}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="span8">
+                <div class="control-group">
+                    <label class="control-label">Account Holder Last Name</label>
+                    <div class="controls">
+                        <apex:inputField id="inputAccLastName" styleClass="span3 inpAccLastName" value="{!utilityAccount.Account_Holder_Last_Name__c}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="span8">
+                <div class="control-group">
+                    <label class="control-label">Account Holder Phone</label>
+                    <div class="controls">
+                        <apex:inputField id="inputAccPhone" styleClass="span3 phoneMaskedInput" value="{!utilityAccount.Phone__c}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="control-group">
+                <label class="control-label">Electric Provider</label>
+                <div class="controls">
+                    <apex:inputField id="inputElcProv" styleClass="span4 electricProviderSelect" value="{!utilityAccount.Electric_Provider__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row electricServiceID">
+        <div class="span12">
+            <div class="control-group">
+                <label class="control-label">Electric Service ID</label>
+                <div class="controls">
+                    <apex:inputText id="inputElecAcc" styleClass="span4 electricAccNumber" maxlength="12" value="{!utilityAccount.Electric_Account_Number__c}"/>
+                    <span class="tip-text">Enter 10-digit number</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="control-group">
+                <label class="control-label">Gas Provider</label>
+                <div class="controls">
+                    <apex:inputField id="inputGasProv" styleClass="span4 gasProviderSelect" value="{!utilityAccount.Gas_Provider__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row gasServiceID">
+        <div class="span12">
+            <div class="control-group">
+                <label class="control-label">Gas Service ID</label>
+                <div class="controls">
+                    <apex:inputText id="inputGasAcc" styleClass="span4 gasAccNumber" maxlength="10" value="{!utilityAccount.Gas_Account_Number__c}"/>
+                    <span class="tip-text">Enter 10-digit number</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-actions">
+        <div class="buttons-block">
+        <a id="next-info" href="#" class="btn btn-primary" >Next</a>
+        <button id="cancelInfo" type="button" class="btn btn-default">Cancel</button>
+        <a id="save-info" href="#" class="btn btn-default" style="margin: 0 0;">Save</a>
+        </div>
+        <apex:actionStatus id="owner-saving-status" onstart="hideOwnerButtons()" onstop="showOwnerButtons()">
+            <apex:facet name="start">
+                <div class="section-content-loader" style="text-align:center;">
+                    <img src="{!URLFOR($Resource.bigutopia, '/img/ajax-loader.gif')}" style="height:40px;" />
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+    </div>
+    </apex:form>
+
+    <apex:outputPanel id="dwellingUnitId">
+        <script>
+            var dwellingUnitId = '{!dwellingUnit.Id}';
+            var id = '{!applicationId}';
+        </script>
+    </apex:outputPanel>
+
+    <script>
+        // Set mask to Property Owner Phone Field
+        $('.phoneMaskedInput').mask('(999) 999-9999' , {autoclear: false });
+
+        showHideGasService($('.gasProviderSelect').val());
+        showHideElectricService($('.electricProviderSelect').val());
+
+        function showHideGasService(pVal) {
+            if (pVal === "Other" || pVal === "No Gas (All Electric Home)" || pVal === "Propane") {
+                helpShowHideService('.gasServiceID', false);
+            } else {
+                helpShowHideService('.gasServiceID', true);
+            }
+            $('.gasServiceID').find('.error,.success').remove('label.error').removeClass('success error');
+        }
+
+        function showHideElectricService(pVal) {
+            if (pVal === "Other") {
+                helpShowHideService('.electricServiceID', false);
+            } else {
+                var maxLength = 10;
+                var hintText = 'Enter 10-digit number';
+                if (pVal === "Sacramento Municipal Utility District") {
+                    maxLength = 12;
+                    hintText = 'Enter 1-12 digit number';
+                }
+                $('.electricAccNumber').attr("maxlength", maxLength);
+                $('.electricServiceID .tip-text').text(hintText);
+
+                helpShowHideService('.electricServiceID', true);
+            }
+            $('.electricServiceID').find('.error,.success').remove('label.error').removeClass('success error');
+        }
+
+        function helpShowHideService(pVal, pFlag) {
+            var $pVal = $(pVal);
+
+            if (pFlag) {
+                $pVal.show();
+            } else {
+                $pVal.hide().find('input').val("");
+            }
+        }
+
+        function bindInputs($object, event, $values) {
+            $object.each(function(i, el) {
+                var $input = $($values.get(i));
+                $(el).on(event, function () {
+                    $input.val($(this).val());
+                });
+            });
+        }
+
+        function unbindInputs($object) {
+            $object.each(function() {
+                $(this).off('blur');
+            });
+        }
+
+        // Set account holder information: First Name, Last Name and Phone.
+        function setAccountHolderInformation() {
+            if ($('.building-frm .contactCheckbox').is(':checked')) {
+                $customerBasicInfo.each(function(i, el) {
+                    var $input = $($utility.get(i));
+                    // Copy values and disable inputs.
+                    $input.val($(this).val()).prop('disabled', true);
+                });
+                // Bind blur event that copies contract-signing customer information to utility account.
+                bindInputs($customerBasicInfo, 'blur', $utility);
+                // Hide inputs.
+                $('.utilityContact').hide();
+            } else {
+                $utility.each(function(i, el) {
+                    // Reset values, enable inputs and remove validations.
+                    $(el).val("").prop('disabled', false);
+                    $('.utilityContact').find('.error,.success').remove('label.error').removeClass('success error');
+                });
+                // Unbind blur event.
+                unbindInputs($customerBasicInfo);
+                // Display inputs.
+                $('.utilityContact').show();
+            }
+        }
+
+        // Set contract-signing customer address information.
+        function setCustomerAddress() {
+            if ($('.building-frm .addressCheckbox').is(':checked')) {
+                $buildingAddress.each(function(i, el) {
+                    var $input = $($customer.get(i));
+                    // Copy values and disable inputs.
+                    $input.val($(this).val()).prop('disabled', true);
+                });
+                // Bind blur event that copies building information to contract-signing customer.
+                bindInputs($buildingAddress, 'blur', $customer);
+                // Hide inputs.
+                $('.customerAddress').hide();
+            } else {
+                $customer.each(function(i, el) {
+                    // Reset values, enable inputs and remove validations.
+                    $(el).val("").prop('disabled', false);
+                    $('.customerAddress').find('.error,.success').remove('label.error').removeClass('success error');
+                });
+                // Unbind blur event.
+                unbindInputs($buildingAddress);
+                // Show inputs
+                $('.customerAddress').show();
+
+                // If address inputs are not filled yet, State should be shown as CA
+                if ($('[id*="inputOwnCity"]').val() === '') {
+                    $('[id*="inputOwnState"]').val('CA');
+                }
+            }
+        }
+
+        // Show/Hide Electric Service ID when Electric Provider values change
+        $('.building-frm').on('change', '.electricProviderSelect', function () {
+            $(this).valid();
+            showHideElectricService($(this).val());
+            $('.electricAccNumber').val("");
+        });
+
+        // Show/Hide Gas Service ID when Gas Provider values change
+        $('.building-frm').on('change', '.gasProviderSelect', function () {
+            $(this).valid();
+            showHideGasService($(this).val());
+            $('.gasAccNumber').val("");
+        });
+
+        var $customer = $('.customerAddress [id*="input"]');
+        var $buildingAddress = $('.buildingAddress [id*="input"]');
+        // Set contract-signing customer's state to California.
+        $('.customerAddress .inputState').val('CA');
+        // Show/Hide inputs when "Same as building address" checkbox is clicked.
+        $('.building-frm .addressCheckbox').click(function() {
+            setCustomerAddress();
+        });
+
+        var $utility = $('.utilityContact input');
+        var $customerBasicInfo = $('.customerContact [id*="input"]').not('[id*="inputEmail"]');
+        // Show/Hide inputs when "Same as contract-signing customer" checkbox is clicked.
+        $('.building-frm .contactCheckbox').click(function() {
+            setAccountHolderInformation();
+        });
+
+        function assignDwellingUnitJS() {
+            assignDwellingUnitForm(dwellingUnitId, id);
+        }
+
+        $('.building-frm').on('click', '#next-info', function(e) {
+            e.preventDefault();
+            validateNextBuildingFormFields();
+
+            if ($('.building-frm').valid()) {
+                hideOwnerButtons();
+                $('[id*="owner-saving-status.start"]').show();
+                nextBuildingInfo();
+            }
+        });
+        $('.building-frm').on('click','#save-info' , function(e) {
+            e.preventDefault();
+            unbindValidation($('.building-frm'));
+            validateSaveBuildingFormFields();
+            if ($('.building-frm').valid()) {
+                saveBuildingInfo();
+            }
+        });
+        $('#mainContent').on('click', '#cancelInfo', function(e) {
+            e.preventDefault();
+
+            if (id !== '') {
+                // Redirect to Building Information page.
+                window.location.href = "{!$Site.CurrentSiteUrl}{!$CurrentPage.Name}?action=new";
+            } else {
+                $('.building-form').hide();
+                // Hide messages.
+                $('.message').hide();
+                $('.buildingInfo-panel').show();
+                cleanUpBuildingForm();
+            }
+        });
+
+        function hideOwnerButtons() {
+            $('.buttons-block').hide();
+        }
+        function showOwnerButtons() {
+            $('.buttons-block').show();
+        }
+
+        // Reset form and clean validation.
+        function cleanUpBuildingForm() {
+            $('.building-frm').get(0).reset();
+            unbindValidation($('.building-frm'));
+            validateSaveBuildingFormFields();
+            // Set contract-signing customer address information.
+            setCustomerAddress();
+            // Set account holder information: First Name, Last Name and Phone.
+            setAccountHolderInformation();
+        }
+
+        $.validator.addMethod("elec_provider_check", function(value, element) {
+            return checkServiceProvider($(".electricProviderSelect").val(), $(".electricAccNumber").val());
+        },"Service IDs for Pacific Gas and Electric Company must be 10 digits and greater than 0.");
+
+        $.validator.addMethod("gas_provider_check", function(value, element) {
+            return checkServiceProvider($(".gasProviderSelect").val(), $(".gasAccNumber").val());
+        }, "Service IDs for Pacific Gas and Electric Company must be 10 digits and greater than 0.");
+
+        $.validator.addMethod("gas_provider_check_SCGC", function(value, element) {
+            var provider = $(".gasProviderSelect").val();
+            var serviceId = $.trim($(".gasAccNumber").val());
+
+            if (provider === 'Southern California Gas Company' && serviceId !== '') {
+                if (!$.isNumeric(serviceId) || serviceId.length !== 10) {
+                    return false;
+                }
+            }
+            return true;
+        }, "Service IDs for Southern California Gas Company must be 10 digits. <br/><a href='https://myaccountum.socalgas.com/register/viewLargeBill.xhtml' target='_blank'>(The first 10 digits of your account number.)</a>");
+
+        function checkServiceProvider(provider, serviceId) {
+            serviceId = $.trim(serviceId);
+            if (provider === 'Pacific Gas and Electric Company' && serviceId !== '') {
+                if (!$.isNumeric(serviceId) || serviceId.length !== 10 || serviceId === '0000000000') {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        // Change validation message for range rule.
+        $.extend($.validator.messages, {
+            range: $.validator.format("Please enter a number between {0} and {1}.")
+        });
+    </script>
+
+</apex:component>

@@ -1,0 +1,624 @@
+<apex:component id="bpiAnalystModalComponent" allowDML="true">
+    <script>
+        if ({!ahu}) {
+            sforce.connection.serverUrl = '{!$Site.Prefix}/services/Soap/u/40.0';
+            sforce.connection.sessionId = '{!$Api.Session_ID}';
+        }
+        var MAX_BPI_FILE_SIZE = 5242880;
+        var isValidBpi = true;
+        var bpiValidator = null;
+
+        $(document).ready(function() {
+            if ({!ahu}) {
+                bindEventsBpiModal();
+            } else {
+                bindHuEventsBpiModal();
+            }
+
+            // Set-Up date picker for date fields
+            $('.input-license-exp-date').attr('readonly', true);
+            $('.input-license-exp-date').datepicker({
+                dateFormat: 'm/d/yy',
+                showOn: "both",
+                minDate: new Date(),
+                buttonImage: "{!URLFOR($Resource.bigutopia, 'img/calendar.png')}",
+                buttonImageOnly: true
+            });
+        });
+
+        //------------------HU----------------------------------------
+        
+        function bindHuEventsBpiModal() {
+            // The contact's logged in has a credential with bpi accreditation
+            if ({!controllerHu.hasAccountBPIAccreditation}) {
+                $('#bpiInfoSection').hide();
+            }
+
+            $('#bpiAnalystModal').on('click', '.bpiCancelModal', function(e) {
+                $('#bpiAnalystModal').modal('hide');
+            });
+
+            // Click on BPI Accreditation checkbox
+            $('#bpiAnalystModal').on('click', '.chk-bpi-certified', function(e) {
+                if (this.checked) {
+                    $('#bpiInfoSection').show();
+                    setBpiCertifiedRules();
+                } else {
+                    $('#bpiInfoSection').hide();
+                    $('.input-license').val('');
+                    $('.input-license-exp-date').val('');
+                    var inpFile = $('.bpi-file');
+                    inpFile.replaceWith (inpFile = inpFile.clone(true));
+                }
+            });
+            
+            $('#bpiAnalystModal').on('hide.bs.modal', function (e) {
+                $('#bpiForm input[type="text"]').each(function(i, e) { 
+                    var $el = $(e);
+                    if ($el.val().length > 0 && $.trim($el.val()) === '') {
+                        $el.val('');
+                    }
+                });
+                
+                isValidBpi = validatorBpiModal({!controllerHu.hasAccountBPIAccreditation});
+                removeValidations();
+            });
+            
+            $('#bpiAnalystModal').on('shown.bs.modal', function (e) {
+                unbindBpiValidation($('.measuresFrm'));
+                setHuBasicBpiRules();
+
+                if ($('.chk-bpi-certified').is(':checked') || {!controllerHu.hasAccountBPIAccreditation} == false) {
+                    setBpiCertifiedRules();
+                }
+            });
+        }
+
+        function addHuBPIAnalyst() {
+            if (validatorBpiModal({!controllerHu.hasAccountBPIAccreditation})) {
+                //get values from modal
+                var BPIfname = $('.input-first-name').val();
+                var BPIlname = $('.input-last-name').val();
+
+                if (!isDuplicated(BPIfname, BPIlname)) {
+                    $("#errorMsg").empty().hide();
+                    $('#bpiAnalystModal').modal('hide');
+
+                    BPIfname = $.trim(BPIfname);
+                    BPIlname = $.trim(BPIlname);
+
+                    //add to option list
+                    var newOption = '<option value="xxx" selected="selected">' + BPIlname + ', ' + BPIfname + '</option>';
+
+                    $('#BPIAnalyst').append(newOption);
+                }
+            }
+        }
+
+        //--------------AHU-----------------------------------
+        function bindEventsBpiModal() {
+            // The contact's logged in has a credential with bpi accreditation
+
+            if ({!controllerAhu.hasAccountBPIAccreditation}) {
+                $('#bpiInfoSection').hide();
+            }
+
+            $('#bpiAnalystModal').on('click', '.cancelBpiModal', function(e) {
+                if (!savingAnalyst) {
+                    $('#bpiAnalystModal').modal('hide');
+                    cleanBPIAnalystModal();
+                }
+            });
+
+            $('#bpiAnalystModal').on('hidden.bs.modal', function(e) {
+                cleanBpiModalFields();
+                removeValidations();
+                bpiValidator.resetForm();
+            });
+
+            $('#bpiAnalystModal').on('shown.bs.modal', function(e) {
+                setAhuRules();
+                if ($('.chk-bpi-certified').is(':checked') || {!controllerAhu.hasAccountBPIAccreditation} == false) {
+                    setBpiCertifiedRules();
+                }
+            });
+
+            // Add analyst when clicking on the "Save" button.
+            $('#addAnalyst').on('click', function(e) {
+                if (!savingAnalyst) {
+                    if (validatorBpiModal({!controllerAhu.hasAccountBPIAccreditation})) {
+                        var BPIfname = $('.input-first-name').val();
+                        var BPIlname = $('.input-last-name').val();
+
+                        if (!isDuplicated(BPIfname, BPIlname)) {
+                            // call to method which will disable cancel, the cross, and add
+                            cleanBPIAnalystModal();
+                            blockButtonsBpiModal();
+                            savingAnalyst = true;
+                            saveBPIAnalyst('' + binaryFileIdCard.name + '', '' + binaryFileIdCard.size + '');
+                        }
+                    }
+                }
+            });
+
+            $('#bpiAnalystModal').on('change', '#inputBPI_IdCard', function(e) {
+               e.preventDefault();
+               if (!savingAnalyst) {
+                   loadBpiFile(e.target);
+               }
+            });
+
+            // Click on BPI Accreditation checkbox
+            $('#bpiAnalystModal').on('click', '.chk-bpi-certified', function(e) {
+                if (this.checked) {
+                    $('#bpiInfoSection').show();
+                    setBpiCertifiedRules();
+                } else {
+                    $('#bpiInfoSection').hide();
+                    $('.input-license').val('');
+                    $('.input-license-exp-date').val('');
+                    cleanBpiFile(binaryFileIdCard);
+                    $('#bpiFile').html('<input id="inputBPI_IdCard" name="bpiIdCard" type="file" class="input-file"/>');
+                }
+            });
+        }
+
+        function activateButtonsBpiModal() {
+            customMsg();
+            if (auxBinaryFileIdCard && auxBinaryFileIdCard.name && auxBinaryFileIdCard.size) {
+                cleanBpiFile(auxBinaryFileIdCard);
+            }
+
+            var BPI_IdCard = $(convertVfToJQ("{!$Component.projectInfoForm.BPI_IdCard}")).val();
+            binaryFileIdCard.parentId = BPI_IdCard;
+            if (binaryFileIdCard && binaryFileIdCard.name && binaryFileIdCard.size && binaryFileIdCard.result) {
+                createAttachment(binaryFileIdCard);
+            }
+
+            savingAnalyst = false;
+            $('#bpiAnalystModal').modal('hide');
+            $('#bpiAnalystModal #addAnalyst').removeClass('disabled');
+            $('#bpiAnalystModal .cancelBpiModal').removeClass('disabled');
+            $('#bpiAnalystModal #inputBPI_IdCard').removeAttr('disabled');
+        }
+
+        function blockButtonsBpiModal() {
+            $('#bpiAnalystModal #inputBPI_IdCard').attr('disabled', 'true');
+            $('#bpiAnalystModal #addAnalyst').addClass('disabled');
+            $('#bpiAnalystModal .cancelBpiModal').addClass('disabled');
+        }
+
+        function cleanBpiModalFields() {
+            $('.input-first-name').val('');
+            $('.input-last-name').val('');
+            $('.input-license').val('');
+            $('.input-license-exp-date').val('');
+            $('.input-email').val('');
+            $('.input-phone').val('');
+            $('.input-phone-extension').val('');
+            $('#bpiFile').html('<input id="inputBPI_IdCard" name="bpiIdCard" type="file" class="input-file" />');
+            cleanBpiFile(binaryFileIdCard);
+            cleanBpiFile(auxBinaryFileIdCard);
+        }
+
+        function lettersWithBasicPunc(txt) {
+            var patt = /^[a-zA-Z\-.,&()'"\s]{2,}$/;
+            var flag = true;
+            txt = txt.trim();
+
+            if (txt.length >= 2) {
+                if (txt[0] === "-" || txt[0] === "," || txt[0] === "." || txt[0] === "&") {
+                    flag = false;
+                }
+                if (txt[txt.length-1] === "-" || txt[txt.length-1] === "," || txt[txt.length-1] === "&") {
+                    flag = false;
+                }
+            }
+
+            return patt.test(txt) && flag;
+        }
+
+        function cleanBPIAnalystModal() {
+            $("#errorMsg").hide().empty();
+            $('#errorModalBpi').hide().empty();
+        }
+
+        function loadBpiFile(e) {
+            var reader = new FileReader();
+            var uploadedFile = e.files[0];
+            if (uploadedFile) {
+                reader.readAsDataURL(uploadedFile);
+                reader.onload = function (e) {
+                    binaryFileIdCard.name = uploadedFile.name;
+                    binaryFileIdCard.size = uploadedFile.size;
+                    binaryFileIdCard.result = reader.result;
+                }
+            } else {
+                cleanBpiFile(binaryFileIdCard);
+            }
+        }
+
+        function cleanBpiFile(obj) {
+            if (obj) {
+                obj.name = '';
+                obj.size = 0;
+                obj.result = '';
+            }
+        }
+
+        var createAttachment = function(data) {
+            var attachment = new sforce.SObject('Attachment');
+            attachment.Name = data.name;
+            attachment.Description = BPI_FILE_DESCRIPTION;
+            attachment.IsPrivate = false;
+            attachment.Body = getFileContent(data.result);
+            attachment.ParentId = data.parentId;
+            var result = sforce.connection.create([attachment]);
+
+            if (result[0].getBoolean("success")) {
+                return result[0].id;
+            } else {
+                return false;
+            }
+        }
+
+        var getFileContent = function(fileData) {
+            var fileContent = String(fileData);
+            return fileContent.substr(fileContent.indexOf(',') + 1);
+        }
+
+        //----------------------------------shared methods HU & AHU------------------------------------------------
+        function setAhuRules() {
+            unbindBpiValidation($(convertVfToJQ("{!$Component.advancedAppForm}")));
+            bpiValidator = $(convertVfToJQ("{!$Component.advancedAppForm}")).validate({
+                focusInvalid: true,
+                invalidHandler: function(event, validator) {
+                    validator.focusInvalid();
+                },
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                highlight: function(element) {
+                    $(element).closest('.control-group').removeClass('success').addClass('error');
+                },
+                rules: {
+                    '{!$Component.bpiAnalystModalComponent.inputFirstName}': {
+                        required: true,
+                        minlength: 2,
+                        checkFirstNameLastName: true
+                    },'{!$Component.bpiAnalystModalComponent.inputLastName}': {
+                        required: true,
+                        checkFirstNameLastName: true
+                    }, '{!$Component.bpiAnalystModalComponent.inputEmail}': {
+                        required: true,
+                        strictEmail: true
+                    }, '{!$Component.bpiAnalystModalComponent.inputPhone}': {
+                        required: true
+                    }, '{!$Component.bpiAnalystModalComponent.inputPhoneExtension}': {
+                        required: false,
+                        number: true
+                    },
+                },
+                messages: {
+                    '{!$Component.bpiAnalystModalComponent.inputFirstName}': {
+                        checkFirstNameLastName: "Please enter a valid first name."
+                    },
+                    '{!$Component.bpiAnalystModalComponent.inputLastName}': {
+                         checkFirstNameLastName: "Please enter a valid last name."
+                    }
+                }
+            });
+        }
+
+        function setHuBasicBpiRules() {
+            $.extend($('.measuresFrm').validate().settings, {
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                rules: {
+                    '{!$Component.bpiAnalystModalComponent.huInputFirstName}': {
+                        required: true,
+                        checkFirstNameLastName: true
+                    },'{!$Component.bpiAnalystModalComponent.huInputLastName}': {
+                        required: true,
+                        checkFirstNameLastName: true
+                    }, '{!$Component.bpiAnalystModalComponent.huInputEmail}': {
+                        required: true,
+                        strictEmail: true
+                    }, '{!$Component.bpiAnalystModalComponent.huInputPhone}': {
+                        required: true
+                    }, '{!$Component.bpiAnalystModalComponent.huInputPhoneExtension}': {
+                        checkPhoneExtension: true
+                    }
+                },
+                messages: {
+                    '{!$Component.bpiAnalystModalComponent.huInputFirstName}': {
+                        checkFirstNameLastName: "Please enter a valid first name."
+                    },
+                    '{!$Component.bpiAnalystModalComponent.huInputLastName}': {
+                        checkFirstNameLastName: "Please enter a valid last name."
+                    }
+                },
+                highlight: function(element) {
+                    $(element).closest('.control-group').removeClass('success').addClass('error');
+                },
+                success: function(element) {
+                    element.text('').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
+                },
+                errorPlacement: function(error, element) {
+                    if (element.attr('name') === 'j_id0:applicationForm:inputDwellingSearch') {
+                        error.insertAfter($(element).closest('div'));
+                    } else if ($(element).attr('name') != 'BPIAnalyst') {
+                        error.insertAfter(element);
+                    }
+                }
+            });
+        }
+        
+        function setBpiCertifiedRules() {
+            if ({!ahu}) {
+                $.extend(true, $(convertVfToJQ("{!$Component.advancedAppForm}")).validate().settings, {
+                    rules: {
+                        '{!$Component.bpiAnalystModalComponent.inputLicense}': {
+                            required: true,
+                            maxlength: 7,
+                            minlength: 7,
+                            digits: true
+                        }, '{!$Component.bpiAnalystModalComponent.inputLicenseExpDate}': {
+                            required: true,
+                            date: true
+                        }, 'bpiIdCard': {
+                            required: true,
+                            filenameLength: true,
+                            extension: "pdf,doc,docx,jpg,gif,png",
+                            filesize: MAX_BPI_FILE_SIZE
+                        }
+                    }
+                });
+            } else {
+                $.extend(true, $('.measuresFrm').validate().settings, {
+                    rules: {
+                        '{!$Component.bpiAnalystModalComponent.huInputLicense}': {
+                            required: true,
+                            maxlength: 7,
+                            minlength: 7,
+                            digits: true
+
+                        }, '{!$Component.bpiAnalystModalComponent.huInputLicenseExpDate}': {
+                            required: true,
+                            date: true
+                        }, "{!$Component.bpiAnalystModalComponent.bpiFile + ':inputFile:file'}": {
+                            required: true,
+                            filenameLength: true,
+                            extension: "pdf,doc,docx,jpg,gif,png",
+                            filesize: MAX_BPI_FILE_SIZE
+                        }
+                    },
+                    highlight: function(element) {
+                        $(element).closest('.control-group').removeClass('success').addClass('error');
+                    },
+                    success: function(element) {
+                        element.text('').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
+                    },
+                    errorPlacement: function(error, element) {
+                        if (element.attr('name') === 'j_id0:applicationForm:inputDwellingSearch') {
+                            error.insertAfter($(element).closest('div'));
+                        } else if ($(element).attr('name') != 'BPIAnalyst') {
+                            error.insertAfter(element);
+                        }
+                    }
+                });
+            }
+        }
+        
+        
+        //Check if BPIAnalyst first name and last name is already on BPIAnalyst picklist
+        function isDuplicated(firstName, lastName) {
+            var isDuplicate = false;
+            // Regular expression to replace multiple Spaces with a single space.
+            var regex = /\s\s+/g;
+            // Sanitize first and last name before to compare.
+            firstName = firstName.trim().replace(regex, ' ').toLowerCase();
+            lastName = lastName.trim().replace(regex, ' ').toLowerCase();
+
+            $("[id*='BPIAnalyst'] > option").each(function() {
+                var bpiAnalystNames = this.text.replace(regex, ' ').toLowerCase().split(',');
+
+                if (bpiAnalystNames.length > 1 && bpiAnalystNames[0].trim() == lastName &&  bpiAnalystNames[1].trim() == firstName) {
+                    isDuplicate = true;
+                    $('#errorModalBpi').html('A BPI Analyst by this name already exists for your Company. Please enter a unique name (first and last) or email jobs@homeupgrade.org for assistance.').show();
+                    // If there is a duplicate BPI, exit from each function
+                    return false;
+                }
+            });
+
+            if (!isDuplicate) {
+                $('#errorModalBpi').hide().empty();
+            }
+
+            return isDuplicate;
+        }
+
+        $('.input-first-name, .input-last-name').on('focusout',function(){
+            isDuplicated($('.input-first-name').val(), $('.input-last-name').val())
+        });
+
+        // Convert visualforce ID into jQuery ID
+        function convertVfToJQ(vfId) {
+            return '#' + vfId.replace(/(:|\.)/g,'\\\\$1');
+        }
+
+        // Removes validation from the form and lets you implement a new validation
+        function unbindBpiValidation(form) {
+            form.validate().destroy();
+            removeValidations();
+        }
+
+        function removeValidations() {
+            $('#bpiAnalystModal .control-group').removeClass('success error');
+            $('#bpiAnalystModal label.error').remove();
+        }
+
+        function validatorBpiModal(hasAccountBPIAccreditation) {
+            if ({!ahu}) {
+                setAhuRules();
+            } else {
+                setHuBasicBpiRules();
+            }
+
+            if ($('.chk-bpi-certified').is(':checked') || hasAccountBPIAccreditation == false) {
+                setBpiCertifiedRules();
+            }
+
+            isValidBpi = ({!ahu}) ? $(convertVfToJQ("{!$Component.advancedAppForm}")).valid() : $('.measuresFrm').valid();
+
+            return isValidBpi;
+        }
+
+        // Validate BPI first/last name
+        $.validator.addMethod('checkFirstNameLastName', function(value, element) {
+            return lettersWithBasicPunc(value)
+        }, "Letters or punctuation only please.");
+
+        $.validator.addMethod('strictEmail', function(value, element) {
+            var result = /^([^<>()\[\]\.,;:ñ¬º·¿´\s@"]([^<>()\[\],;:ñ¬º·¿´\s@"]+([^<>()\[\],;:ñº·¿´\s@"]+)*)|(".+"))@(?!-)[a-zA-Z0-9-]*?[a-zA-Z0-9]\.[a-zA-Z0-9]{2,}$/;
+            return this.optional(element) || result.test(value);
+        }, "Please enter a valid email address.");
+
+        $.validator.addMethod('checkPhoneExtension', function(value, element) {
+            var myVal = $.trim(value);
+            $('.input-phone-extension').val(myVal);
+            if (myVal == null || $.trim(myVal) === '') {
+                return true;
+            } else {
+                return $.isNumeric(value);
+            }
+        }, "Please enter a valid number.");
+    </script>
+
+    <apex:attribute name="ahu" description="AHU program" type="Boolean" required="true"/>
+    <apex:attribute name="controllerAhu" description="AHU controller" type="BIGPortalAdvancedHUAppController" required="false"/>
+    <apex:attribute name="controllerHu" description="HU controller" type="BIGPortalManageApplicationController" required="false"/>
+
+    <div id="bpiAnalystModal" class="modal hide fade" style="width: 540px;">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add BPI Analyst</h3>
+        </div>
+        <div class="modal-body" style="max-height:540px;">
+            <div id="bpiForm" class="form-horizontal">
+                <div id="errorModalBpi"></div>
+                <div class="span6">
+                    <div class="control-group">
+                        <label class="control-label">First Name *</label>
+                        <div class="controls">
+                            <apex:inputText value="{!controllerAhu.newBPIAnalyst.FirstName}" id="inputFirstName" rendered="{!ahu}" styleClass="input-first-name" maxlength="40"/>
+                            <apex:inputText value="{!controllerHu.newBPIAnalystContact.FirstName}" id="huInputFirstName" rendered="{!NOT(ahu)}" styleClass="input-first-name" maxlength="40"/>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Last Name *</label>
+                        <div class="controls">
+                            <apex:inputText value="{!controllerAhu.newBPIAnalyst.LastName}" id="inputLastName" rendered="{!ahu}" styleClass="input-last-name" maxlength="80"/>
+                            <apex:inputText value="{!controllerHu.newBPIAnalystContact.LastName}" id="huInputLastName" rendered="{!NOT(ahu)}" styleClass="input-last-name" maxlength="80"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Email *</label>
+                        <div class="controls">
+                            <apex:inputText value="{!controllerAhu.newBPIAnalyst.Email}" rendered="{!ahu}" id="inputEmail" styleClass="input-email"/>
+                            <apex:inputText value="{!controllerHu.newBPIAnalystContact.Email}" rendered="{!NOT(ahu)}" id="huInputEmail" styleClass="input-email"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Phone *</label>
+                        <div class="controls">
+                            <apex:inputText value="{!controllerAhu.newBPIAnalyst.Phone}" rendered="{!ahu}" id="inputPhone" styleClass="input-phone"/>
+                            <apex:inputText value="{!controllerHu.newBPIAnalystContact.Phone}" rendered="{!NOT(ahu)}" id="huInputPhone" styleClass="input-phone"/>
+                        </div>
+                    </div>
+
+                     <div class="control-group">
+                        <label class="control-label">Extension</label>
+                        <div class="controls">
+                            <apex:inputText value="{!controllerAhu.newBPIAnalyst.Phone_Extension__c}" rendered="{!ahu}" id="inputPhoneExtension" styleClass="input-phone-extension" maxlength="18"/>
+                            <apex:inputText value="{!controllerHu.newBPIAnalystContact.Phone_Extension__c}" rendered="{!NOT(ahu)}" id="huInputPhoneExtension" styleClass="input-phone-extension" maxlength="18"/>
+                        </div>
+                    </div>
+
+                    <apex:outputPanel rendered="{!ahu}" layout="none">
+                        <apex:outputPanel styleClass="control-group" rendered="{!controllerAhu.hasAccountBPIAccreditation}" layout="block">
+                            <label class="control-label">BPI Certified</label>
+                            <div class="controls">
+                                <apex:inputCheckbox value="{!controllerAhu.isBpiCertified}" id="chkBpiCertified" styleClass="chk-bpi-certified"/>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel rendered="{!NOT(ahu)}" layout="none">
+                        <apex:outputPanel styleClass="control-group" rendered="{!controllerHu.hasAccountBPIAccreditation}" layout="block">
+                            <label class="control-label">BPI Certified</label>
+                            <div class="controls">
+                                <apex:inputCheckbox value="{!controllerHu.isBpiCertified}" id="huChkBpiCertified" styleClass="chk-bpi-certified"/>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                     <div id="bpiInfoSection">
+                        <div class="control-group">
+                            <label class="control-label">BPI ID Number *</label>
+                            <div class="controls">
+                                <apex:inputText value="{!controllerAhu.newBPIAnalyst.BPI_License_Number__c}" rendered="{!ahu}" id="inputLicense" styleClass="input-license"/>
+                                <apex:inputText value="{!controllerHu.newBPIAnalystContact.BPI_License_Number__c}" rendered="{!NOT(ahu)}" id="huInputLicense" styleClass="input-license"/>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Expiration Date *</label>
+                            <div class="controls">
+                                <apex:inputText value="{!controllerAhu.newBPIAnalyst.BPI_License_Expiration_Date__c}" rendered="{!ahu}" id="inputLicenseExpDate" styleClass="input-license-exp-date"/>
+                                <apex:inputField showDatePicker="false" value="{!controllerHu.newBPIAnalystContact.BPI_License_Expiration_Date__c}" rendered="{!NOT(ahu)}" id="huInputLicenseExpDate" styleClass="input-license-exp-date"/>
+                            </div>
+                        </div>
+                        <apex:outputPanel styleClass="control-group" layout="block" rendered="{!ahu}">
+                            <label class="control-label">BPI ID Card * <span class="optional-label">(both sides)</span></label>
+                            <div id="bpiFile" class="controls">
+                                <input id="inputBPI_IdCard" name="bpiIdCard" type="file" class="input-file" />
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="control-group" layout="block" rendered="{!NOT(ahu)}">
+                            <div class="control-label-div">
+                                <label class="control-label">BPI ID Card *<span class="optional-label">(both sides)</span></label>
+                            </div>
+                            <div class="controls">
+                                <apex:inputFile id="bpiFile" value="{!controllerHu.bpiFileIdCard.body}" filename="{!controllerHu.bpiFileIdCard.name}" filesize="{!controllerHu.bpiFileIdCard.BodyLength}" styleClass="input-file bpi-file"/>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+
+                    <apex:outputPanel styleClass="control-group" layout="block" rendered="{!ahu}">
+                        <div class="controls" style="margin-left:150px;width:250px;">
+                            <button class="btn btn-default cancelBpiModal" type="button">Cancel</button>&nbsp;
+                            <a id="addAnalyst" href="" class="btn btn-primary">Save</a>&nbsp;
+                        </div>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel styleClass="control-group" layout="block" rendered="{!NOT(ahu)}">
+                        <div class="control-label-div">
+                            <label class="control-label" style="width: 130px;"></label>
+                        </div>
+                        <div class="controls">
+                            <button class="btn btn-default bpiCancelModal" type="button">Cancel</button>&nbsp;
+                            <button class="btn btn-primary" type="button" onclick="addHuBPIAnalyst();">Add</button>&nbsp;
+                        </div>
+                    </apex:outputPanel>
+
+                    <apex:actionFunction action="{!controllerAhu.saveBPIAnalyst}" name="saveBPIAnalyst" rerender="BPIAnalystList,postBPIAnalystList,errorMsgs" oncomplete="activateButtonsBpiModal()">
+                        <apex:param name="fileName" assignTo="{!controllerAhu.BPI_IdCardFileName}" value="" />
+                        <apex:param name="fileSize" assignTo="{!controllerAhu.BPI_IdCardFileSize}" value="" />
+                    </apex:actionFunction>
+                </div>
+            </div>
+        </div>
+    </div>
+</apex:component>

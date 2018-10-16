@@ -1,0 +1,225 @@
+<apex:page controller="et4ae5.phoenixSendControl">
+    <script>
+        var previousOnload = window.onload;
+        var buOn = '{!defaultBUisEnabled}';
+        window.onload = function ()
+        {
+            if (previousOnload)
+            {
+                previousOnload();
+                if (buOn == "false")
+                {
+                    createBuFilter();
+                }
+            }
+        }
+    </script>
+    <style>
+        #popupcontent {
+            position: fixed;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            display: none;
+            overflow: auto;
+            border: 3px solid #585858;
+            background-color: white; //
+            border: 1px solid #333;
+            z-index: 100;
+            padding: 5px;
+            line-height: 20px;
+        }
+        #opaque {
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            z-index: 99;
+            display: none;
+            background-color: gray;
+            filter: alpha(opacity=80);
+            opacity: 0.8;
+            -moz-opacity: 0.8;
+            -khtml-opacity: 0.8
+        }
+        * html #opaque {
+            position: absolute;
+        }
+        #showPopBtn {
+            border: 0 0 0 0;
+            background-image: url(/img/func_icons/util/lookup20.gif);
+            background-position: left top;
+            height: 20px;
+            width: 20px;
+        }
+        #showPopBtn:hover {
+            border: 0 0 0 0;
+            background-image: url(/img/func_icons/util/lookup20.gif);
+            background-position: right top;
+            height: 20px;
+            width: 20px;
+        }
+        .pbTitle {
+            white-space: nowrap;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+        .alert h4 {
+            margin-top: 0;
+            color: inherit;
+        }
+        .alert .alert-link {
+            font-weight: bold;
+        }
+        .alert>p,
+        .alert>ul {
+            margin-bottom: 0;
+        }
+        .alert-dismissable {
+            padding-right: 35px;
+        }
+        .alert-dismissable .close {
+            position: relative;
+            color: inherit;
+        }
+        .alert-et {
+            color: black;
+            background-color: white;
+            border-color: #ffa100;
+        }
+        .alert-et hr {
+            border-top-color: #f8e5be;
+        }
+        .alert-et .alert-link {
+            color: #a47e3c;
+        }
+        button.close {
+            padding: 0;
+            cursor: pointer;
+            background: transparent;
+            border: 0;
+            -webkit-appearance: none;
+        }
+        .close {
+            float: right;
+            font-size: 15px;
+            font-weight: bold;
+            line-height: 1;
+            color: #000000;
+            text-shadow: 0 1px 0 #ffffff;
+            opacity: 0.2;
+            filter: alpha(opacity=20);
+        }
+        .close:hover,
+        .close:focus {
+            color: #000000;
+            text-decoration: none;
+            cursor: pointer;
+            opacity: 0.5;
+            filter: alpha(opacity=50);
+        }
+    </style>
+    <apex:insert name="customCSS" />
+    <div id="opaque" />
+    <apex:outputPanel id="popupOP" rendered="true">
+        <div id="popupcontent">
+            <apex:form id="form" style="background-color:#ffffff">
+                <apex:pageBlock mode="edit" id="pbWhite">
+                    <table width="100%" border="0">
+                        <tr>
+                            <td colspan="2">
+                                <table width="100%" style="background-color: white;">
+                                    <tr>
+                                        <td width="5">
+                                            <apex:insert name="buManagementImage" />
+                                        </td>
+                                        <td width="5" />
+                                        <td width="100%" style="vertical-align: middle; font-size: 36px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold;">
+                                            {!$label.slctBU}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="250" valign="top">
+                                <apex:pageBlock title="{!$Label.et4ae5__filtercrit}" mode="edit" id="criteria">
+                                    <apex:actionFunction name="searchServer" action="{!runSearch}" rerender="results">
+                                        <apex:param name="buName" value="" />
+                                        <apex:param name="buId" value="" />
+                                    </apex:actionFunction>
+                                    <table cellpadding="2" cellspacing="2">
+                                        <tr>
+                                            <td style="font-weight: bold;">
+                                                {!$label.buName}
+                                                <br />
+                                                <apex:inputText value="{!buSearchName}" style="width:200px">
+                                                    <apex:actionSupport event="onkeyup" action="{!runSearch}" rerender="results" />
+                                                </apex:inputText>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight: bold;">
+                                                {!$label.buId}
+                                                <br />
+                                                <apex:inputText value="{!buSearchId}" style="width:200px">
+                                                    <apex:actionSupport event="onkeyup" action="{!runSearch}" rerender="results" />
+                                                </apex:inputText>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </apex:pageBlock>
+                                <apex:outputPanel rendered="{!LEN(selectedBuDisp)>0}">
+                                    <button type="button" onclick="hidepopup();">
+                                        {!$Label.cancel}
+                                    </button>
+                                </apex:outputPanel>
+                            </td>
+                            <td valign="top">
+                                <apex:pageBlock mode="edit" id="results">
+                                    <apex:pageBlockTable value="{!luBu}" var="buxyz">
+                                        <apex:column >
+                                            <apex:facet name="header">
+                                                <apex:commandLink value="{!$Label.et4ae5__name}" action="javascript:toggleSort('business_unit_name__c');" rerender="results" />
+                                            </apex:facet>
+                                            <apex:outputLink value="javascript:selectLuBu('{!buxyz.id}');hidepopup();">
+                                                {!buxyz.et4ae5__Business_Unit_Name__c}
+                                            </apex:outputLink>
+                                        </apex:column>
+                                        <apex:column >
+                                            <apex:facet name="header">
+                                                <apex:commandLink value="{!$Label.et4ae5__id}" action="javascript:toggleSort('business_unit_id__c');" rerender="results" />
+                                            </apex:facet>
+                                            <apex:outputField value="{!buxyz.et4ae5__Business_Unit_ID__c}" />   
+                                        </apex:column>
+                                    </apex:pageBlockTable>
+                                </apex:pageBlock>
+                            </td>
+                        </tr>
+                    </table>
+                </apex:pageBlock>
+            </apex:form>
+        </div>
+    </apex:outputPanel>
+    <br />
+    <br />
+    <table>
+        <tr>
+            <td>
+                <apex:insert name="sendTypeImage" />
+            </td>
+            <td width="5" />
+            <td style="font-size: 36px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold; margin: 0 0 15px 0;">
+                <apex:insert name="sendTypeLabel" />
+            </td>
+        </tr>
+    </table>
+    <apex:pageMessages />
+</apex:page>

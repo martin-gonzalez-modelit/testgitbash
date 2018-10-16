@@ -1,0 +1,34 @@
+<apex:component layout="none" controller="BIGPortalAHUSurveyController">
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-cookie/jquery.cookie.js')}"/>
+    <style>
+        [data-notify="container"] {
+            font-size: 16px;
+            width: 40%;
+        }
+    </style>
+    <apex:variable var="options" value="{
+            title: '<strong>Build It Green wants your feedback!</strong><br/>',
+            message: 'Help us make the contractor portal better by taking this brief survey.',
+            url: 'https://builditgreen.tfaforms.net/97',
+            target: '_blank'}" />
+    <apex:variable var="settings" value="{
+            delay: 0,
+            type: 'info',
+            allow_dismiss: true,
+            placement: {
+                align: 'center'
+            },
+            animate: {
+                enter: 'animated fadeInDown',
+                exit: 'animated fadeOutUp'
+            },
+            offset: {
+                y: 50
+            },
+            z_index: 1031,
+            onClose: function() {
+                $.cookie('apex__ahu_survey_{!sid}', 'hide', { path: '/pgeportal', secure: true });
+            }}" />
+
+    <c:BIGPortalShowToast options="{!options}" settings="{!settings}" rendered="{!render}" />
+</apex:component>

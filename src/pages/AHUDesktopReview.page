@@ -1,0 +1,307 @@
+<apex:page standardController="Review__c" extensions="AHUDesktopReviewController" showHeader="true" sidebar="false">
+
+    <style>
+    .bPageBlock .pbHeader .pbTitle {
+        width: 100%;
+    }
+    .pbBottomButtons td.pbTitle {
+        display: none;
+    }
+    .c-col-left .hideListButton {
+        visibility: hidden;
+    }
+    .c-grid {
+        border-spacing: 4px;
+    }
+    .c-col-left, .c-col-right {
+        vertical-align: top;
+    }
+    .c-col-left {
+        width: 35%;
+        min-width: 350px;
+    }
+    .c-col-right {
+        width: 65%;
+        min-width: 650px;
+        padding: 0;
+    }
+    .c-col-right-inner {
+        width: 100%;
+        padding: 0;
+    }
+    .c-col-right table {
+        border-spacing: 0;
+    }
+    .c-label {
+        width: 70% !important;
+        font-weight: normal !important;
+        text-align: left !important;
+        font-size: 1em !important;
+    }
+    .c-label-review {
+        width: 100% !important;
+        display: block;
+        border: none !important;
+    }
+    .c-data {
+        width: 30% !important;
+    }
+    .c-data select {
+        width: 100%;
+    }
+    .c-data-review {
+        width: 100% !important;
+        display: block;
+        border: none !important;
+    }
+    .c-data-review textarea {
+        width: 98%;
+        margin-left: -8px;
+    }
+    .c-btn {
+        display: inline-block;
+        padding: 6px 15px;
+        margin-bottom: 0;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.42857143;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        -ms-touch-action: manipulation;
+        touch-action: manipulation;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        background-image: none;
+        border: 1px solid rgba(0, 0, 0, 0);
+        border-radius: 3px;
+    }
+    .c-btn-sm {
+        padding: 6px 10px;
+        font-size: 14px;
+        line-height: 1.5;
+        border-radius: 3px;
+    }
+    .c-btn-primary {
+        color: #FFF;
+        background-color: #428BCA;
+        border-color: #357EBD;
+    }
+    .c-btn-danger {
+        color: #FFF;
+        background-color: #D9534F;
+        border-color: #D43F3A;
+    }
+    .c-col-left .c-btn {
+        margin: 3px 5px 3px 0;
+    }
+    .c-col-left .c-btn-sm {
+        padding: 3px 5px;
+        font-size: 12px;
+    }
+    .c-btn:disabled {
+        pointer-events: none;
+        cursor: not-allowed;
+        opacity: .50;
+    }
+    /* For higher screen resolutions */
+    @media screen and (min-device-width: 1600px) {
+        .c-col-left .c-btn-sm {
+            padding: 3px 8px;
+            font-size: 12px;
+        }
+    }
+    </style>
+
+    <apex:includeScript value="//code.jquery.com/jquery-1.11.1.min.js"/>
+    <script type="text/javascript">
+    var j$, settings, sel, fixStyles, getTemplateText, initIssuesBehavior, validate, eventObj;
+
+    j$ = jQuery.noConflict();
+    settings = {!settingsJson};
+    sel = {issues: '.c-issues', field: '.c-field'};
+
+    fixStyles = function () {
+        // remove salesforce's btn class from custom buttons
+        j$('.c-btn').removeClass('btn');
+    };
+
+    getTemplateText = function (field) {
+        return settings[field].Template_Text__c.replace('\r','');
+    };
+
+    // populate issues textarea based on review input
+    initIssuesBehavior = function () {
+        j$(sel.issues).val(j$(sel.issues).val() + '\n');
+        j$(sel.field).on('change', function () {
+            var res, f, val;
+            f = j$(this).data('api_name');
+            val = j$(sel.issues).val();
+            if (j$(this).val() === settings[f].Template_Value__c) {
+                val = val.replace(/\s*$/, '');
+                j$(sel.issues).val(val + '\n' + getTemplateText(f) + '\n');
+            }
+            else {
+                j$(sel.issues).val(val.replace(getTemplateText(f) + '\n', ''));
+            }
+        });
+    };
+
+    // validation criteria
+    validate = function (id) {
+        var isValid = true;
+        if (id === 'approve') {
+            j$(sel.field).each(function () {
+                var f = j$(this).data('api_name');
+                if (j$(this).val() !== settings[f].Truthy_Value__c)
+                    isValid = false;
+            });
+            if (!isValid) {
+                eventObj.preventDefault();
+                alert('To approve, all review fields must be true.');
+            }
+            else if (j$.trim(j$(sel.issues).val())) {
+                eventObj.preventDefault();
+                isValid = false;
+                alert('To approve, issues input must be blank.')
+            }
+            if (isValid)
+                approveAction();
+        }
+        else {
+            isValid = false;
+        }
+        return isValid;
+    };
+
+    j$(function () {
+        initIssuesBehavior();
+        fixStyles();
+
+        j$('.c-approve').on('click', function (event) {
+
+            if ( ! conf ( "approve" ) ) return;
+
+            eventObj = event;
+            validate('approve');
+        });
+
+        // Extract the field name from fields' class for use
+        // with application of validation and issues text.
+        j$(sel.field).each(function () {
+            var f = /(^|\s)c-field-(.*)(\s|$)/.exec(j$(this).attr('class'))[2];
+            j$(this).data('api_name', f);
+        });
+
+        j$('.leftCol').height(j$(window).height() - j$('.bPageHeader').outerHeight(true) - j$('.bPageFooter').outerHeight(true) - 100);
+        j$('.rightCol').height(j$(window).height() - j$('.bPageHeader').outerHeight(true) - j$('.bPageFooter').outerHeight(true) - 100);
+
+        j$(window).on('resize', function() {
+            j$('.leftCol').height(j$(window).height() - j$('.bPageHeader').outerHeight(true) - j$('.bPageFooter').outerHeight(true) - 100);
+            j$('.rightCol').height(j$(window).height() - j$('.bPageHeader').outerHeight(true) - j$('.bPageFooter').outerHeight(true) - 100);
+        });
+        
+        j$('.c-save').on('click', function (event) {
+            event.preventDefault();
+            j$(this).attr('disabled', true);
+        });
+
+    });
+
+    function doReturn ()
+    {
+        if ( ! conf ( "return for correction" ) ) return;
+
+        returnAction ();
+    }
+
+    function doReject ()
+    {
+        if ( ! conf ( "reject" ) ) return;
+
+        rejectAction ();
+    }
+
+    function conf ( action )
+    {
+        return confirm ( "Are you sure you'd like to " + action + "?" );
+    }
+
+    // disable focus on text areas
+    function setFocusOnLoad() {}
+    </script>
+
+    <apex:pageMessages />
+
+    <apex:outputPanel rendered="{!doDisplayForm}" id="mainContainer">
+        <p>« <a href="/{!app.id}">Back to Rebate Application Form</a></p>
+
+        <apex:panelGrid columns="2" columnClasses="c-col-left,c-col-right" styleClass="c-grid">
+            <apex:form >
+                <apex:actionFunction action="{!approve}" name="approveAction"/>
+                <apex:actionFunction action="{!returnForCorrection}" name="returnAction"/>
+                <apex:actionFunction action="{!reject}" name="rejectAction"/>
+
+                <apex:outputPanel layout="block" style="overflow-y:scroll;" styleClass="leftCol">
+                <apex:pageBlock title="Rebate Application Form Details {!stageHint}">
+                    <apex:pageBlockButtons location="bottom">
+                        <div style="float:left; ">
+
+                            <button type="button" class="c-approve c-btn c-btn-sm c-btn-primary">Approve</button>
+                            <button onclick="doReturn ();" type="button" class="c-btn c-btn-sm c-btn-primary">Return for Correction</button>
+
+                            <apex:commandButton action="{!save}" value="Save" styleClass="c-btn c-btn-sm c-btn-primary c-save" oncomplete=""/>
+                        </div>
+                        <div style="float:right; ">
+
+                            <button onclick="doReject ();" type="button" class="c-btn c-btn-sm c-btn-danger">Reject</button>
+
+                        </div>
+                    </apex:pageBlockButtons>
+
+                    <apex:dynamicComponent componentValue="{!reviewSections}"/>
+
+                    <apex:pageBlockSection columns="1" title="Review" id="review_section">
+                        <apex:pageBlockSectionItem labelStyleClass="c-label c-label-review" dataStyleClass="c-data c-data-review">
+                            <apex:outputLabel value="{!$ObjectType.Review__c.fields.Comments__c.label}"/>
+                            <apex:inputField value="{!review.Comments__c}" styleClass="c-issues"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem labelStyleClass="c-label c-label-review" dataStyleClass="c-data c-data-review">
+                            <apex:outputLabel value="{!$ObjectType.Review__c.fields.Additional_Comments__c.label}"/>
+                            <apex:inputField value="{!review.Additional_Comments__c}"/>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+                </apex:outputPanel>
+            </apex:form>
+
+            <apex:panelGrid columns="1" styleClass="c-col-right-inner">
+            <apex:outputPanel layout="block" style="overflow-y:scroll;" styleClass="rightCol" >
+                <apex:pageBlock title="AHU Application Detail">
+                    <apex:repeat value="{!fieldSets['Application__c']}" var="fs">
+                        <apex:pageBlockSection columns="2" title="{!fs.label}">
+                            <apex:repeat value="{!fs.fields}" var="f">
+                                <apex:outputField value="{!app[f.fieldPath]}" label="{!f.label}"/>
+                            </apex:repeat>
+                         </apex:pageBlockSection>
+                     </apex:repeat>
+                </apex:pageBlock>
+                <apex:pageBlock title="AHU Sub-Application Detail">
+                    <apex:repeat value="{!fieldSets['Sub_Application__c']}" var="fs">
+                        <apex:pageBlockSection columns="2" title="{!fs.label}">
+                            <apex:repeat value="{!fs.fields}" var="f">
+                                <apex:outputField value="{!subApp[f.fieldPath]}" label="{!f.label}"/>
+                            </apex:repeat>
+                         </apex:pageBlockSection>
+                     </apex:repeat>
+                </apex:pageBlock>
+                <apex:dynamicComponent componentValue="{!dynamicLists}"/>
+                </apex:outputPanel>
+            </apex:panelGrid>
+        </apex:panelGrid>
+    </apex:outputPanel>
+
+</apex:page>

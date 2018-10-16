@@ -1,0 +1,960 @@
+<apex:page controller="et4ae5.SubscriberAnalyticsController" readOnly="true" tabStyle="send_analytics__tab" sidebar="false" id="page">
+  <style>
+    #showPopBtn {
+    border: 0 0 0 0;
+    background-image: url(/img/func_icons/util/lookup20.gif);
+    background-position: left top;
+    height: 20px;
+    width: 20px;
+    }
+    #showPopBtn:hover {
+    border: 0 0 0 0;
+    background-image: url(/img/func_icons/util/lookup20.gif);
+    background-position: right top;
+    height: 20px;
+    width: 20px;
+    }
+    #opaque {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 99;
+    display: none;
+    background-color: gray;
+    filter: alpha(opacity=80);
+    opacity: 0.8;
+    -moz-opacity: 0.8;
+    -khtml-opacity: 0.8
+    }
+    #popupcontent {
+    position: fixed;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+    display: none;
+    overflow: auto;
+    border: 3px solid #585858;
+    background-color: white; //
+    border: 1px solid #333;
+    z-index: 100;
+    padding: 5px;
+    line-height: 20px;
+    }
+  </style>
+  <c:ETHeader message="{!$Label.et4ae5__etanlytcs}" image="analytic.png" />
+  <apex:pageMessages id="messages" />
+  <apex:form id="frm">
+    <apex:actionFunction name="okayBtn" action="{!changeSub}" onComplete="showPersonName();" rerender="subNameOutputText,subChart,datesSection,createdDateSection,subPicker, messages, detailsSection, graphSection, sentEmailSection, openedEmailSection, 
+        clickedEmailSection, linksClickedSection, emailsSentRptTitle, emailsOpenRptTitle, emailsClckRptTitle, linksClckRptTitle, sidebarInfo">
+      <apex:param name="objType" value="" />
+    </apex:actionFunction>
+    <apex:actionFunction name="selectQEmail" action="{!selectQEmail}" rerender="subNameOutputText,subChart,datesSection,createdDateSection,subPicker, messages, detailsSection, graphSection, sentEmailSection, openedEmailSection, 
+        clickedEmailSection, linksClickedSection, emailsSentRptTitle, emailsOpenRptTitle, emailsClckRptTitle, linksClckRptTitle, sidebarInfo">
+      <apex:param name="qEmailId" value="" />
+      <apex:param name="qEmailName" value="" />
+    </apex:actionFunction>
+    <apex:actionFunction name="selectEmailJS" action="{!selectEmail}" rerender="emailName,emailSubject,exactTargetEmails" status="listEmailsStatus">
+      <apex:param name="emailId" value="" />
+      <apex:param name="emailName" value="" />
+      <apex:param name="emailSubject" value="" />
+    </apex:actionFunction>
+    <div id="opaque" />
+    <apex:outputPanel id="popupOp">
+      <div id="popupcontent">
+        <table width="100%" border="0" style="background-color:#ffffff">
+          <tr>
+            <td colspan="2">
+              <table width="100%" style="background-color: white;">
+                <tr>
+                  <td width="5">
+                    <img height="45" src="{!URLFOR( $Resource.ExactTargetImages, 'analytic.png' )}" />
+                  </td>
+                  <td width="5" />
+                  <td width="100%" style="vertical-align: middle; font-size: 36px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold;">
+                    {!$label.slctEmail}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td width="250" valign="top">
+              <apex:pageBlock title="{!$Label.et4ae5__filtercrit}" mode="edit" id="criteria">
+                <apex:actionFunction name="searchServer" action="{!runSearch}" rerender="results">
+                  <apex:param name="buName" value="" />
+                  <apex:param name="buId" value="" />
+                </apex:actionFunction>
+                <table cellpadding="2" cellspacing="2">
+                  <tr>
+                    <td style="font-weight: bold;">
+                      {!$label.emailName}
+                      <br />
+                      <apex:inputText value="{!emSearchName}" style="width:200px">
+                        <apex:actionSupport event="onkeyup" action="{!runSearch}" rerender="results" />
+                      </apex:inputText>
+                    </td>
+                  </tr>
+                </table>
+              </apex:pageBlock>
+              <apex:outputPanel >
+                <button type="button" onclick="hidepopup();">
+                  {!$Label.cancel}
+                </button>
+              </apex:outputPanel>
+            </td>
+            <td valign="top">
+              <apex:pageBlock mode="edit" id="results">
+                <apex:pageBlockTable value="{!queriedEmails}" var="xyz">
+                  <apex:column >
+                    <apex:facet name="header">
+                      <apex:outputPanel layout="block" style="text-align:left;">
+                        {!$Label.et4ae5__emailname}
+                      </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputLink value="javascript:selectQEmail('{!JSENCODE(xyz.et4ae5__EmailId__c)}','{!JSENCODE(xyz.et4ae5__EmailName__c)}');hidepopup();">
+                      {!xyz.et4ae5__EmailName__c}
+                    </apex:outputLink>
+                  </apex:column>
+                  <apex:column style="text-align:right;">
+                    <apex:facet name="header">
+                      <apex:outputPanel layout="block" style="text-align:right;">
+                        {!$Label.et4ae5__totjobs}
+                      </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputField value="{!xyz.et4ae5__JobId__c}" />
+                  </apex:column>
+                  <apex:column style="text-align:right;">
+                    <apex:facet name="header">
+                      <apex:outputPanel layout="block" style="text-align:right;">
+                        {!$Label.et4ae5__lastsent}
+                      </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputField value="{!xyz.et4ae5__MemberID__c}" />
+                  </apex:column>
+                  <apex:column style="text-align:right;">
+                    <apex:facet name="header">
+                      <apex:outputPanel layout="block" style="text-align:right;">
+                        {!$Label.et4ae5__emailid}
+                      </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputField value="{!xyz.et4ae5__EmailId__c}" />
+                  </apex:column>
+                </apex:pageBlockTable>
+              </apex:pageBlock>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </apex:outputPanel>
+    <div style="padding-bottom:15px;">
+      <apex:selectList size="1" style="font-size: 16px; font-weight: bold; color: black;" value="{!reportType}">
+        <apex:selectOption itemValue="Subscriber" itemLabel="{!subscriberLabel}" />
+        <apex:selectOption itemValue="Aggregate" itemLabel="{!aggregateLabel}" />
+        <apex:selectOption itemValue="Email" itemLabel="{!emailLabel}" />
+        <apex:actionSupport event="onchange" action="{!refData}" rerender="subNameOutputText,subChart,datesSection,createdDateSection,subPicker, messages, detailsSection, graphSection, sentEmailSection, 
+                openedEmailSection, clickedEmailSection, linksClickedSection, emailsSentRptTitle, emailsOpenRptTitle, emailsClckRptTitle, linksClckRptTitle, 
+                sidebarInfo" />
+      </apex:selectList>
+      <span style="color:#777;" class="helpButton" id="picker-_help">
+        <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:middle;" title="" />
+        <script>
+          sfdcPage.setHelp('picker', '{!JSENCODE($Label.msg0096)}');
+        </script>
+      </span>
+    </div>
+    <apex:pageBlock rendered="{!ShowPage}" id="pb">
+      <apex:outputPanel id="subPicker">
+        <apex:pageBlockSection columns="2">
+          <apex:outputPanel >
+            <apex:outputPanel rendered="{!renderSubscriberItems}">
+              <div id="personName">
+                <table>
+                  <tr>
+                    <td style="font-size: 16px; font-weight:bold; color: #99ccc3;">
+                      <apex:outputText id="subNameOutputText" value="{!SubscriberNameLabel} ({!OptStatus})" />
+                    </td>
+                    <td style="vertical-align:center;">
+                      <input type="image" src="/s.gif" id="showPopBtn" onclick="showDivSubChoose();return false;" />
+                    </td>
+                    <td style="vertical-align:center;">
+                      <span style="color:#777;" class="helpButton" id="msg0117-_help">
+                        <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:middle;" title="" />
+                        <script>
+                          sfdcPage.setHelp('msg0117', '{!JSENCODE($Label.msg0117)}');
+                        </script>
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div id="divSubChoose" style="display:none">
+                <apex:outputPanel id="subChoose">
+                  <table id="tableSubChoose">
+                    <tr id="trSubChoose">
+                      <td style="font-size: 14px; font-weight:bold; color: #99ccc3; vertical-align:top;">
+                        <select id="subLookupSelect" style="font-size: 14px; font-weight: bold; color: black; vertical-align:top;" onchange="changeSLU(this);">
+                          <option value="Contact">
+                            {!$Label.contact}
+                          </option>
+                          <option value="Lead">
+                            {!$Label.lead}
+                          </option>
+                        </select>
+                      </td>
+                      <td id="tdSubChoose" style="vertical-align:center;">
+                        <div id="contactLookup">
+                          <apex:inputField id="inpFldContact" value="{!send.et4ae5__Contact__c}" />
+                        </div>
+                      </td>
+                      <td>
+                        <div id="leadLookup">
+                          <apex:inputField id="inpFldLead" value="{!send.et4ae5__Lead__c}" />
+                        </div>
+                      </td>
+                      <td>
+                        <apex:outputLink value="javascript:showPersonName();">
+                          <apex:image value="/img/func_icons/util/ileUndo16.gif" alt="{!$Label.et4ae5__undo}" title="{!$Label.et4ae5__undo}" />
+                        </apex:outputLink>
+                      </td>
+                      <td>
+                        <apex:outputLink value="javascript:okayBtn(objType);">
+                          <apex:image value="/img/permissions_confirm16.gif" alt="{!$Label.et4ae5__accept}" title="{!$Label.et4ae5__accept}" />
+                        </apex:outputLink>
+                      </td>
+                    </tr>
+                  </table>
+                </apex:outputPanel>
+              </div>
+            </apex:outputPanel>
+            <apex:outputPanel id="emailPanel" rendered="{!renderEmailItems}">
+              <table>
+                <tr>
+                  <td style="font-size: 16px; font-weight:bold; color: #99ccc3;">
+                    <apex:outputText id="emailNameOutputText" value="{!EmailNameLabel} ({!EmailIdLabel})" />
+                  </td>
+                  <td style="vertical-align:center;">
+                    <input type="image" src="/s.gif" id="showPopBtn" onclick="showEmailPicker();return false;" />
+                  </td>
+                  <td style="vertical-align:center;">
+                    <span style="color:#777;" class="helpButton" id="msg0118-_help">
+                      <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:middle;" title="" />
+                      <script>
+                        sfdcPage.setHelp('msg0118', '{!JSENCODE($Label.msg0118)}');
+                      </script>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </apex:outputPanel>
+          </apex:outputPanel>
+          <apex:outputPanel >
+            <apex:outputPanel rendered="{!renderExcludeSingleSends}">
+              <div align="right">
+                <table style="width:100%">
+                  <tr>
+                    <td style="padding-top:0px;padding-bottom:0px;width:95%" class="labelCol">
+                      <span style="color:#777;padding-left:2px;" class="helpButton" id="msg0097-_help">
+                        {!$Label.exclSS}
+                        <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                        <script>
+                          sfdcPage.setHelp('msg0097','{!JSENCODE($Label.msg0097)}');
+                        </script>
+                      </span>
+                    </td>
+                    <td style="padding-top:0px;padding-bottom:0px;width:5%" class="dataCol col02 inlineEditWrite">
+                      <apex:inputCheckbox value="{!ExcludeSingleSends}">
+                        <apex:actionSupport rerender="subPicker, messages, detailsSection, graphSection, sentEmailSection, openedEmailSection, clickedEmailSection, 
+                                                linksClickedSection, emailsSentRptTitle, emailsOpenRptTitle, emailsClckRptTitle, linksClckRptTitle, sidebarInfo"
+                        action="{!refData}" event="onclick" />
+                      </apex:inputCheckbox>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </apex:outputPanel>
+          </apex:outputPanel>
+        </apex:pageBlockSection>
+      </apex:outputPanel>
+      <div id="subBody">
+        <table style="width:100%">
+          <tr>
+            <td style="width:25%; vertical-align: top; background-color: #f0f0f0">
+              <table style="background-color: #f0f0f0;" width="100%">
+                <tr height="25px">
+                  <td style="vertical-align: middle">
+                    <b>
+                      <hr color="#99ccc3" />
+                      {!$Label.histEngt}
+                      <hr color="#f8f8f8" />
+                    </b>
+                  </td>
+                </tr>
+              </table>
+              <br/>
+              <apex:outputPanel id="sidebarInfo">
+                <table style="width:100%">
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <span style="color:#777;padding-left:2px;" class="helpButton" id="emailSentHelp-_help">
+                              {!$Label.et4ae5__emailssent}
+                              <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                              <script>
+                                sfdcPage.setHelp('emailSentHelp','{!JSENCODE(emailSentHelp)}');
+                              </script>
+                            </span>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            {!SendCountX}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td colspan="3">
+                      <hr color="#ffffff" />
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <span style="color:#777;padding-left:2px;" class="helpButton" id="emailDeliveredHelp-_help">
+                              {!$Label.et4ae5__emailsdeld}
+                              <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                              <script>
+                                sfdcPage.setHelp('emailDeliveredHelp','{!JSENCODE(emailDeliveredHelp)}');
+                              </script>
+                            </span>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            {!DeliverCountX}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td colspan="3">
+                      <hr color="#ffffff" />
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <span style="color:#777;padding-left:2px;" class="helpButton" id="emailBouncedHelp-_help">
+                              {!$Label.et4ae5__bounces}
+                              <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                              <script>
+                                sfdcPage.setHelp('emailBouncedHelp','{!JSENCODE(emailBouncedHelp)}');
+                              </script>
+                            </span>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            {!BounceCountX}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td colspan="3">
+                      <hr color="#ffffff" />
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <span style="color:#777;padding-left:2px;" class="helpButton" id="uniqueOpenHelp-_help">
+                              {!$Label.et4ae5__unqopens}
+                              <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                              <script>
+                                sfdcPage.setHelp('uniqueOpenHelp','{!JSENCODE(uniqueOpenHelp)}');
+                              </script>
+                            </span>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            {!UniqueOpenCountX}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td colspan="3" style="padding-top:0px;padding-bottom:0px;">
+                      <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!NOT(renderSubscriberItems)}">
+                        <img src="/s.gif" style="height:5px;" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td colspan="3" style="padding-top:0px;padding-bottom:0px;">
+                      <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!NOT(renderSubscriberItems)}">
+                        <hr color="#ffffff" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td colspan="3" style="padding-top:0px;padding-bottom:0px;">
+                      <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!NOT(renderSubscriberItems)}">
+                        <img src="/s.gif" style="height:5px;" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td style="padding-top:0px;padding-bottom:0px;width:100%">
+                      <table style="padding-top:0px;padding-bottom:0px;width:100%">
+                        <tr style="padding-top:0px;padding-bottom:0px;">
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!NOT(renderSubscriberItems)}">
+                              <span style="color:#777;padding-left:2px;padding-top:0px;padding-bottom:0px;" class="helpButton" id="totalOpenHelp-_help">
+                                {!$Label.totOpens}
+                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                <script>
+                                  sfdcPage.setHelp('totalOpenHelp','{!JSENCODE(totalOpenHelp)}');
+                                </script>
+                              </span>
+                            </apex:outputPanel>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!NOT(renderSubscriberItems)}">
+                              {!OpenCountX}
+                            </apex:outputPanel>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td colspan="3" style="padding-top:0px;padding-bottom:0px;">
+                      <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!NOT(renderSubscriberItems)}">
+                        <img src="/s.gif" style="height:5px;" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td colspan="3">
+                      <hr color="#ffffff" />
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <span style="color:#777;padding-left:2px;" class="helpButton" id="uniqueClickHelp-_help">
+                              {!$Label.et4ae5__unqclicks}
+                              <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                              <script>
+                                sfdcPage.setHelp('uniqueClickHelp','{!JSENCODE(uniqueClickHelp)}');
+                              </script>
+                            </span>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            {!UniqueClickCountX}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td colspan="3">
+                      <hr color="#ffffff" />
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <span style="color:#777;padding-left:2px;" class="helpButton" id="msg0107-_help">
+                              {!$Label.totClicks}
+                              <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                              <script>
+                                sfdcPage.setHelp('msg0107','{!JSENCODE($Label.msg0107)}');
+                              </script>
+                            </span>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            {!ClickCountX}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <!-- paste below -->
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td colspan="3" style="padding-top:0px;padding-bottom:0px;">
+                      <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!AND(renderEmailItems,emailIsSelected)}">
+                        <hr color="#ffffff" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td colspan="3" style="padding-top:0px;padding-bottom:0px;">
+                      <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!AND(renderEmailItems,emailIsSelected)}">
+                        <img src="/s.gif" style="height:5px;" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td style="padding-top:0px;padding-bottom:0px;width:100%">
+                      <table style="padding-top:0px;padding-bottom:0px;width:100%">
+                        <tr style="padding-top:0px;padding-bottom:0px;">
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!AND(renderEmailItems,emailIsSelected)}">
+                              <span style="color:#777;padding-left:2px;padding-top:0px;padding-bottom:0px;" class="helpButton" id="msg0114-_help">
+                                {!$Label.et4ae5__totjobs}
+                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                <script>
+                                  sfdcPage.setHelp('msg0114','{!JSENCODE($label.msg0114)}');
+                                </script>
+                              </span>
+                            </apex:outputPanel>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!AND(renderEmailItems,emailIsSelected)}">
+                              {!jobCountX}
+                            </apex:outputPanel>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="padding-top:0px;padding-bottom:0px;">
+                    <td colspan="3" style="padding-top:0px;padding-bottom:0px;">
+                      <apex:outputPanel style="padding-top:0px;padding-bottom:0px;" rendered="{!AND(renderEmailItems,emailIsSelected)}">
+                        <img src="/s.gif" style="height:5px;" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <!-- paste above -->
+                  <tr>
+                    <td colspan="3">
+                      <apex:outputPanel rendered="{!OR(AND(renderSubscriberItems,subIsSelected),AND(renderEmailItems,emailIsSelected))}">
+                        <hr color="#ffffff" size="10" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <apex:outputPanel rendered="{!OR(AND(renderSubscriberItems,subIsSelected),AND(renderEmailItems,emailIsSelected))}">
+                              <span style="color:#777;padding-left:2px;" class="helpButton" id="firstEmailSentHelp-_help">
+                                {!$Label.firstEmSnt}
+                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                <script>
+                                  sfdcPage.setHelp('firstEmailSentHelp','{!JSENCODE(firstEmailSentHelp)}');
+                                </script>
+                              </span>
+                            </apex:outputPanel>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            <apex:outputPanel rendered="{!OR(AND(renderSubscriberItems,subIsSelected),AND(renderEmailItems,emailIsSelected))}">
+                              {!FirstEmailDate}
+                            </apex:outputPanel>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td colspan="3">
+                      <apex:outputPanel rendered="{!OR(AND(renderSubscriberItems,subIsSelected),AND(renderEmailItems,emailIsSelected))}">
+                        <hr color="#ffffff" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <apex:outputPanel rendered="{!OR(AND(renderSubscriberItems,subIsSelected),AND(renderEmailItems,emailIsSelected))}">
+                              <span style="color:#777;padding-left:2px;" class="helpButton" id="lastEmailSentHelp-_help">
+                                {!$Label.lastEmSnt}
+                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                <script>
+                                  sfdcPage.setHelp('lastEmailSentHelp','{!JSENCODE(lastEmailSentHelp)}');
+                                </script>
+                              </span>
+                            </apex:outputPanel>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            <apex:outputPanel rendered="{!OR(AND(renderSubscriberItems,subIsSelected),AND(renderEmailItems,emailIsSelected))}">
+                              {!LastEmailDate}
+                            </apex:outputPanel>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td colspan="3">
+                      <apex:outputPanel rendered="{!AND(renderSubscriberItems,subIsSelected)}">
+                        <hr color="#ffffff" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <apex:outputPanel rendered="{!AND(renderSubscriberItems,subIsSelected)}">
+                              <span style="color:#777;padding-left:2px;" class="helpButton" id="msg0112-_help">
+                                {!$Label.dateUnsub}
+                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                <script>
+                                  sfdcPage.setHelp('msg0112','{!JSENCODE($Label.msg0112)}');
+                                </script>
+                              </span>
+                            </apex:outputPanel>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            <apex:outputPanel rendered="{!AND(renderSubscriberItems,subIsSelected)}">
+                              {!UnsubscribedDate}
+                            </apex:outputPanel>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td colspan="3">
+                      <apex:outputPanel rendered="{!AND(renderSubscriberItems,subIsSelected)}">
+                        <hr color="#ffffff" />
+                      </apex:outputPanel>
+                    </td>
+                  </tr>
+                  <tr style="height:5px;" />
+                  <tr>
+                    <td style="width:100%">
+                      <table style="width:100%">
+                        <tr>
+                          <td style="padding-top:0px;padding-bottom:0px;width:53%" class="labelCol">
+                            <apex:outputPanel rendered="{!AND(renderSubscriberItems,subIsSelected)}">
+                              <span style="color:#777;padding-left:2px;" class="helpButton" id="msg0113-_help">
+                                {!$Label.dateCreate}
+                                <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                <script>
+                                  sfdcPage.setHelp('msg0113','{!JSENCODE($Label.msg0113)}');
+                                </script>
+                              </span>
+                            </apex:outputPanel>
+                          </td>
+                          <td style="padding-top:0px;padding-bottom:0px;width:47%" class="dataCol col02 inlineEditWrite">
+                            <apex:outputPanel rendered="{!AND(renderSubscriberItems,subIsSelected)}">
+                              {!CreatedDate}
+                            </apex:outputPanel>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </apex:outputPanel>
+            </td>
+            <td style="width:75%">
+              <table width="100%">
+                <tr height="25px">
+                  <td style="vertical-align: middle">
+                    <b>
+                      <hr color="#99ccc3" />
+                      {!$Label.timeEngt}
+                      <hr color="#f0f0f0" />
+                    </b>
+                  </td>
+                </tr>
+              </table>
+              <apex:pageBlockSection id="timeFrameSection" columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0115}">
+                  <apex:outputLabel value="{!$Label.et4ae5__range}" />
+                  <apex:outputPanel >
+                    <apex:outputPanel id="rangeSection">
+                      <apex:selectList id="rangeList" size="1" value="{!SelectedRange}">
+                        <apex:selectOptions value="{!dateRanges}" />
+                      </apex:selectList>
+                      <apex:actionSupport reRender="customDate, commandButton, detailsSection, graphSection, sentEmailSection, timeFrameSection, 
+                                            openedEmailSection, clickedEmailSection, linksClickedSection, sidebarInfo" action="{!refData}" event="onchange" status="counterStatus"
+                                            />
+                    </apex:outputPanel>
+                    <apex:outputPanel id="customDate">
+                      <span style="padding-left:15px; padding-right:15px;">
+                        <apex:outputLabel value="{!$Label.et4ae5__fromdate}" />
+                        <apex:inputField label="From:" value="{!FromDateTask.ActivityDate}" />
+                        <apex:actionSupport reRender="rangeSection" action="{!customDate}" event="onchange" />
+                      </span>
+                      <span style="padding-right:15px;">
+                        <apex:outputLabel value="{!$Label.et4ae5__todate}" />
+                        <apex:inputField label="To:" value="{!ToDateTask.ActivityDate}" />
+                      </span>
+                    </apex:outputPanel>
+                    <apex:outputPanel id="commandButton">
+                      <apex:commandButton value="{!$Label.et4ae5__refrshdata}" action="{!filterDate}"
+                      rerender="messages, detailsSection, graphSection, sentEmailSection, openedEmailSection, clickedEmailSection, linksClickedSection, subPicker, sidebarInfo, emptyMessage"
+                      status="counterStatus" />
+                    </apex:outputPanel>
+                    <apex:actionStatus id="counterStatus" startText=" (refreshing...)" stopText="" />
+                    <apex:outputPanel id="emptyMessage" layout="block" style="padding-top:12px;">
+                      <apex:outputLabel value="{!$Label.et4ae5__msg0116}" rendered="{!ShowEmptyMessage}" />
+                    </apex:outputPanel>
+                  </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+              </apex:pageBlockSection>
+              <table width="100%">
+                <tr height="25px">
+                  <td style="vertical-align: middle">
+                    <b>
+                      <hr color="#99ccc3" />
+                      {!$Label.subsEngt}
+                      <hr color="#f0f0f0" />
+                    </b>
+                  </td>
+                </tr>
+              </table>
+              <apex:pageBlockSection id="graphSection" columns="1">
+                <apex:outputPanel id="lineGraphs">
+                  <apex:chart id="subChart" height="400" width="100%" data="{!data}" name="Graphs" hidden="false">
+                    <apex:legend position="right" />
+                    <apex:axis id="countAxis" type="Numeric" position="left" fields="OpenCount" maximum="{!AxisMaximum}" minimum="0" steps="{!AxisSteps}" grid="true" />
+                    <apex:axis type="Category" position="bottom" fields="EntryDate">
+                      <apex:chartLabel rotate="315" />
+                    </apex:axis>
+                    <apex:lineSeries title="{!$Label.et4ae5__sent}" axis="left" fill="false" xField="EntryDate" yField="SendCount" markerType="circle" markerSize="4" markerFill="#0000FF" rendered="{!RenderSentCount}"
+                                        />
+                    <apex:lineSeries title="{!$Label.et4ae5__delivered}" axis="left" fill="false" xField="EntryDate" yField="DeliverCount" markerType="circle" markerSize="4" markerFill="#00FF00"
+                    rendered="{!RenderDeliveredCount}" />
+                    <apex:lineSeries title="{!$Label.et4ae5__opened}" axis="left" fill="false" xField="EntryDate" yField="OpenCount" markerType="cross" markerSize="4" markerFill="#FF0000" rendered="{!RenderOpenCount}"
+                                        />
+                    <apex:lineSeries title="{!$Label.et4ae5__clicked}" axis="left" fill="false" xField="EntryDate" yField="ClickCount" markerType="circle" markerSize="4" markerFill="#0F0F0F"
+                    rendered="{!RenderClickCount}" />
+                    <apex:lineSeries title="{!$Label.et4ae5__bounced}" axis="left" fill="false" xField="EntryDate" yField="BounceCount" markerType="cross" markerSize="4" markerFill="#A3B4C5"
+                    rendered="{!RenderBounceCount}" />
+                  </apex:chart>
+                </apex:outputPanel>
+                <apex:outputPanel id="checkBoxPanel">
+                  <div style="text-align:center;">
+                    <span style="padding-right:10px;">
+                      <apex:inputCheckbox value="{!RenderSentCount}">
+                        <apex:actionSupport event="onclick" reRender="lineGraphs, checkBoxPanel, messages" action="{!sentCountClicked}"/>
+                      </apex:inputCheckbox>
+                      <apex:outputText value="{!$Label.et4ae5__shwsnt}" />
+                    </span>
+                    <span style="padding-right:10px;">
+                      <apex:inputCheckbox value="{!RenderDeliveredCount}">
+                        <apex:actionSupport event="onclick" reRender="lineGraphs, checkBoxPanel, messages" action="{!deliveredCountClicked}" />
+                      </apex:inputCheckbox>
+                      <apex:outputText value="{!$Label.et4ae5__shwdlvrd}" />
+                    </span>
+                    <span style="padding-right:10px;">
+                      <apex:inputCheckbox value="{!RenderOpenCount}">
+                        <apex:actionSupport event="onclick" reRender="lineGraphs, checkBoxPanel, messages" action="{!openCountClicked}" />
+                      </apex:inputCheckbox>
+                      <apex:outputText value="{!$Label.et4ae5__shwopnd}" />
+                    </span>
+                    <span style="padding-right:10px;">
+                      <apex:inputCheckbox value="{!RenderClickCount}">
+                        <apex:actionSupport event="onclick" reRender="lineGraphs, checkBoxPanel, messages" action="{!clickCountClicked}" />
+                      </apex:inputCheckbox>
+                      <apex:outputText value="{!$Label.et4ae5__shwclckd}" />
+                    </span>
+                    <span style="padding-right:20px;">
+                      <apex:inputCheckbox value="{!RenderBounceCount}">
+                        <apex:actionSupport event="onclick" reRender="lineGraphs, checkBoxPanel, messages" action="{!bounceCountClicked}" />
+                      </apex:inputCheckbox>
+                      <apex:outputText value="{!$Label.et4ae5__shwbncd}" />
+                    </span>
+                    <span style="padding-right:10px;">
+                      <apex:selectList id="incrementOptions" size="1" value="{!SelectedIncrementOption}">
+                        <apex:selectOptions value="{!increment}"/>
+                        <apex:actionSupport event="onchange" reRender="messages, lineGraphs" />
+                      </apex:selectList>
+                    </span>
+                  </div>
+                </apex:outputPanel>
+              </apex:pageBlockSection>
+              <table width="100%">
+                <tr height="25px">
+                  <td style="vertical-align: middle">
+                    <b>
+                      <hr color="#009baa" />
+                      {!$Label.details}
+                      <hr color="#f0f0f0" />
+                    </b>
+                  </td>
+                </tr>
+              </table>
+              <apex:pageBlockSection id="detailsSection" columns="2">
+                <apex:pageBlockSectionItem helpText="{!emailSentHelp}">
+                  <apex:outputLabel value="{!$Label.et4ae5__emailssent}" />
+                  <apex:outputText value="{!SendCount}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!uniqueOpenHelp}">
+                  <apex:outputLabel value="{!$Label.et4ae5__unqopens}" />
+                  <apex:outputText value="{!UniqueOpenCount}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!emailDeliveredHelp}">
+                  <apex:outputLabel value="{!$Label.et4ae5__emailsdeld}" />
+                  <apex:outputText value="{!DeliverCount}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!uniqueClickHelp}">
+                  <apex:outputLabel value="{!$Label.et4ae5__unqclicks}" />
+                  <apex:outputText value="{!UniqueClickCount}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!emailBouncedHelp}">
+                  <apex:outputLabel value="{!$Label.et4ae5__bounces}" />
+                  <apex:outputText value="{!BounceCount}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0114}" rendered="{!AND(renderEmailItems,emailIsSelected)}">
+                  <apex:outputLabel value="{!$Label.et4ae5__totjobs}" />
+                  <apex:outputText value="{!JobCount}" />
+                </apex:pageBlockSectionItem>
+              </apex:pageBlockSection>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </apex:pageBlock>
+    <input id="hiddenElementId" type="hidden" />
+  </apex:form>
+  <apex:includeScript value="{!URLFOR($Resource.et4ae5__jQueryUI, 'jquery-ui-1.9.2.custom/js/jquery-1.8.3.js')}" />
+  <script>
+    function setFocus()
+    {
+    document.getElementById("hiddenElementId").focus();
+    }
+
+    function addLoadEvent(func)
+    {
+    var oldonload = window.onload;
+    if (typeof window.onload != 'function')
+    {
+    window.onload = func;
+    }
+    else
+    {
+    window.onload = function ()
+    {
+    if (oldonload)
+    {
+    oldonload();
+    }
+    func();
+    }
+    }
+    }
+    addLoadEvent(setFocus);
+    var leadLU = jQuery('[id$=leadLookup]');
+    var contactLU = jQuery('[id$=contactLookup]');
+    var divSub = jQuery('[id$=divSubChoose]');
+    var persNm = jQuery('[id$=personName]');
+    var objType = 'Contact';
+    leadLU.hide();
+    contactLU.show();
+    divSub.hide();
+    persNm.show();
+
+    function changeSLU(sel)
+    {
+    if (sel.value == 'Contact')
+    {
+    leadLU.hide();
+    contactLU.show();
+    }
+    if (sel.value == 'Lead')
+    {
+    leadLU.show();
+    contactLU.hide();
+    }
+    objType = sel.value;
+    }
+
+    function showDivSubChoose()
+    {
+    divSub = jQuery('[id$=divSubChoose]');
+    persNm = jQuery('[id$=personName]');
+    divSub.show();
+    persNm.hide();
+    showApprSubPicker();
+    }
+
+    function showPersonName()
+    {
+    divSub = jQuery('[id$=divSubChoose]');
+    persNm = jQuery('[id$=personName]');
+    divSub.hide();
+    persNm.show();
+    }
+
+    function showEmailName()
+    {
+    divSub.hide();
+    persNm.hide();
+    }
+
+    function showApprSubPicker()
+    {
+    leadLU = jQuery('[id$=leadLookup]');
+    contactLU = jQuery('[id$=contactLookup]');
+    if (objType == 'Contact')
+    {
+    leadLU.hide();
+    contactLU.show();
+    }
+    if (objType == 'Lead')
+    {
+    leadLU.show();
+    contactLU.hide();
+    }
+    }
+
+    function showEmailPicker()
+    {
+    showpopup();
+    }
+
+    function showpopup()
+    {
+    document.getElementById('opaque').style.display = 'block';
+    var popUp = document.getElementById("popupcontent");
+    popUp.style.display = "block";
+    }
+
+    function hidepopup()
+    {
+    document.getElementById('opaque').style.display = 'none';
+    var popUp = document.getElementById("popupcontent");
+    popUp.style.display = "none";
+    }
+  </script>
+</apex:page>

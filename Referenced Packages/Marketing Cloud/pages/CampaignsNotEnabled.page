@@ -1,0 +1,15 @@
+<apex:page controller="et4ae5.phoenixSendControl" tabStyle="ExactTargetPhoenix__tab" action="{!initCNE}">    
+    <apex:composition template="et4ae5__UserErrorTemplate">
+        <apex:define name="customMessage" >
+            <apex:pageBlock title="{!$Label.et4ae5__cpnsddsbld}">
+                {!$label.msg0060}
+                <br />
+                <br />
+                <a href="/{!campaignIdReturn}">
+                    {!$label.backTo}
+                    {!campaignNameReturn}
+                </a>
+            </apex:pageBlock>
+        </apex:define>
+    </apex:composition>
+</apex:page>

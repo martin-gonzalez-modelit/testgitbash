@@ -1,0 +1,50 @@
+<apex:page showheader="false" standardstylesheets="false" sidebar="false" cache="false" docType="html-5.0"
+        applyhtmltag="false" standardController="Application_File__c" extensions="ApplicationFileS3Controller"
+        action="{!checkAmazonS3File}">
+<html>
+<head>
+    <style>
+        .message {
+            padding: 15px 35px 15px 14px;
+            border-radius: 4px;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+            text-align: left;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px;
+            line-height: 20px;
+        }
+        .message.confirmM3 {
+            color: #3c763d;
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+        }
+        .message.infoM3 {
+            padding: 8px 35px 20px 14px;
+            color: #3a87ad;
+            background-color: #d9edf7;
+            border-color: #bce8f1;
+        }
+        .message.infoM3 a {
+            color: #3a87ad;
+            font-weight: bold;
+        }
+        .message.errorM3 {
+            color: #a94442;
+            background-color: #f2dede;
+            border-color: #ebccd1;
+        }
+        .message.errorM3 h4, .message.confirmM3 h4 {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <apex:pageMessages escape="false" />
+    <apex:outputPanel rendered="{!NOT(ISBLANK(url))}">
+        <script>
+            window.location = '{!url}';
+        </script>
+    </apex:outputPanel>
+</body>
+</html>
+</apex:page>

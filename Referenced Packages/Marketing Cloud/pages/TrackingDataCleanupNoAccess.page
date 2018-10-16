@@ -1,0 +1,14 @@
+<apex:page standardStylesheets="false">
+    <apex:includeLightning />
+
+    <div id="content">
+        <div id="lightningComponent" />
+    </div>
+
+    <script>
+        $Lightning.use("et4ae5:TrackingDataCleanupNoAccessApp", function() {
+            $Lightning.createComponent("et4ae5:TrackingDataCleanupNoAccess", null, "lightningComponent");      
+        });
+    </script>
+
+</apex:page>

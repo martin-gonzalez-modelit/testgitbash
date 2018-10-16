@@ -1,0 +1,437 @@
+<apex:component controller="BIGPortalPropertyOwnerController"
+                  id="property-owner-component" allowDML="true">
+
+<apex:attribute name="pobuilding" description="Building For the Dwelling Unit"
+                  type="Building__c" required="true" assignTo="{!building}"/>
+
+<apex:attribute name="podwellingunit" description="Dwelling Unit"
+                  type="Dwelling_Unit__c" required="true" assignTo="{!dwellingUnit}"/>
+
+<apex:attribute name="popropertyowner" description="Property Owner"
+                  type="Contact" required="true" assignTo="{!propertyOwner}"/>
+
+<div id="info-section-owner">
+<apex:actionStatus id="owner-section-status" onstart="hideOwInfoPanel()" onstop="showOwInfoPanel()">
+<apex:facet name="start">
+<div class="section-content-loader" style="text-align:center;margin-bottom:20px;">
+    <img src="{!URLFOR($Resource.bigutopia, '/img/ajax-loader.gif')}" style="height:60px;" />
+</div>
+</apex:facet>
+</apex:actionStatus>
+<apex:outputPanel id="info-panel-owner">
+<apex:outputPanel rendered="{!showOwnInfo}">
+<!-- Property Owner Information -->
+<div class="property-owner-info" style="margin-bottom:20px;">
+    <div class="row">
+        <div class="span6">
+            <div class="span3 text-right muted">First Name</div>
+            <div class="span2">{!propertyOwner.FirstName}</div>
+        </div>
+        <div class="span6">
+            <div class="span3 text-right muted">Last Name</div>
+            <div class="span2">{!propertyOwner.LastName}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="span3 text-right muted">Email</div>
+            <div class="span2">{!propertyOwner.Email}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="span3 text-right muted">Phone</div>
+            <div class="span2">{!propertyOwner.Phone}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <address style="margin-left: 188px;">
+                <div class="muted" style="position:absolute;">Address</div>
+                <div style="margin-left:72px;">{!propertyOwner.MailingStreet}</div>
+                <div style="margin-left:72px;">{!propertyOwner.MailingCity},&nbsp;{!propertyOwner.MailingState}&nbsp;{!propertyOwner.MailingPostalCode}</div>
+            </address>
+        </div>
+    </div>
+</div>
+</apex:outputPanel>
+</apex:outputPanel>
+<apex:form id="property_owner_form" styleClass="form-horizontal property-owner-frm" style="display:none;">
+    <apex:actionFunction name="setPropertyOwner" rerender="info-panel-owner" status="owner-section-status"/>
+    <apex:actionFunction action="{!savePropertyOwner}" name="savePropertyOwner" rerender="property_owner_form,info-panel-owner,addApplicationBlock,addApplicationBlock2-4, utilityAccPanel" status="owner-saving-status"/>
+    <script>
+        // Validate Form Fields
+        try {
+            validateOwnerFormFields();
+        } catch (error) {
+        }
+    </script>
+
+    <!-- Edit Dwelling Unit Form -->
+    <div class="customerContact">
+        <div class="row">
+            <div class="span8">
+                <div class="control-group">
+                    <label class="control-label">First Name</label>
+                    <div class="controls">
+                        <apex:inputField id="inputFirstName" styleClass="span3 inpFirstNameOwn" value="{!propertyOwner.FirstName}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="span8">
+                <div class="control-group">
+                    <label class="control-label">Last Name</label>
+                    <div class="controls">
+                        <apex:inputField id="inputLastName" styleClass="span3 inpLastNameOwn" value="{!propertyOwner.LastName}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <div class="control-group">
+                    <label class="control-label optional">
+                        Email <span class="optional-label">(optional)</span>
+                    </label>
+                    <div class="controls">
+                        <apex:inputField id="inputEmail" styleClass="span3" value="{!propertyOwner.Email}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <div class="control-group">
+                    <label class="control-label">Phone</label>
+                    <div class="controls">
+                        <apex:inputField id="inputPhone" styleClass="span3 phoneMaskedInput" value="{!propertyOwner.Phone}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span3" style="padding-left: 255px; margin-bottom: 20px;">
+            <label class="checkbox">
+                <apex:inputCheckbox value="{!sameAddress}" styleClass="addressCheckbox"/>
+                Same as building address
+            </label>
+        </div>
+    </div>
+    <div id="ownerAddressFrm">
+        <div class="row">
+            <div class="span12">
+                <div class="control-group">
+                    <label class="control-label">Address</label>
+                    <div class="controls">
+                        <apex:inputField id="inputOwnAddress" styleClass="span4 inpPropertyOwnSt" value="{!propertyOwner.MailingStreet}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <div class="control-group">
+                    <label class="control-label">City</label>
+                    <div class="controls">
+                        <apex:inputField id="inputOwnCity" styleClass="span4 inpOwnCity" value="{!propertyOwner.MailingCity}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <div class="control-group">
+                    <label class="control-label">State</label>
+                    <div class="controls">
+                        <apex:selectList id="inputOwnState" value="{!propertyOwner.MailingState}" title="State" styleClass="span4" size="1">
+                            <apex:selectOptions value="{!states}"/>
+                        </apex:selectList>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <div class="control-group">
+                    <label class="control-label">Zip Code</label>
+                    <div class="controls">
+                        <apex:inputField id="inputOwnZip" styleClass="span4 inpOwnZipCode" value="{!propertyOwner.MailingPostalCode}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-actions" style="padding-left:25px;">
+        <button id="cancel-owner" type="button" class="btn btn-default">Cancel</button>
+        <a id="save-info-owner" href="#" class="btn btn-primary" >Save</a>
+        <apex:actionStatus id="owner-saving-status" onstart="hideOwnerButtons()" onstop="showOwnerButtons()">
+            <apex:facet name="start">
+                <div class="section-content-loader" style="text-align:center;">
+                    <img src="{!URLFOR($Resource.bigutopia, '/img/ajax-loader.gif')}" style="height:40px;" />
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+    </div>
+</apex:form>
+</div>
+<script>
+    var ownervalidator = null;
+    validateOwnerFormFields();
+    // Set mask to Property Owner Phone Field
+    $('input[id*="inputPhone"]').mask('(999) 999-9999', { autoclear: false });
+    // Save Info Button behaviour
+    $('#info-section-owner').on('click','#save-info-owner' , function(e) {
+        e.preventDefault();
+        if ($('.property-owner-frm').valid()) {
+            savePropertyOwner();
+        }
+    });
+    // Cancel button behaviour
+    $('#info-section-owner').on('click', '#cancel-owner', function() {
+        // Enable edit buttons.
+        $(".btn-edit").removeClass("disabled");
+        // Hide Form
+        $('.property-owner-frm').slideUp('fast');
+        // Reset Form
+        ownervalidator.resetForm();
+        $('.property-owner-frm .control-group').removeClass('success error');
+        $(".property-owner-frm")[0].reset();
+        // Remove icon next to the input.
+        $('.error.valid').remove();
+        showOwInfoPanel();
+        // Show pencil icon
+        $('#edit-info-property-owner').show();
+    });
+
+    function showOwInfoPanel() {
+        // Show info
+        $('.property-owner-info').show();
+    }
+
+    function hideOwInfoPanel() {
+        // Hide info
+        $('.property-owner-info').hide();
+    }
+
+    function hideOwnerButtons() {
+        $('#save-info-owner').hide();
+        $('#cancel-owner').hide();
+    }
+
+    function showOwnerButtons() {
+        $('#save-info-owner').show();
+        $('#cancel-owner').show();
+    }
+
+    //Validate Form Fields
+    function validateOwnerFormFields() {
+        ownervalidator = $('.property-owner-frm').validate({
+                focusInvalid: true,
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                rules: {
+                    '{!$Component.property_owner_form.inputFirstName}': {
+                        required: true,
+                        firstNameOwner_check: true
+                    },
+                    '{!$Component.property_owner_form.inputLastName}': {
+                        required: true,
+                        lastNameOwner_check: true
+                    },
+                    '{!$Component.property_owner_form.inputEmail}': {
+                        strictEmail: true
+                    },
+                    '{!$Component.property_owner_form.inputPhone}': {
+                        required: true,
+                        phoneDigitsLength: 10
+                    },
+                    '{!$Component.property_owner_form.inputOwnAddress}': {
+                        required: true,
+                        propertyOwnerSt: true
+                    },
+                    '{!$Component.property_owner_form.inputOwnCity}': {
+                        required: true,
+                        checkOwnCity: true
+                    },
+                    '{!$Component.property_owner_form.inputOwnZip}': {
+                        required: true,
+                        zip_code_own_check: true
+                    }
+                },
+                highlight: function(element) {
+                    $(element).closest('.control-group').removeClass('success').addClass('error');
+                },
+                success: function(element) {
+                    element.text('OK!').addClass('valid').closest('.control-group').removeClass('error')
+                            .addClass('success');
+                },
+                debug:true
+        });
+    }
+
+    $.validator.addMethod("phoneDigitsLength", function(value, element, param) {
+        return (this.optional(element) || value.replace(/[^0-9]+/g, "").length === param);
+    }, function (params, element) {
+        var phoneDigits = $(element).val().replace(/[^0-9]+/g, "").length;
+        return (phoneDigits === 0 ? "This field is required." : "Please enter a valid phone number.");
+    });
+
+    $.validator.addMethod('strictEmail', function(value, element) {
+        var result = /^([^<>()\[\]\.,;:ñ¬º·¿´\s@"]([^<>()\[\],;:ñ¬º·¿´\s@"]+([^<>()\[\],;:ñº·¿´\s@"]+)*)|(".+"))@(?!-)[a-zA-Z0-9-]*?[a-zA-Z0-9]\.[a-zA-Z0-9]{2,}$/;
+        return this.optional(element) || result.test(value);
+    }, "Please enter a valid email address.");
+
+    $.validator.addMethod("propertyOwnerSt", function(value, element) {
+        //false error, true ok
+        return checkStCity('.inpPropertyOwnSt');
+    }, "Please enter a valid street address.");
+
+    function checkStCity(pClassName) {
+        var patt = /^[a-zA-Z0-9 &#,.'-]{2,}$/;
+        return stPropertyOwnerValidations(pClassName, patt);
+    }
+
+    /**
+     * Checks if the string starts or ends with certain type of character.
+     * If it ends or starts with the character given, it won't be valid.
+     * Also checks if the string is formed entirely by certain kind of chars.
+     * If it is formed entirely that way it won't be valid.
+     */
+    function stPropertyOwnerValidations(pClassName, patt) {
+        var str = $(pClassName).val();
+        var flag = true;
+        str = str.trim();
+        str = str.replace(/\n/,'');
+
+        if (str != "") {
+
+            if (str.length >= 2) {
+
+                if (invalidPropertyOwnerChars(str) == true) {
+                    flag = false;
+                }
+                if (str[0] == "-" || str[0] == "," || str[0] == ".") {
+                    flag = false;
+                }
+                if (str[str.length-1] == "-" || str[str.length-1] == ",") {
+                    flag = false;
+                }
+            }
+
+            return patt.test(str) && flag;
+
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Checks if the string given is formed entirely by certain kind of chars.
+     * In this case the chars are: "'", "-", "." and ","
+     * If the string is formed entirely by any of these chars the function returns true.
+     */
+    function invalidPropertyOwnerChars(myChars) {
+        var check = 0;
+        var res = false;
+
+        for (var i = 0; i < myChars.length; i++) {
+            if (myChars[i] == "'" || myChars[i] == "-" || myChars[i] == "." || myChars[i] == "," ) {
+                check++;
+            }
+        }
+
+        if (check == myChars.length) {
+            res = true;
+        }
+
+        return res;
+    }
+
+    $.validator.addMethod("zip_code_own_check", function(value, element) {
+        //false error, true ok
+        return checkOwnZipCode();
+    }, "Please enter a valid zip code.");
+
+    $.validator.addMethod("firstNameOwner_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return checkFnLn('.inpFirstNameOwn');
+    }, "Please enter a valid first name.");
+
+    $.validator.addMethod("lastNameOwner_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return checkFnLn('.inpLastNameOwn');
+    }, "Please enter a valid last name.");
+
+    $.validator.addMethod("checkOwnCity", function(value, element) {
+        //false error, true ok
+        //the method checkBuildingOwnerCity is in the Page wich contains this component
+        return checkBuildingOwnerCity('.inpOwnCity');
+    }, "Please enter a valid city.");
+
+    function checkOwnZipCode() {
+        var patt = /^\d{5}$/;
+        return patt.test($('.inpOwnZipCode').val());
+    }
+
+    function checkFnLn(pClassName) {
+        var patt = /^[a-zA-Z &,.'-]{2,}$/;
+        var str = $(pClassName).val();
+        var flag = true;
+        str = str.trim();
+
+
+        if (str.length >= 2) {
+            if (str[0] == "-" || str[0] == "," || str[0] == "." || str[0] == "&") {
+                flag = false;
+            }
+            if (str[str.length-1] == "-" || str[str.length-1] == "," || str[str.length-1] == "&") {
+                flag = false;
+            }
+        }
+
+        return patt.test(str) && flag;
+    }
+
+    // Set contract-signing customer address information.
+    function setCustomerAddress(resetValues) {
+        if ($('.addressCheckbox').is(':checked')) {
+            // Copy building address information to contract-signing customer, and disable inputs.
+            $('[id*="inputOwnAddress"]').val('{!JSENCODE(building.Street_Address__c)}').prop('disabled', true);
+            $('[id*="inputOwnCity"]').val('{!JSENCODE(building.City__c)}').prop('disabled', true);
+            $('[id*="inputOwnState"]').val('{!building.State__c}').prop('disabled', true);
+            $('[id*="inputOwnZip"]').val('{!building.ZIP_Code__c}').prop('disabled', true);
+            // Hide contract-signing customer inputs.
+            $('#ownerAddressFrm').hide();
+        } else {
+            // Enable contract-signing customer's address inputs.
+            $('#ownerAddressFrm :input').each(function(i, el) {
+                var $el = $(el);
+                $el.prop('disabled', false);
+                if (resetValues) {
+                    // Set 'CA' state by default.
+                    $el.val($el.attr('id').indexOf('inputOwnState') > -1 ? 'CA' : '');
+                    // Remove validations.
+                    $('#ownerAddressFrm').find('.error,.success').remove('label.error').removeClass('success error');
+                }
+            });
+
+            // Show contract-signing customer inputs.
+            $('#ownerAddressFrm').show();
+        }
+    }
+
+    $(document).ready(function() {
+        // Limit zip code to 5 digits.
+        $('.inpOwnZipCode').attr('maxlength','5');
+
+        // Functionality when "Contract-signing customer has the same mailing address" checkbox is clicked.
+        $('.addressCheckbox').click(function() {
+            setCustomerAddress(true);
+        });
+    });
+</script>
+</apex:component>

@@ -1,0 +1,384 @@
+<apex:component controller="BIGPortalDwellingUnitController"
+    id="dwelling_unit_component" allowDML="true">
+
+<apex:attribute name="dwbuilding" description="Building For the Dwelling Unit"
+                  type="Building__c" required="true" assignTo="{!building}"/>
+
+<apex:attribute name="dwdwellingunit" description="Dwelling Unit"
+                  type="Dwelling_Unit__c" required="true" assignTo="{!dwellingUnit}"/>
+
+<div id="info-section-dwelling">
+<apex:actionStatus id="dw-section-status" onstart="hideDwInfoPanel()" onstop="showDwInfoPanel()">
+<apex:facet name="start">
+<div class="section-content-loader" style="text-align:center;margin-bottom:20px;">
+    <img src="{!URLFOR($Resource.bigutopia, '/img/ajax-loader.gif')}" style="height:60px;" />
+</div>
+</apex:facet>
+</apex:actionStatus>
+<apex:outputPanel id="info-panel">
+    <apex:outputPanel rendered="{!showInfo}">
+        <!-- Dwelling Unit Information -->
+        <div class="dwelling-unit-info" style="margin-bottom:20px;">
+            <div class="row">
+                <div class="span7">
+                    <div class="span3 text-right muted">Number of Bedrooms</div>
+                    <div class="span3">{!dwellingUnit.Number_of_Bedrooms__c}</div>
+                </div>
+                <div class="span7">
+                    <div class="span3 text-right muted">Conditioned Area (sq ft)</div>
+                    <div class="span3">{!dwellingUnit.Conditioned_Area__c}</div>
+                </div>
+            </div>
+            <div class="row">
+            	<div class="span7">
+                    <div class="span3 text-right muted">Average Ceiling Height (ft)</div>
+                    <div class="span3">{!dwellingUnit.Avg_Ceiling_Height__c}</div>
+                </div>
+                <div class="span7">
+                    <div class="span3 text-right muted">Number of Occupants</div>
+                    <div class="span3">{!dwellingUnit.Number_of_Occupants__c}</div>
+                </div>
+            </div>
+            <div class="row">
+            	<div class="span7">
+                    <div class="span3 text-right muted">Number of Stories</div>
+                    <div class="span3">{!dwellingUnit.Number_of_Stories__c}</div>
+                </div>
+                <div class="span7">
+                    <div class="span3 text-right muted">Year Built</div>
+                    <div class="span3">{!dwellingUnit.Year_Built__c}</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="span7">
+                    <div class="span3 text-right muted">Primary Heating Fuel</div>
+                    <div class="span3">{!dwellingUnit.Primary_Fuel__c}</div>
+                </div>
+                <div class="span7">
+                    <div class="span3 text-right muted">Hot Water Fuel</div>
+                    <div class="span3">{!dwellingUnit.Hot_Water_Fuel__c}</div>
+                </div>
+                <div class="span7">
+                    <div class="span3 text-right muted">Heating System Type</div>
+                    <div class="span3">{!dwellingUnit.Heating_System__c}</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="span7">
+                    <div class="span3 text-right muted">Cooling System Type</div>
+                    <div class="span3">{!dwellingUnit.Air_Conditioning__c}</div>
+                </div>
+                <div class="span7">
+                    <div class="span3 text-right muted">Domestic Hot Water Type</div>
+                    <div class="span3">{!dwellingUnit.Hot_Water_System__c}</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="span7">
+                    <div class="span3 text-right muted">Foundation Type</div>
+                    <div class="span3">{!dwellingUnit.Foundation_Type__c}</div>
+                </div>
+                <div class="span7">
+                    <div class="span3 text-right muted">Roof-Attic Type</div>
+                    <div class="span3">{!dwellingUnit.Attic_Type__c}</div>
+                </div>
+            </div>
+        </div>
+    </apex:outputPanel>
+</apex:outputPanel>
+<apex:form id="dwelling_unit_form" styleClass="form-horizontal dwelling-unit-frm" style="display:none;">
+    <apex:actionFunction action="{!prepareDwellingUnit}" name="setDwellingUnit" rerender="dwelling_unit_form,info-panel" status="dw-section-status"/>
+    <apex:actionFunction action="{!saveDwellingUnit}" name="saveDwellingUnit" rerender="dwelling_unit_form,info-panel,addApplicationBlock,addApplicationBlock2-4" status="dw-saving-status"/>
+    <script>
+        // Validate Form Fields
+        try {
+            validateDwFormFields();
+        } catch (error) {
+        }
+    </script>
+
+    <!-- Edit Dwelling Unit Form -->
+    <div class="row">
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label optional">
+                    Number of Bedrooms <span class="optional-label">(optional)</span>
+                </label>
+                <div class="controls">
+                    <apex:inputField id="inputNumBed" styleClass="span3 inpNumBedrooms" value="{!dwellingUnit.Number_of_Bedrooms__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span11">
+            <div class="control-group">
+                <label class="control-label">Conditioned Area (sq ft)</label>
+                <div class="controls">
+                    <apex:inputField id="inputCondAr" styleClass="span3" value="{!dwellingUnit.Conditioned_Area__c}"/>
+                    <span class="tip-text">Enter a number between 800.00 - 7,000.00. <br/> Example: 1,960.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+    	<div class="span11">
+            <div class="control-group">
+                <label class="control-label">Average Ceiling Height (ft)</label>
+                <div class="controls">
+                    <apex:inputField id="inputAvCeHe" styleClass="span3 inpDwAvgCeilingHeight" value="{!dwellingUnit.Avg_Ceiling_Height__c}"/>
+                    <span class="tip-text">Enter a number between 8.00 - 36.00.</span>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label optional">
+                    Number of Occupants <span class="optional-label">(optional)</span>
+                </label>
+                <div class="controls">
+                    <apex:inputField id="inputNumOcc" styleClass="span3 inpNumOcc" value="{!dwellingUnit.Number_of_Occupants__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span11">
+            <div class="control-group">
+                <label class="control-label">Number of Stories</label>
+                <div class="controls">
+                    <apex:inputField id="inputNumSto" styleClass="span3 inpNumSto" value="{!dwellingUnit.Number_of_Stories__c}"/>
+                    <span class="tip-text">Enter a whole number between 1 - 5.</span>
+                </div>
+            </div>
+        </div>
+        <div class="span11">
+            <div class="control-group">
+                <label class="control-label">Year Built</label>
+                <div class="controls">
+                    <apex:inputField id="inputYearBuilt" styleClass="span3 inpYearBuilt" value="{!dwellingUnit.Year_Built__c}"/>
+                    <span class="tip-text">Enter as full year. Example: 1989</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label" for="inputPriFu">Primary Heating Fuel</label>
+                <div class="controls">
+                    <apex:inputField id="inputPriFu" styleClass="span3 abiPrimaryHeatingFuel" value="{!dwellingUnit.Primary_Fuel__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Hot Water Fuel</label>
+                <div class="controls">
+                    <apex:inputField id="inputHotWFuel" styleClass="span3" value="{!dwellingUnit.Hot_Water_Fuel__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Heating System Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputHeatSys" styleClass="span3" value="{!dwellingUnit.Heating_System__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+    	<div class="span8">
+            <div class="control-group">
+                <label class="control-label">Cooling System Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputAirCond" styleClass="span3 abiCoolingSystemType" value="{!dwellingUnit.Air_Conditioning__c}"/>
+                </div>
+            </div>
+        </div>
+         <div class="span8">
+            <div class="control-group">
+                <label class="control-label" for="inputFundType">Domestic Hot Water Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputHotWSys" styleClass="span3" value="{!dwellingUnit.Hot_Water_System__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label" for="inputFundType">Foundation Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputFundType" styleClass="span3" value="{!dwellingUnit.Foundation_Type__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Roof-Attic Type</label>
+                <div class="controls">
+                    <apex:inputField id="inputAttType" styleClass="span3" value="{!dwellingUnit.Attic_Type__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-actions" style="padding-left:25px;">
+        <button id="cancel-dwelling" type="button" class="btn btn-default">Cancel</button>
+        <a id="save-info-dwelling" href="#" class="btn btn-primary">Save</a>
+        <apex:actionStatus id="dw-saving-status" onstart="hideDwButtons()" onstop="showDwButtons()">
+            <apex:facet name="start">
+                <div class="section-content-loader" style="text-align:center;">
+                    <img src="{!URLFOR($Resource.bigutopia, '/img/ajax-loader.gif')}" style="height:40px;" />
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+    </div>
+</apex:form>
+</div>
+<script>
+    var dwvalidator = null;
+    validateDwFormFields();
+    // Save Info Button behaviour
+    $('#info-section-dwelling').on('click','#save-info-dwelling' , function(e) {
+        e.preventDefault();
+        if ($('.dwelling-unit-frm').valid()) {
+            saveDwellingUnit();
+        }
+    });
+
+    // Cancel button behaviour
+    $('#info-section-dwelling').on('click', '#cancel-dwelling', function() {
+        // Enable edit buttons.
+        $(".btn-edit").removeClass("disabled");
+        //Hide form
+        $('.dwelling-unit-frm').slideUp('fast');
+        // Reset Form
+        dwvalidator.resetForm();
+        $('.dwelling-unit-frm .control-group').removeClass('success error');
+        $(".dwelling-unit-frm")[0].reset();
+        // Remove icon next to the input.
+        $('.error.valid').remove();
+        showDwInfoPanel();
+        // Show pencil icon
+        $('#edit-info-dwelling-unit').show();
+    });
+
+    // Format number with 2 decimal places and commas "1,000.00".
+    $('input[id*="inputCondAr"], input[id*="inputAvCeHe"]').number(true, 2);
+
+    function showDwInfoPanel() {
+        // Show info
+        $('.dwelling-unit-info').show();
+    }
+
+    function hideDwInfoPanel() {
+        // Show info
+        $('.dwelling-unit-info').hide();
+    }
+
+    function hideDwButtons() {
+        $('#save-info-dwelling').hide();
+        $('#cancel-dwelling').hide();
+    }
+
+    function showDwButtons() {
+        $('#save-info-dwelling').show();
+        $('#cancel-dwelling').show();
+    }
+    //Validate Form Fields
+    function validateDwFormFields() {
+        dwvalidator = $('.dwelling-unit-frm').validate({
+                focusInvalid: true,
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                rules: {
+                    '{!$Component.dwelling_unit_form.inputNumOcc}': {
+                        range: [1, 10],
+                        number: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputNumBed}': {
+                        range: [1, 99],
+                        number: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputAttType}': {
+                        required: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputCondAr}': {
+                        required: true,
+                        range: [800, 7000]
+                    },
+                    '{!$Component.dwelling_unit_form.inputNumSto}': {
+                        required: true,
+                        range: [1, 5]
+                    },
+                    '{!$Component.dwelling_unit_form.inputAvCeHe}': {
+                        required: true,
+                        range: [8, 36]
+                    },
+                    '{!$Component.dwelling_unit_form.inputHotWFuel}': {
+                        required: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputHeatSys}': {
+                        required: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputAirCond}': {
+                        required: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputFundType}': {
+                        required: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputPriFu}': {
+                        required: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputHotWSys}': {
+                        required: true
+                    },
+                    '{!$Component.dwelling_unit_form.inputYearBuilt}': {
+                        required: true,
+                        year_built_check: true
+                    }
+                },
+                messages: {
+                    '{!$Component.dwelling_unit_form.inputAvCeHe}': {
+                        range: "Please enter a number between 8.00 - 36.00."
+                    },
+                    '{!$Component.dwelling_unit_form.inputCondAr}': {
+                        range: "Please enter a number between 800.00 - 7,000.00."
+                    }
+                },
+                highlight: function(element) {
+                    $(element).closest('.control-group').removeClass('success').addClass('error');
+                    // Display tip-text before error message
+                    $(element).parent().find("label").appendTo($(element).parent());
+                },
+                success: function(label, element) {
+                    label.text('OK!').addClass('valid').closest('.control-group').removeClass('error')
+                            .addClass('success');
+                    // Display tip-text after success label (check)
+                    label.insertAfter(element);
+                },
+                errorPlacement: function(error, element) {
+                    error.appendTo($(element).parent());
+                }
+        });
+    }
+
+    $.validator.addMethod("year_built_check", function(value, element) {
+        //false error, true ok
+        return checkYearBuilt('.inpYearBuilt');
+    }, "Please enter a value between 1900 and the current year.");
+
+    function checkYearBuilt(pYear) {
+        var str = $(pYear).val();
+        var patt = /^\d{1,}$/;
+        var cd = new Date();
+        return patt.test(str) && str >= 1900 && str <= cd.getFullYear();
+    }
+
+    // Change validation message for range rule.
+    $.extend($.validator.messages, {
+        range: $.validator.format("Please enter a number between {0} and {1}.")
+    });
+</script>
+</apex:component>

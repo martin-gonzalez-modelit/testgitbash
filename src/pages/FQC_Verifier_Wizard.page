@@ -1,0 +1,79 @@
+<apex:page standardController="Application__c" showHeader="false" sidebar="false" applyhtmltag="false">
+    <html>
+        <head>
+            <apex:includeLightning />
+            <style>
+                /* Override styles of standard flow buttons (Previous and Next) to have the look-and-feel of Lightning */
+                /* Previous button */
+                button.slds-button.slds-button--neutral.uiButton--default.uiButton {
+                    box-shadow: none;
+                }
+                button.slds-button.slds-button--neutral.uiButton--default.uiButton:active {
+                    background-color: rgb(238, 241, 246);
+                    border-color: rgb(238, 241, 246);
+                }
+                button.slds-button.slds-button--neutral.uiButton--default.uiButton:hover {
+                    background: rgb(238, 241, 246);
+                }
+                button.slds-button.slds-button--neutral.uiButton--default.uiButton:focus {
+                    background: rgb(238, 241, 246);
+                    box-shadow: 0 0 3px #0070d2;
+                }
+                button.slds-button.slds-button--neutral.uiButton--default.uiButton span.label.bBody {
+                    color: rgb(0, 112, 210);
+                    text-shadow: none;
+                }
+                /* Next button */
+                button.slds-button.uiButton--default.uiButton.slds-button--brand {
+                    box-shadow: none;
+                }
+                button.slds-button.uiButton--default.uiButton.slds-button--brand:active {
+                    background-color: rgb(0, 95, 178);
+                    border-color: rgb(0, 95, 178);
+                }
+                button.slds-button.uiButton--default.uiButton.slds-button--brand:hover {
+                    background: rgb(0, 95, 178);
+                }
+                button.slds-button.uiButton--default.uiButton.slds-button--brand:focus {
+                    background: rgb(0, 95, 178);
+                    box-shadow: 0 0 3px #0070d2;
+                }
+                button.slds-button.uiButton--default.uiButton.slds-button--brand span.label.bBody {
+                    color: rgb(255, 255, 255);
+                    text-shadow: none;
+                }
+            </style>
+        </head>
+        <body class="slds-scope">
+            <div id="flowContainer"/>
+            <script>
+               var recordId = '{!Application__c.Id}';
+               var statusChange = function(event) {
+                  // Redirect to the record page when the flow interview finishes.
+                  if (event.getParam("status") === "FINISHED") {
+                     var url = '/apex/AppRedirect?id=' + recordId;
+                     window.location.href = "{!URLFOR('" + url + "')}";
+                  }
+               };
+               $Lightning.use("c:FQCVerifierWizardApp", function() {
+                  // Create the flow component and set the onstatuschange attribute.
+                  $Lightning.createComponent("lightning:flow", {"onstatuschange":statusChange},
+                     "flowContainer",
+                     function(component) {
+                        // Set the input variables.
+                        var inputVariables = [
+                           {
+                              name : 'vID',
+                              type : 'String',
+                              value : '{!Application__c.Id}'
+                           }
+                        ];
+                        // Start the flow interview in the flowContainer div, and initialize the input variables.
+                        component.startFlow("Field_QC_Verifier_Wizard", inputVariables);
+                     }
+                  );
+               });
+            </script>
+        </body>
+    </html>
+</apex:page>

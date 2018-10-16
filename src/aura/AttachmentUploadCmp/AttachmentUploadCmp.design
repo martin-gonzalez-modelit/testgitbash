@@ -1,0 +1,5 @@
+<design:component>
+    <design:attribute name="parentId" label="Record Id" required="true"/>
+    <design:attribute name="reason" label="Reason" required="true"/>
+    <design:attribute name="appFileId" label="Application File Id" required="true"/>
+</design:component>

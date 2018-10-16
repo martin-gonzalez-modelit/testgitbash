@@ -1,0 +1,309 @@
+<apex:page showheader="false" docType="html-5.0" standardstylesheets="false" sidebar="false" cache="false"
+    applyhtmltag="false" controller="BIGPortalACQCContractorController" action="{!checkUserAccess}">
+<html>
+<head>
+    <title>AC Quality Care New Contractor Enrollment</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/bootstrap.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/style.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-ui/jquery-ui.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+
+    <style>
+        div.zipCode{
+            padding:10px;
+        }
+
+        div.county, div.zipCode{
+            float:left;
+            width:185px;
+            padding-left:10px;
+        }
+
+        div.region-div{
+            float:left;
+            padding-bottom:30px;
+            width:100%;
+        }
+
+        div.region-div div.region-header{
+            width:849px;
+            padding:10px;
+            padding-left:20px;
+            background-color:#DFDFDF;
+            color:#696D6E;
+            margin-bottom:10px;
+            font-weight:bold;
+        }
+
+        div.region-div div.region-counties{
+            float:left;
+            width:100%;
+        }
+
+        div.region-div div.counties-label{
+            font-weight:bold;
+            width:100%;
+            padding-left:20px;
+        }
+
+        div.county-div div.county-header{
+            padding-top:5px;
+            padding-left:20px;
+        }
+
+        div.zipcodes-div{
+            display:none;
+            border: solid 1px #EEEEEE;
+            background-color: #EEEEEE;
+            border-radius: 5px;
+            padding: 5px;
+            margin-left: 20px;
+            margin-top: 5px;
+            float:left;
+            width: 830px;
+        }
+
+        div.zipcodes-div div.county-label{
+            float:left;
+            width:100%;
+        }
+
+        div.zipcodes-div div.county-check-all{
+            float:left;
+            padding-left:20px;
+            width:3%;
+            padding-top:15px;
+        }
+
+        div.zipcodes-div div.county-check-all-label{
+            float:left;
+            width:10%;
+            padding-top:10px;
+        }
+
+        div.zipcodes-div div.county-zip-codes{
+            float:left;
+            width:100%;
+        }
+
+        div.zipcodes-div div.county-label span{
+            font-weight:bold;
+        }
+
+        input[type=checkbox]{
+            margin-top:-2px;
+        }
+
+        .big-margin {
+            margin-left: 80px;
+        }
+
+        .open-county {
+            font-size: small;
+            display: none;
+        }
+
+        .message {
+            width: 865px;
+            margin-left: 0;
+            border-radius:8px;
+            -moz-border-radius:8px;
+        }
+
+        .infoM6, .infoM4, .infoM3, .infoM2, .infoS1 {
+            border: 1px solid  #9adf8f;
+            background-color: #d4ffcd;
+            font-size: 90%;
+        }
+
+        .infoM3 .msgIcon {
+            background-image: url(' {!URLFOR($Resource.acqcicons,'iconsuccess.png')}');
+            background-position: 0px 0px;
+            background-repeat: no-repeat;
+            width: 40px;
+            height: 55px;
+        }
+
+        .errorM3 {
+            border: 1px solid #df8f90;
+            background-color: #ffd2d3;
+            font-size: 90%;
+        }
+
+        .errorM3 .msgIcon {
+            background-image: url(' {!URLFOR($Resource.acqcicons,'iconerror.png')}');
+            background-position: 0px 0px;
+            background-repeat: no-repeat;
+            width: 40px;
+            height: 55px;
+        }
+
+        .breadcrumb {
+            background-color: #fafcfb;
+        }
+    </style>
+
+    <script>
+        var menu = '';
+        function selectCounty(checked, countyId){
+            if(checked){
+                $("#zipCodesDiv_"+countyId).fadeIn("slow");
+                checkAll(true, countyId);
+                $("#countyCheckAll_"+countyId).attr("checked","true");
+            }else{
+                $("#open_"+countyId).fadeOut("slow");
+                $("#zipCodesDiv_"+countyId).fadeOut("slow");
+                $("#zipCodesDiv_"+countyId+" input[type=checkbox]").removeAttr("checked");
+            }
+        }
+
+        function checkAll(checked, countyId){
+            if(checked)
+                $(".zipCode"+countyId).attr("checked","true");
+            else
+                $(".zipCode"+countyId).removeAttr("checked");
+        }
+
+        $(document).ready(function(){
+            checkServiceTerritories();
+        });
+
+        function checkServiceTerritories(){
+            <apex:repeat value="{!ServiceTerritories}" var="st">
+            $("#zipCode{!st.Zip_Code__c}").attr("checked","true");
+            hideCounty("{!SUBSTITUTE(st.Zip_Code__r.Region__c,' ','_')}_{!SUBSTITUTE(st.Zip_Code__r.County__c,' ','_')}");
+    //      selectCounty(true, "{!SUBSTITUTE(st.Zip_Code__r.Region__c,' ','_')}_{!SUBSTITUTE(st.Zip_Code__r.County__c,' ','_')}");
+            $("#county{!SUBSTITUTE(st.Zip_Code__r.Region__c,' ','_')}_{!SUBSTITUTE(st.Zip_Code__r.County__c,' ','_')}").attr("checked","true");
+            </apex:repeat>
+        }
+
+        function buildZipCodes(){
+            var zipCodes = "";
+            $(".zipCode").each(function(){
+                if(this.checked){
+                    if(zipCodes!="") zipCodes+=",";
+                    zipCodes+=this.value;
+                }
+            });
+            $("#inputZipCodes").val(zipCodes);
+        }
+
+        function openRegion(region){
+            return;
+            if($("#regionCounties_"+region).css("display")=="none"){
+                $("#regionCounties_"+region).fadeIn("slow");
+            }else{
+                $("#regionCounties_"+region).fadeOut("slow");
+            }
+        }
+
+        function hideCounty(countyId){
+            $("#zipCodesDiv_"+countyId).fadeOut("slow");
+            $("#open_"+countyId).fadeIn("slow");
+        }
+
+        function showCounty(countyId){
+            $("#zipCodesDiv_"+countyId).fadeIn("slow");
+            $("#open_"+countyId).fadeOut("slow");
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <c:BIGACQCHeader />
+
+        <div id="mainContent">
+            <div class="cushion">
+                <ul class="breadcrumb" style="margin-left:0;padding:0;">
+                    <li><a href="BIGACQCDashboard">Dashboard</a> <span class="divider">/</span></li>
+                    <li class="active">Service Territories</li>
+                </ul>
+
+                <h1 class="page-header">Contractor Service Territories</h1>
+                Note: The AC Quality Care website contractor directory will be updated every Friday to reflect any changes to your service territory.
+
+                <p/>
+
+                <apex:outputPanel layout="none" rendered="{!HasError==true}">
+                    <div id="messageDiv">
+                        <h4>Some errors were encountered. Please correct them before submitting the form.</h4>
+                        <apex:messages />
+                    </div>
+                </apex:outputPanel>
+                <apex:pageMessages escape="false"/>
+                <apex:outputPanel layout="none" rendered="{!HasError==false}">
+                    <div id="messageDiv" style="display:none">
+                        <h4></h4>
+                        <ul></ul>
+                    </div>
+                </apex:outputPanel>
+                <apex:form prependId="false" id="contractor_form" styleClass="form-horizontal contractor_form" enctype="multipart/form-data">
+                    <input type="hidden" name="zipCodes" id="inputZipCodes" value=""/>
+
+                    <apex:repeat value="{!Regions}" var="region">
+                        <apex:variable var="regionId" value="{!SUBSTITUTE(region,' ','_')}"/>
+                        <div class="region-div" id="counties_{!regionId}">
+                            <div class="region-header" onclick="openRegion('{!regionId}')" >
+                                <span>{!region}</span>
+                            </div>
+                            <div class="region-counties" id="regionCounties_{!regionId}">
+                                <div class="counties-label">Select Counties:</div>
+                                <apex:repeat value="{!Counties[region]}" var="county">
+                                <apex:variable var="countyId" value="{!SUBSTITUTE(county,' ','_')}"/>
+                                <div class="county-div">
+                                    <div class="county-header">
+                                        <input type="checkbox" class="county_{!regionId} county" name="county" id="county{!regionId}_{!countyId}" value="{!regionId}_{!countyId}" onclick="selectCounty(this.checked,'{!regionId}_{!countyId}');"/> <span>{!county}</span>
+                                        <span id="open_{!regionId}_{!countyId}" class="open-county">&nbsp;&nbsp;&nbsp;<a href="javascript:showCounty('{!regionId}_{!countyId}');">Edit zip codes</a></span>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="span9">
+                                            <div class="zipcodes-div" id="zipCodesDiv_{!regionId}_{!countyId}">
+                                                <div class="row">
+                                                    <div class="span7">
+                                                        <strong><small>Select cities and zip codes in {!county}</small></strong>&nbsp;&nbsp;&nbsp;&nbsp;
+                                                        <input type="checkbox" class="county-check-all" id="countyCheckAll_{!regionId}_{!countyId}" onclick="checkAll(this.checked,'{!regionId}_{!countyId}')"/>
+                                                        <small>Select all cities and zip codes</small>
+                                                    </div>
+                                                    <div class="span1 big-margin" style="text-align:right;">
+                                                        <a href="javascript:hideCounty('{!regionId}_{!countyId}');"><small>Close</small></a>
+                                                    </div>
+                                                </div>
+
+                                                <div class="county-zip-codes">
+                                                    <apex:repeat value="{!ZipCodes[region & '::' & county]}" var="zipCode">
+                                                        <div class="zipCode">
+                                                            <input type="checkbox" class="zipCode{!regionId}_{!countyId} zipCode" name="zipCode" id="zipCode{!zipCode.Id}" value="{!zipCode.Id}"/> <span>{!zipCode.City__c} ({!zipCode.Name})</span>
+                                                        </div>
+                                                    </apex:repeat>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </apex:repeat>
+                            </div>
+                        </div>
+                    </apex:repeat>
+
+                    <p class="center" style="padding-top:20px">
+                        <button class="btn" type="button" onclick="if(confirm('Are you sure you want to exit? Your changes will not be saved.')) window.location.href='BIGACQCDashboard'">Cancel</button>&nbsp;
+                        <apex:commandButton id="saveButton" action="{!saveServiceTerritories}"  styleClass="btn btn-primary" style="background-color: rgb(66, 139, 202)!important;background-image:none!important;" value="Save" onclick="buildZipCodes();"/>&nbsp;
+                    </p>
+
+                </apex:form>
+            </div><!--end of cushion-->
+        </div><!-- end of main Content -->
+
+    <c:BIGPortalFooter />
+    <c:BIGPortalAHUSurvey />
+
+    </div><!--end of container-->
+</body>
+</html>
+</apex:page>

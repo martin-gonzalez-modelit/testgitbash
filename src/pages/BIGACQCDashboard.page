@@ -1,0 +1,604 @@
+<!--
+BE CAREFUL IF YOU IMPLEMENT SOMETHING RELATED TO EDIT DATA ON BIGACQCDASHBOARD.
+IF YOU TRY TO DO THAT YOU WON'T BE ABLE TO DO IT 'CAUSE THIS PAGE IS SET AS
+READ ONLY. ALSO WE HANDLE THE LIST OF REBATE_APPLICTION__C(INTO THE CONTROLLER)
+BY TRANSIENT VARIABLE. IT MEANS THAT YOU WON'T BE ABLE TO STORE THE STATE.
+IT WORKS ONLY IN THE CONTEXT OF THE REQUEST. ONCE YOU GET THE PAGE, THE DATA
+STORED IN listRebateApps WILL DISAPPEAR. -->
+
+<apex:page showheader="false" sidebar="false" cache="false" standardstylesheets="false"
+    applyHtmltag="false" controller="BIGPortalHVACDashboardController" readOnly="true" action="{!checkUserAccess}">
+<html>
+<head>
+    <title>PG&amp;E Portal - AC Quality Care Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/validatorStyle.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<style>
+
+.clearfix {
+    min-width: 960px;
+}
+
+.dashboard-container{
+    width:860px;
+    min-width: 860px;
+    float:left;
+    padding:10px;
+    background-color:white;
+    border-radius:10px;
+    -moz-border-radius:10px;
+    box-shadow:inset 2px 2px 0 rgba(256,255,255,.6), 0px 0px 2px rgba(0,0,0,.6);
+}
+
+.dashboard-panel{
+    width:410px;
+    height: 247px;
+    float:left;
+    padding:10px;
+    background-color:white;
+    border-radius:6px;
+    -moz-border-radius:6px;
+    box-shadow:inset 2px 2px 0 rgba(256,255,255,.6), 0px 0px 2px rgba(0,0,0,.6);
+    overflow:hidden;
+    position:relative;
+}
+
+.panel-content {
+    height: 225px;
+    overflow-y: auto;
+}
+
+.dashboard-header{
+    width:840px;
+    padding:10px;
+    margin:0 auto;
+    background-color:#e7e7e7;
+    border-radius:6px;
+    -moz-border-radius:6px;
+}
+
+div.chart-widest{
+    width:430px;
+    height:270px;
+    min-width:430px;
+}
+
+div.chart-wide{
+    width:320px;
+    min-width:320px;
+    float:left;
+}
+
+div.chart-narrow{
+    width:252px;
+    min-width: 252px;
+    float:left;
+}
+
+
+div.announcement{
+    padding-right:10px;
+}
+
+div.event{
+}
+
+.span5 {
+    width: 410px;
+    min-width: 410px;
+}
+
+.span3 {
+    width: 265px;
+    margin-left: 20px;
+    min-width: 265px;
+}
+
+.big-margin {
+    margin-left: 50px;
+}
+
+.mid-margin {
+    margin-left: 40px;
+}
+
+.small-margin {
+    margin-left: 15px;
+}
+
+.no-pad-bottom {
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.no-pad-top {
+    padding-top: 0;
+    margin: 5px 0 10px 0!important;
+}
+
+#announcement {
+    margin-left: 0;
+    border-right: 1px solid #cfcfcf;
+}
+
+#events {
+    width: 405px;
+    margin-left: 20px;
+    min-width: 405px;
+}
+
+a.uline, a.uline:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.legend {
+    width: 16px;
+    height: 16px;
+    border-radius:5px;
+    -moz-border-radius:5px;
+}
+
+.chart-legend {
+    width: 350px;
+    margin: 20px 0 0 0;
+}
+
+.bar-chart {
+    height:240px;
+}
+
+.cell-right {
+    width: 70px;
+    text-align: right;
+}
+
+.big-text {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.blue-header {
+    color: #0c6698;
+    font-weight: 600;
+    font-size: 24px;
+    border-bottom: 0;
+    margin-bottom: 5px;
+}
+
+.dash-header {
+    font-size: 1.2em;
+    margin: 10px 0 10px 10px;
+}
+
+.panel-header {
+    font-size: 1.2em;
+    color: #0b6796;
+    margin-bottom: 5px;
+    line-height: 40px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.slim-margin {
+    padding: 0;
+    margin: 8px 0;
+}
+
+.view-all {
+    width: 410px;
+    margin: 0 0 5px 0;
+    bottom: 0;
+    text-align: right;
+    position: absolute;
+}
+
+.smaller {
+    font-size: 87%;
+}
+
+.no-margin {
+    margin-left: 0;
+}
+
+.margin-below {
+    margin-bottom: 5px;
+}
+
+.row {
+    width: 960px;
+    min-width: 960px;
+    max-width: 960px;
+    display:inline-block
+}
+</style>
+
+<apex:variable var="statCounter" value="{!0}"/>
+<apex:repeat value="{!ACQCApplications}" var="m">
+    <apex:variable var="thisStat" value="{!m.numofApps}"/>
+    <apex:variable var="statCounter" value="{!statCounter+thisStat}"/>
+</apex:repeat>
+
+    <script type="text/javascript">
+      var chartPie;
+      var dataTablePie;
+
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        checkDonutPie();
+        drawTotalRebatePaidMonthly();
+        drawTotalApplicationsSubmittedByMonth();
+        drawTotalRebateIssuedByMeasure();
+      }
+
+      function drawNumberOfApplicationsByStatus(){
+        var rows = [];
+        <apex:repeat value="{!ACQCApplications}" var="m">
+            if ('{!m.status}' != 'Rebate Issued') {
+             rows.push(['{!m.status}', {!m.numofApps}])
+            }
+        </apex:repeat>
+        dataTablePie = new google.visualization.DataTable();
+        dataTablePie.addColumn('string', 'Task');
+        dataTablePie.addColumn('number', 'Hours per Day');
+        dataTablePie.addRows(rows);
+
+        var options = {
+          title: 'No. of Applications by Status',
+          pieHole: 0.5,
+          sliceVisibilityThreshold: 1/100000,
+          chartArea: {left:0, width:"100%", height:"90%"},
+          legend: {position: 'none'},
+          colors:[<apex:repeat value="{!ACQCApplications}" var="c">'{!c.color}',</apex:repeat>],
+          pieSliceText: 'value'
+        };
+
+        chartPie = new google.visualization.PieChart(document.getElementById('numberOfApplicationsByStatus'));
+        chartPie.draw(dataTablePie, options);
+
+        google.visualization.events.addListener(chartPie, 'select', selectHandler);
+      }
+
+      function selectHandler(e) {
+        window.location = 'BIGACQCRebateApplications?filterby=' + dataTablePie.getValue(chartPie.getSelection()[0].row, 0);
+        chartPie.setSelection();
+      }
+
+      function drawEmptyChart(){
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Task');
+        dataTable.addColumn('number', 'Hours per Day');
+        dataTable.addRows([
+            ['Application Submitted', 100]
+        ]);
+
+        var options = {
+          title: 'No. of Applications by Status',
+          pieHole: 0.5,
+          chartArea: {left:0, width:"100%", height:"90%"},
+          legend: {position: 'none'},
+          colors: ['#ccc'],
+          pieSliceText: 'value',
+          tooltip : {trigger: 'none'}
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('numberOfApplicationsByStatus'));
+        chart.draw(dataTable, options);
+      }
+
+      function drawTotalRebatePaidMonthly(){
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Year');
+        dataTable.addColumn('number', 'Sales');
+        // A column for custom tooltip content
+        dataTable.addColumn({type: 'string', role: 'tooltip'});
+        dataTable.addColumn({type: 'string', role: 'style'});
+        dataTable.addRows([
+            <apex:repeat value="{!LastSixMonthsWithYear}" var="m">
+            ['{!m}', {!TotalRebatePaidMonthly[m]} , '<apex:outputText value="{0, number, $###,##0}"><apex:param value="{!TotalRebatePaidMonthly[m]}"/></apex:outputText>', 'color: #869b0e'], //#036564
+            </apex:repeat>
+        ]);
+
+        var options = {
+          /*title: 'Total Rebate Paid Monthly',*/
+          chartArea: { top: 10, width: "75%", height:"70%" },
+          hAxis: { slantedTextAngle:90, slantedText: true },
+          vAxis:{ format:'$#,###', viewWindowMode: 'explicit', viewWindow:{ min:0 }},
+          legend: {position:'none'}
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('totalRebatePaidMonthly'));
+        chart.draw(dataTable, options);
+      }
+
+      function drawTotalApplicationsSubmittedByMonth(){
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Year');
+        dataTable.addColumn('number', 'Units');
+        // A column for custom tooltip content
+        dataTable.addColumn({type: 'string', role: 'tooltip'});
+        dataTable.addColumn({type: 'string', role: 'style'});
+        dataTable.addRows([
+            <apex:repeat value="{!LastSixMonthsWithYear}" var="m">
+            ['{!m}', {!TotalApplicationsSubmittedByMonth[m]} , '<apex:outputText value="{0, number, ###,##0}"><apex:param value="{!TotalApplicationsSubmittedByMonth[m]}"/></apex:outputText>', 'color: #1789c7'], //#490b3e
+            </apex:repeat>
+        ]);
+
+        var options = {
+          chartArea: { top: 10, width: "80%", height:"70%" },
+          hAxis: { slantedTextAngle:90, slantedText: true },
+          vAxis:{ viewWindowMode: 'explicit', viewWindow:{  min:0 }},
+          legend: {position:'none'}
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('TotalApplicationsSubmittedByMonth'));
+        chart.draw(dataTable, options);
+      }
+
+
+      function drawTotalRebateIssuedByMeasure(){
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Year');
+        dataTable.addColumn('number', 'Sales');
+        // A column for custom tooltip content
+        dataTable.addColumn({type: 'string', role: 'tooltip'});
+        dataTable.addColumn({type: 'string', role: 'style'});
+        dataTable.addRows([
+            <apex:repeat value="{!RebateTypeGroups}" var="mg">
+            ['{!mg}', {!TotalRebatePaidByRecordTypeGroup[mg]} , '<apex:outputText value="{0, number, $###,##0}"><apex:param value="{!TotalRebatePaidByRecordTypeGroup[mg]}"/></apex:outputText>', 'color: #869b0e'], //#be1550
+            </apex:repeat>
+        ]);
+
+        var options = {
+          chartArea: {top: 10, width: "75%", height:"70%" },
+          hAxis: { slantedTextAngle:90, slantedText: true },
+          vAxis:{ format:'$#,###', viewWindowMode: 'explicit', viewWindow:{ min:0 }},
+          legend: {position:'none'}
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('TotalRebatePaidByRecordTypeGroup'));
+        chart.draw(dataTable, options);
+      }
+
+      function checkDonutPie(){
+        var thisChart = '{!statCounter}';
+        if(thisChart==0){
+            drawEmptyChart();
+        }else{
+            drawNumberOfApplicationsByStatus();
+        }
+      }
+    </script>
+
+</head>
+<body>
+
+ <div class="container main" id="main-container">
+    <c:BIGACQCHeader />
+    <div id="mainContent">
+        <div class="cushion">
+            <div class="span5 no-margin">
+                <!-- h2 class="panel-header">Your AC Quality Care Dashboard</h2 -->
+                <div class="panel-header">Your AC Quality Care Dashboard</div>
+            </div>
+            <div class="clearfix">
+                <div class="dashboard-container" style="padding-bottom:0;">
+                    <div class="dashboard-header">
+                        <div class="row">
+                            <div class="span5 mid-margin">
+                                <img src="{!URLFOR($Resource.acqcicons,'iconbriefcase.png')}" style="padding:0;"/>
+                                Total Application Submitted to PG&amp;E:&nbsp;&nbsp;
+                                <span class="big-text"><apex:outputText value="{0, number, ###,##0}"><apex:param value="{!TotalApplicationsSubmitted}"/></apex:outputText></span>
+                            </div>
+                            <div class="span4" style="text-align:right;">
+                                <img src="{!URLFOR($Resource.acqcicons,'iconcheck.png')}" style="padding:0;"/>
+                                Total Rebates Paid:&nbsp;&nbsp;
+                                <span class="big-text"><apex:outputText value="{0, number, $###,##0}"><apex:param value="{!TotalRebatePaid}"/></apex:outputText></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- h2 class="small-margin">APPLICATION STATUS</h2 -->
+                    <div class="small-margin" style="line-height: 20px; margin-top: 12px;font-weight:bold;">APPLICATION STATUS</div>
+                    <div class="row">
+                        <div class="span6">
+                            <div id="numberOfApplicationsByStatus" class="chart-widest"></div>
+                        </div>
+                        <div class="span4 chart-legend">
+                            <apex:variable var="listCounter" value="{!1}"/>
+                            <apex:variable var="thisColor" value="fff"/>
+
+                            <table class="table-condensed">
+                                <apex:repeat value="{!ACQCApplications}" var="s">
+                                    <tr>
+                                        <td><div class="legend" style="background-color:{!s.color};"></div></td>
+                                        <td>
+                                           <apex:outputLink value="BIGACQCRebateApplications?filterby={!s.status}">{!s.status}</apex:outputLink>
+                                        </td>
+                                        <td class="cell-right"><strong>{!s.numofApps}</strong></td>
+                                    </tr>
+                                </apex:repeat>
+                            </table>
+                        </div>
+
+                    </div>
+                    <p/>
+                    <div class="row">
+                        <div class="span3 big-margin"><strong>Applications Submitted Monthly</strong> *</div>
+                        <div class="span3"><strong>Rebate Paid Monthly</strong> *</div>
+                        <div class="span3"><strong>Total Rebate Issued by Measure</strong> *</div>
+                    </div>
+                    <div class="row">
+                        <div class="span3 big-margin">
+                            <div id="TotalApplicationsSubmittedByMonth" class="bar-chart"></div>
+                            <span class="smaller margin-below">&nbsp;* data shown for the last 6 months</span>
+                        </div>
+                        <div class="span3">
+                            <div id="totalRebatePaidMonthly" class="bar-chart"></div>
+                        </div>
+                        <div class="span3">
+                            <div id="TotalRebatePaidByRecordTypeGroup" class="bar-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <br/>
+
+            <div class="row">
+                <div class="span5">
+                    <!-- h2 class="panel-header">Program Announcements</h2 -->
+                    <div class="panel-header">Program Announcements</div>
+                </div>
+                <div class="span5 mid-margin">
+                    <!-- h2 class="panel-header">Future Trainings &amp; Events</h2 -->
+                    <div class="panel-header">Upcoming Field QC Inspections</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="span5">
+                    <div class="dashboard-panel">
+                        <div class="panel-content">
+                            <apex:variable var="counter" value="{!ProgramAnnouncements.size}"/>
+                            <apex:variable var="thisCounter" value="{!1}"/>
+                            <apex:outputPanel rendered="{!counter != 0}">
+                                <apex:repeat value="{!ProgramAnnouncements}" var="p">
+                                <apex:outputPanel rendered="{!thisCounter < 4}">
+                                    <apex:outputPanel rendered="{!thisCounter != 1}"><!-- <hr class="slim-margin"/>  --><br/></apex:outputPanel>
+                                    <apex:variable var="thisCounter" value="{!thisCounter+1}"/>
+                                    <div class="announcement">
+                                        <strong>{!p.Name}</strong><br/>
+                                        <span class="smaller"><apex:outputField value="{!p.Announcement__c}"/></span>
+                                        <apex:outputPanel rendered="{!p.URL__c != ''}">
+                                        <br/>
+                                        <a href="{!p.URL__c}" target="_blank" class="smaller">More Information</a>
+                                        </apex:outputPanel>
+                                    </div>
+                                </apex:outputPanel>
+                                </apex:repeat>
+                                <div class="view-all" style="display:{!IF(counter>3, 'block', 'none')}">
+                                <a href="BIGACQCDashboardDetail?q=PA">View All</a>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!counter == 0}">
+                                There are no Program Announcements at this time
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <div class="span5 mid-margin">
+                    <div class="dashboard-panel">
+                        <div class="panel-content">
+                            <apex:variable var="counter4" value="{!Inspections.size}"/>
+                            <apex:variable var="thisCounter4" value="{!1}"/>
+                            <apex:outputPanel rendered="{!counter4 != 0}">
+                                <apex:repeat value="{!Inspections}" var="p">
+                                    <apex:outputPanel rendered="{!thisCounter4 < 6}">
+                                        <apex:outputPanel rendered="{!thisCounter4 != 1}"><!-- <hr class="slim-margin"/> --><p/></apex:outputPanel>
+                                        <apex:variable var="thisCounter4" value="{!thisCounter4+1}"/>
+                                        <div class="event">
+                                            <strong><apex:outputField value="{!p.Field_QC_Date_Time__c}"/></strong><br/>
+                                            <span class="smaller">{!p.Building_Street_Address__c}, {!p.Building_City__c}</span>&nbsp;&nbsp;
+                                            <a href="/pgeportal/BIGACQCRebateApplicationForm?appId={!p.Id}" class="smaller">View Application</a>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:repeat>
+                                <div class="view-all" style="display:{!IF(Inspections.size>5, 'block', 'none')}">
+                                    <a href="BIGACQCDashboardDetail?q=FQC">View All</a>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!Inspections.size == 0}">
+                                There are no QC Inspections scheduled at this time
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="span5">
+                    <!-- h2 class="panel-header">Quick Reference</h2 -->
+                    <div class="panel-header">Future Trainings &amp; Events</div>
+                </div>
+                <div class="span5 mid-margin">
+                    <!-- h2 class="panel-header">Upcoming Field QC Inspections</h2 -->
+                    <div class="panel-header">Quick Reference</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="span5">
+                    <div class="dashboard-panel">
+                     <div class="panel-content">
+                            <apex:variable var="counter2" value="{!Events.size}"/>
+                            <apex:variable var="thisCounter2" value="{!1}"/>
+                            <apex:outputPanel rendered="{!counter2 != 0}">
+                                <apex:repeat value="{!Events}" var="p">
+                                <apex:outputPanel rendered="{!thisCounter2 < 4}">
+                                    <apex:outputPanel rendered="{!thisCounter2 != 1}"><!-- <hr class="slim-margin"/>  --><br/></apex:outputPanel>
+                                    <apex:variable var="thisCounter2" value="{!thisCounter2+1}"/>
+                                    <div class="event">
+                                        <strong>{!p.Name} (<apex:outputField value="{!p.Activity_Date__c}"/>)</strong><br/>
+                                        <span class="smaller"><apex:outputField value="{!p.Announcement__c}"/></span>
+                                        <apex:outputPanel rendered="{!p.URL__c != ''}">
+                                        <br/>
+                                        <a href="{!p.URL__c}" target="_blank" class="smaller">More Information &amp; Registration</a>
+                                        </apex:outputPanel>
+                                    </div>
+                                </apex:outputPanel>
+                                </apex:repeat>
+                                <div class="view-all" style="display:{!IF(counter2>3, 'block', 'none')}">
+                                <a href="BIGACQCDashboardDetail?q=FTE">View All</a>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!counter2 == 0}">
+                                There are no Trainings &amp; Events in the future
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <div class="span5 mid-margin">
+                    <div class="dashboard-panel">
+                        <div class="panel-content">
+                            <apex:variable var="counter3" value="{!QuickReferences.size}"/>
+                            <apex:variable var="thisCounter3" value="{!1}"/>
+                            <apex:outputPanel rendered="{!counter3 != 0}">
+                                <apex:repeat value="{!QuickReferences}" var="p">
+                                <apex:outputPanel rendered="{!thisCounter3 < 7}">
+                                <apex:outputPanel rendered="{!thisCounter3 != 1}"><!-- <hr class="slim-margin"/> --><br/></apex:outputPanel>
+                                    <apex:variable var="thisCounter3" value="{!thisCounter3+1}"/>
+                                    <div class="announcement">
+                                        <apex:outputPanel rendered="{!p.New_window__c == false}">
+                                            <a href="{!p.URL__c}">{!p.Title__c}</a>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!p.New_window__c != false}">
+                                            <a href="{!p.URL__c}" target="_blank">{!p.Title__c}</a>
+                                        </apex:outputPanel>
+                                    </div>
+                                </apex:outputPanel>
+                                </apex:repeat>
+                                <div class="view-all" style="display:{!IF(counter3>5, 'block', 'none')}">
+                                <a href="BIGACQCDashboardDetail?q=QR">View All</a>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!counter3 == 0}">
+                                There are no Quick References
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <c:BIGPortalFooter />
+    <c:BIGPortalAHUSurvey />
+</div>
+</body>
+</html>
+</apex:page>

@@ -1,0 +1,2285 @@
+<apex:page showheader="false" sidebar="false" cache="false" standardstylesheets="false" applyhtmltag="false"
+        controller="BIGPortalManageApplicationController" action="{!init}">
+<head>
+    <title>PG&amp;E Portal - Application</title>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/datatables.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bigutopia.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/cupertino/cupertino_styles.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/nprogress/nprogress.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-ui/jquery-ui.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-validate/jquery.validate.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-validate/additional-methods.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-maskedinput/jquery.maskedinput.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/datatable/jquery.dataTables.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/nprogress/nprogress.js')}"/>
+<style>
+    body {
+        background-color: #CCFFFF;
+    }
+    .options-table label {
+        display: inline-block;
+        margin-left: 10px;
+    }
+    .options-table input {
+        margin-bottom: 7px;
+        vertical-align: top;
+    }
+    .options-table {
+        margin-left: 17px;
+    }
+    .options-table tr td:first-child {
+        width: 570px;
+    }
+    .options-table tr td label {
+        width: 520px !important;
+    }
+    .options-table tr td {
+        padding-bottom: 4px;
+        width: 79px;
+    }
+
+    .options-table2 label {
+        display: inline-block;
+        margin-left: 10px;
+    }
+    .options-table2 input {
+        margin-bottom: 7px;
+    }
+    .options-table2 {
+        margin-left: 17px;
+    }
+    .options-table2 tr td:first-child {
+        width: 630px;
+    }
+    .options-table2 tr td label {
+        width:600px !important;
+    }
+    .options-table2 tr td {
+        padding-bottom: 4px;
+    }
+
+    .control-group label.error {
+        padding-left: 5px;
+        color: #B94A48;
+        font-size: 12px !important;
+        z-index: 1050;
+        background-color: inherit;
+    }
+    label.error, label.zipCodeError {
+        color: #B94A48;
+        font-size: 12px;
+        white-space: normal;
+    }
+
+    #dwellingUnit label.error {
+        display: block;
+        padding-left: 210px;
+    }
+
+    .form-horizontal .control-label  {
+        width: 200px;
+        margin-right: 10px;
+    }
+
+    .form-horizontal .controls {
+        margin-left: 0;
+    }
+    .error.valid {
+        width: 24px !important;
+    }
+
+    .multipleItemsSearchResult {
+        list-style: none;
+        font-size: 14px;
+        color: #999999;
+        border-left: 1px solid #999999;
+        border-right: 1px solid #999999;
+        border-bottom: 1px solid #999999;
+        margin-left: 10px;
+        width: 225px;
+    }
+    .multipleItemsSearchResult li {
+        padding-left: 5px;
+        padding-right: 2px;
+        text-overflow: ellipsis;
+    }
+    .multipleItemsSearchResult li:hover {
+        cursor: pointer;
+        background-color: #006DCC;
+        color: #FFFFFF;
+    }
+    .measureItem[disabled] + label {
+        color: #888;
+    }
+    .attachments-wrapper .control-group {
+        position: relative;
+    }
+    .attachments-wrapper .control-group .control-label {
+        padding-top: 0;
+        margin-bottom: 0;
+    }
+    .attachments-wrapper .control-group .controls input {
+        top: 50%;
+        margin-top: -11px;
+        /*position: absolute;*/
+        height: Auto !important;
+    }
+
+    #notes{
+        width:98%;
+        height:100px;
+        margin-bottom:20px;
+    }
+
+    span.note{
+        font-size: 75%;
+        color: #676767;
+    }
+
+    #conversation{
+        border: solid 1px #9fc7f5;
+        padding: 20px;
+        background-color: #dfecf2;
+        margin-top: 20px;
+        border-radius:8px;
+        -moz-border-radius:8px;
+        font-size: 90%;
+    }
+
+    #conversation h2{
+        float:left;
+        width:170px;
+    }
+
+    #showConversation{
+        display:none;
+        margin-top:20px;
+    }
+
+    .popover-content{
+        font-size:90%;
+    }
+
+    .text-info {
+        margin: 0;
+        padding: 0;
+    }
+
+    .ui-datepicker-trigger {
+        margin-left: 5px;
+        cursor: pointer;
+    }
+
+    div.control-group label h4 {
+        display: inline;
+    }
+
+    #errorSearchDw {
+        display: block;
+    }
+
+    .subtitles-comments {
+        font-size: 13px;
+        cursor: default;
+        font-style: italic;
+        margin-bottom: 0;
+    }
+
+    .filename-container {
+        width: 350px;
+        overflow: hidden;
+        display: inline-block;
+        text-overflow: ellipsis;
+        line-height: 18px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+</style>
+<script>
+    var MAX_FILE_SIZE = 5242880;
+    var MAX_RANGE_INCENTIVE = 2500;
+    var binaryFileIdCard = {name:'', size:0};
+    var additionalDocumentsSize = 0;
+    /**
+     * Default values for these two measures structure variables.
+     * Going to get updated once the user selects a dwelling unit since has dependencies on the gas provider.
+     */
+    var dwellingUnit = '{!dwellingUnit}';
+    var minimumIncentive = {!minimumIncentive};
+    var maximumIncentive = {!maximumIncentive};
+    var selectedRebateAssignment = '';
+    var totalCost;
+    var hasMinimumIncentiveChanged;
+    var projectFinancingDescriptionValue = '{!application.Project_Financing_Description__c}';
+    var zipCodeError = '{!zipCodeErrors}' !== '';
+    // Progress bar configuration that hides spinner
+    NProgress.configure({ showSpinner: false });
+
+$(document).ready(function() {
+    $('.input-phone').mask('(999) 999-9999');
+    $('[data-toggle="tooltip"]').tooltip();
+    addDownloadLinks();
+    $(".help-icon").popover();
+
+    // Set style to alert messages
+    customMsg();
+
+    validateApplicationFormFields();
+
+    // Set Completed Installation Cost
+    totalCost = $('.jobCostInput').val() !== undefined ? $('.jobCostInput').val().replace(/[^0-9\.]+/g,"") : totalCost;
+
+    if ($('.jobCostInput').length > 0) {
+        // Add validation rule to Completed Installation Cost input when action is not null
+        var incentivesSum = parseFloat($('#incentivesSum').text().replace("$","").replace(",",""));
+        $('.jobCostInput').rules('add', {
+            required: true,
+            currency: ["$", false],
+            min_comma: (incentivesSum > 0 ? incentivesSum : 1),
+            maxlength_currency: 16
+        });
+    }
+
+    // Remove multiple buildings' error message when a building is selected.
+    $('.multipleItemsSearchResult').on('click', function(e) {
+        $('.message.errorM3').remove();
+    });
+    // Search Dwelling Unit when Search button is clicked
+    $('#dwellingUnit').on('click', '#searchDwelling', function(e) {
+        e.preventDefault();
+        if (!$(this).hasClass('disabled')) {
+            $('input[id*="inputDwellingSearch"]').rules("add", {
+                required: true,
+                minlength: 2,
+                alphanumericwithbasicpunc : true,
+                messages: {
+                    required: dwellingUnit === '' ? 'This field is required.' : 'Please enter at least 2 characters.'
+                }
+            });
+            // Remove Bayren Zip Code validation in order to be able to search.
+            $('input[id*="inputDwellingSearch"]').rules("remove",  "validZipCode");
+
+            if ($('.measuresFrm').validate().element('input[id*="inputDwellingSearch"]')) {
+                $(this).addClass('disabled');
+                searchDwellingUnit($.trim($('.search-dw-input').val()));
+            }
+        }
+    });
+    // Search Dwelling Unit when Enter is pressed
+    $('#dwellingUnit').keypress(function(e) {
+        if (e.which == 13) {
+            e.preventDefault();
+            if (!$('#searchDwelling').hasClass('disabled')) {
+                $('input[id*="inputDwellingSearch"]').rules( "add", {
+                    required: true,
+                    minlength: 2,
+                    alphanumericwithbasicpunc : true,
+                    messages: {
+                        required: dwellingUnit === '' ? 'This field is required.' : 'Please enter at least 2 characters.'
+                    }
+                });
+                // Remove Bayren Zip Code validation in order to be able to search.
+                $('input[id*="inputDwellingSearch"]').rules("remove",  "validZipCode");
+
+                if ($('.measuresFrm').validate().element('input[id*="inputDwellingSearch"]')) {
+                    $('#searchDwelling').addClass('disabled');
+                    searchDwellingUnit($.trim($('.search-dw-input').val()));
+                }
+            }
+        }
+    });
+
+    $('#searchDwModal').on('shown', function() {
+         $('#inputModalDwellingSearch').focus();
+         $('input[id*="inputDwellingSearch"]').rules("remove");
+    });
+
+    $('#searchDwModal').on('hidden', function() {
+        $(this).find('label.error').text("");
+        // Remove the validation event handler.
+        $('#inputModalDwellingSearch').off('keyup');
+    });
+
+    // Search Dwelling Unit At Modal Window when Search button is clicked or Enter is pressed
+    $('#searchDwModal').on('click', '#modalSearchDwelling', function(e) {
+        e.preventDefault();
+        $('#inputModalDwellingSearch').off('keyup');
+        $('#inputModalDwellingSearch').on('keyup', validateInputModalSearch);
+        if ($('#searchDwModal').is(':visible') && minimumCharsDw($("#inputModalDwellingSearch").val())) {
+            // Search for dwelling if the modal is displayed
+            searchDwellingFromModal($(this));
+            $("#errorSearchDw").text("");
+        } else {
+            $("#errorSearchDw").addClass("error").text("Please enter at least 2 characters");
+        }
+    });
+    // Set dwelling unit when clicking on a link of the search modal popup
+    $('#main-container').on('click', '.set-dw', function(e) {
+        e.preventDefault();
+        // Check that the id is present and assign the dwelling unit
+        if ($.trim($(this).attr('rel')) != '') {
+            assignDwellingUnit($.trim($(this).attr('rel')));
+            $('.search-dw-input').val($.trim($(this).text()));
+            if ($('.multipleItemsSearchResult').length > 0) {
+                $('.multipleItemsSearchResult').remove();
+            }
+        }
+    });
+
+    // Set the rebate assignment form label when a rebate assignment is selected
+    $('form[id*="applicationForm"]').on('click', 'span[id*="rebateAssignment"] input', function () {
+        setRebateAssignmentFormLabel();
+    });
+
+    var $projectFinancing = $('select[id*="projectFinancingOptions"]');
+    var $projectFinancingDescription = $('textarea[id*="projectFinancingDescription"]');
+    var projectFinancingSelectedOption = ('{!application.Project_Financing_Source__c}' !== ''
+            && '{!application.Project_Financing_Source__c}' !== 'Secured Loan'
+            && '{!application.Project_Financing_Source__c}' !== 'Unsecured Loan')
+            ? '{!application.Project_Financing_Source__c}'
+            : '{!application.Project_Financing_Detail__c}';
+
+    // Set project financing select input.
+    $projectFinancing.val(projectFinancingSelectedOption);
+    // Set project description visibility and value.
+    setProjectDescription(projectFinancingSelectedOption);
+
+    // Bind change event on project financing select input.
+    $projectFinancing.on('change', function() {
+        var optionValue = $(this).val();
+        var groupLabel = $('select[id*="projectFinancingOptions"] :selected').parent().attr('label');
+        var $projectFinancingSource = $('input[type=hidden][id*="projectFinancingSource"]');
+        var $projectFinancingDetail = $('input[type=hidden][id*="projectFinancingDetail"]');
+        // Set project description visibility and value.
+        setProjectDescription(optionValue);
+        // Set values for hidden inputs.
+        if (groupLabel === 'General Options') {
+            $projectFinancingSource.val(optionValue);
+            $projectFinancingDetail.val('');
+        } else if (groupLabel === 'Secure Options') {
+            $projectFinancingSource.val('Secured Loan');
+            $projectFinancingDetail.val(optionValue);
+        } else if (groupLabel === 'Unsecure Options') {
+            $projectFinancingSource.val('Unsecured Loan');
+            $projectFinancingDetail.val(optionValue);
+        } else {
+            $projectFinancingSource.val('');
+            $projectFinancingDetail.val('');
+        }
+    });
+
+    // Bing keyup event on project financing description text area.
+    $projectFinancingDescription.on('keyup', function() {
+        // Save last value entered for project financing description.
+        projectFinancingDescriptionValue = $(this).val();
+    });
+    // The Following Functionality prepares the dom for incentives' calculations only if user is in new application screen
+    // This will add two additional cells to each table row containing measure inputs
+    // The cells will contain Available Incentives and Selected Incentives
+    if ($('.appDetailActions').length == 0) {
+        // Set class to the inputs (checkboxes and radiobuttons)
+        $('.options-table tr').find('td:eq(0) input').addClass('measureItem');
+        // Set Available Incentives and Selected Incentives cells on tables, next to the input label
+        $('.options-table tr').find('td:eq(0) input').each(function () {
+            var $el = $(this);
+            var id = $el.val().split('_')[0];
+            var incentive = $el.val().split('_')[1];
+            // Append Available and Selective Incentives cells
+            $el.parent().parent().append('<td id="'+ id +'" class="text-right"></td><td id="' + id + '_value" class="measureValue text-right"></td>');
+            // Set Available Incentives value to the cell
+            $('#' + id).text('$' + incentive);
+        });
+        // Append a 'Remove Selection' cross next to the radio button
+        $('.measure-container input:radio').on('click', function (e) {
+            removeSelectionCrosses(this);
+        });
+        // Set building permit label when Air Conditioning radio buttons are clicked
+        $('.air-conditioning input').on('click', function () {
+            setBuildingPermitLabel();
+        });
+        // Set the additional documents label when the Kicker Measure is selected
+        $('.kicker-measure input').on('click', function () {
+            setAdditionalDocumentsLabel();
+        });
+        /**
+         * It controls that you can select only one radio button
+         * radioButton. The radio button selected currently
+         */
+        function removeSelectionCrosses(radioButton) {
+            var $radioButton = $(radioButton);
+            $radioButton.next().next().remove();
+            // Find parent from cell
+            $tbody = $radioButton.parent().parent().parent();
+            // Get radio buttons that haven't been checked.
+            $crosses = $tbody.find('input[type:radio]:not(:checked)').next().next();
+            // Remove the crosses next to the radio buttons.
+            $crosses.remove();
+            $radioButton.parent().append('<a href="#" title="Remove Selection" class="removeSelection close" style="font-size:30px;">&times;</a>');
+        }
+        // Deselect the radio button selected when click the close link
+        $('#main-container').on('click', '.removeSelection', function(e) {
+            e.preventDefault();
+            $(this).prev().prev().attr('checked', false);
+            $(this).remove();
+            updateMeasuresSelected();
+            calculateIncentive();
+            setRebateAssignmentFormLabel();
+            setBuildingPermitLabel();
+            setAdditionalDocumentsLabel();
+        });
+        setRebateAssignmentFormLabel();
+        setBuildingPermitLabel();
+        setAdditionalDocumentsLabel();
+        // Set rebate assignment form label
+        function setRebateAssignmentFormLabel() {
+            var $optionalMessage = $('.rebate-assignment-optional');
+            var selectedRebateAssignment = $("input[name='j_id0:applicationForm:rebateAssignmentNew']").length > 0
+                    ? $("input[name='j_id0:applicationForm:rebateAssignmentNew']:checked").val()
+                    : $("input[name='j_id0:applicationForm:rebateAssignmentApp']:checked").val()
+
+            var optionalText = selectedRebateAssignment != 'Account Holder' ? '*' : '';
+            $optionalMessage.text(optionalText);
+        }
+        // Set building permit label
+        function setBuildingPermitLabel() {
+            var $optionalMessage = $('.building-permit-optional');
+            var $parent = $('.building-permit-optional').parent();
+
+            if ($('.air-conditioning').find('input:radio:checked').length > 0) {
+                $optionalMessage.text('*');
+            } else {
+                $optionalMessage.text('(If required for scope of work)');
+                // Reset previous validations
+                $parent.parent().removeClass('error');
+                $parent.closest('div').find('label.error').remove();
+            }
+        }
+        // Set additonal documents label
+        function setAdditionalDocumentsLabel() {
+            var $optionalMessage = $('.additional-documents-optional');
+            var $parent = $('.additional-documents-optional').parent();
+
+            if ($('.kicker-measure').find('input:checked').length > 0) {
+                $optionalMessage.text('(HPHI Data Collection Form) *');
+                // Hide tooltip
+                $parent.find('.help-icon').hide();
+            } else {
+                $optionalMessage.text('(As necessary/if requested by reviewer)');
+                // Reset previous validations
+                $parent.parent().removeClass('error');
+                $parent.closest('div').find('label.error').remove();
+                // Show tooltip
+                $parent.find('.help-icon').show();
+            }
+        }
+
+        // Update selected incentives on page load
+        <apex:outputPanel layout="none" rendered="{!AND(!isHuTerminated, OR(action == 'new', application.Status__c == 'Created'))}">
+        updateMeasuresSelected();
+        </apex:outputPanel>
+
+        // Update Selected Incentives when selecting an input
+        $('.measureItem').on('click', function () {
+            updateMeasuresSelected();
+            calculateIncentive();
+        });
+
+        $('.disable-btn').on('click', function() {
+            disableButtons();
+        });
+
+        // JOB COST INPUT VALIDATION
+        $('.jobCostInput').on('blur', function () {
+            // Calculate incentive when total installation cost has changed
+            if ($(this).val() !== '' && Number($(this).val().replace(/[^0-9\.]+/g,"")) != totalCost) {
+                calculateIncentive();
+            }
+        });
+    }
+
+    $('.attachments-wrapper').on('change', '.additionalAttachment', function(e) {
+        e.preventDefault();
+        if (e.target.files.length > 0) {
+            additionalDocumentSize = e.target.files[0].size;
+        }
+    })
+
+    if ($.trim($('.infoM3 .messageCell h4').text()) === 'Messages') {
+        $('.infoM3 .messageCell h4').replaceWith($('.infoM3 span ul'));
+    }
+
+    function customMsg() {
+        // Add styling to messages
+        $('.message').addClass('alert');
+        $('.confirmM3').addClass('alert-success');
+        $('.infoM3').addClass('alert-info');
+        $('.errorM3').addClass('alert-error');
+        // Remove titles
+        $('.confirmM3 .messageCell h4').remove();
+        $('.infoM3 .messageCell h4').remove();
+        $('.errorM3 .messageCell h4').remove();
+
+        if ($('.errorM3').find('ul').length > 0) {
+            $('.errorM3 tr:first').remove();
+        }
+     }
+
+     // Set-Up date picker for date fields.
+     $('input[id*=testInDate]').attr('readonly', true).datepicker({
+        dateFormat: 'm/d/yy',
+        showOn: 'both',
+        maxDate: new Date(),
+        buttonImage: '{!URLFOR($Resource.bigutopia, "img/calendar.png")}',
+        buttonImageOnly: true,
+        onSelect: function(selectedDate) {
+            // Verify testInDate is higher than workStartDate, if it happens, remove workStartDate value
+            var $workStartDate = $('input[id*=workStartDate]');
+            var $workFinishDate = $('input[id*=workFinishDate]');
+            var $testOutDate = $('input[id*=testOutDate]');
+            if (Date.parse(selectedDate) > Date.parse($workStartDate.val())) {
+                $.datepicker._clearDate($workStartDate);
+                $.datepicker._clearDate($workFinishDate);
+                $.datepicker._clearDate($testOutDate);
+            }
+        }
+     });
+
+     // Set-Up date picker for date fields.
+     $('input[id*=workStartDate]').attr('readonly', true).datepicker({
+        dateFormat: 'm/d/yy',
+        showOn: 'both',
+        maxDate: new Date(),
+        buttonImage: '{!URLFOR($Resource.bigutopia, "img/calendar.png")}',
+        buttonImageOnly: true,
+        beforeShow: function() {
+            var $testInDate = $('input[id*=testInDate]');
+            var $workStartDate = $(this);
+            // Verify if testInDate already has a date, if it has, set it as minDate for workStartDate
+            if ($testInDate.val() != '') {
+                $workStartDate.datepicker('option', 'minDate', $testInDate.val());
+                $workStartDate.datepicker('refresh');
+            }
+        },
+        onSelect: function(selectedDate) {
+            // Verify WorkStartDate is higher than workFinishDate, if it happens, remove WorkFinishDate value
+            var $workFinishDate = $('input[id*=workFinishDate]');
+            var $testOutDate = $('input[id*=testOutDate]');
+            if (Date.parse(selectedDate) > Date.parse($workFinishDate.val())) {
+                $.datepicker._clearDate($workFinishDate);
+                $.datepicker._clearDate($testOutDate);
+            }
+        }
+     });
+
+     // Set-Up date picker for date fields.
+     $('input[id*=workFinishDate]').attr('readonly', true).datepicker({
+        dateFormat: 'm/d/yy',
+        showOn: 'both',
+        maxDate: new Date(),
+        buttonImage: '{!URLFOR($Resource.bigutopia, "img/calendar.png")}',
+        buttonImageOnly: true,
+        beforeShow: function() {
+            var $workStartDate = $('input[id*=workStartDate]');
+            var $testInDate = $('input[id*=testInDate]');
+            var $workFinishDate = $(this);
+            // Verify if workStartDate already has a date, if it has, set it as minDate for workFinishDate
+            if ($workStartDate.val() != '') {
+                $workFinishDate.datepicker('option', 'minDate', $workStartDate.val());
+                $workFinishDate.datepicker('refresh');
+            } else if ($testInDate.val() != '') {
+                $workFinishDate.datepicker('option', 'minDate', $testInDate.val());
+                $workFinishDate.datepicker('refresh');
+            }
+         },
+         onSelect: function(selectedDate) {
+            // Verify WorkFinishDate is higher than testOutDate, if it happens, remove testOutDate value
+            var $testOutDate = $('input[id*=testOutDate]');
+            if (Date.parse(selectedDate) > Date.parse($testOutDate.val())) {
+                $.datepicker._clearDate($testOutDate);
+            }
+        }
+     });
+
+     // Set-Up date picker for date fields.
+     $('input[id*=testOutDate]').attr('readonly', true).datepicker({
+        dateFormat: 'm/d/yy',
+        showOn: 'both',
+        maxDate: new Date(),
+        buttonImage: '{!URLFOR($Resource.bigutopia, "img/calendar.png")}',
+        buttonImageOnly: true,
+        beforeShow: function() {
+            var $workFinishDate = $('input[id*=workFinishDate]');
+            var $workStartDate = $('input[id*=workStartDate]');
+            var $testInDate = $('input[id*=testInDate]');
+            var $testOutDate = $(this);
+            // Verify if workFinishDate already has a date, if it has, set it as minDate for testOutDate
+            if ($workFinishDate.val() != '') {
+                $testOutDate.datepicker('option', 'minDate', $workFinishDate.val());
+                $testOutDate.datepicker('refresh');
+            } else if ($workStartDate.val() != '') {
+                $testOutDate.datepicker('option', 'minDate', $workStartDate.val());
+                $testOutDate.datepicker('refresh');
+            } else if ($testInDate.val() != '') {
+                $testOutDate.datepicker('option', 'minDate', $testInDate.val());
+                $testOutDate.datepicker('refresh');
+            }
+        }
+     });
+});
+
+// #### END OF DOCUMENT READY #### //
+
+//
+function validateInputModalSearch() {
+    if (!minimumCharsDw($('#inputModalDwellingSearch').val())) {
+        $("#errorSearchDw").addClass("error").text("Please enter at least 2 characters");
+    } else {
+        $("#errorSearchDw").text("");
+    }
+}
+
+function minimumCharsDw(txt) {
+    // accept 2 or more characters alphanumeric and basic punctuation.
+    return /^[a-zA-Z0-9\-.,&()@_\/'\s]+$/.test(txt) && txt.trim().length > 1;
+}
+
+// Perform Dwelling unit search from modal window
+function searchDwellingFromModal(input) {
+    if (!input.hasClass('disabled')) {
+        $("#modalSearchDwelling").after($('.search-dwelling-loader').clone().appendTo(input.parent()));
+        input.addClass('disabled');
+        searchDwellingUnit($.trim($('#inputModalDwellingSearch').val()));
+    }
+}
+// Show search dwelling unit modal
+function showSearchDwModal() {
+    $('#modalSearchDwelling').removeClass('disabled');
+    $('#searchDwelling').removeClass('disabled');
+    if (!$('#searchDwModal').is(':visible')) {
+        var searchKey = $.trim($('.search-dw-input').val());
+        if (searchKey == '') {
+            // Show modal window
+            $('#searchDwModal').modal('show');
+            $('#inputModalDwellingSearch').val('').focus();
+        } else {
+            // Show modal only if there are more than one rows in the dw list OR
+            // There is one row in the list but the name is not equals to the search text
+            if ($('.dw-row').size() != 1 || ($('.dw-row').size() == 1 && $('.set-dw').text() != searchKey)) {
+                $('#searchDwModal').modal('show');
+                $('#inputModalDwellingSearch').val(searchKey).focus();
+            } else {
+                // Highlight Building/Dwelling information area
+                $('.building-dwelling-details').effect('highlight', {color:'#fcfce2'}, 'slow');
+            }
+        }
+    } else {
+        // Hide loader on search modal
+        $('#modalSearchDwelling').parent().find('.search-dwelling-loader').remove();
+    }
+}
+
+// Hide search dwelling unit modal
+function hideSearchDwModal() {
+    $('#searchDwModal').modal('hide');
+    // Highlight Building/Dwelling information area
+    $('.building-dwelling-details').effect('highlight', {color:'#fcfce2'}, 'slow');
+}
+
+// Keeps the selection of the rebate assignment when user selects a new building and updates payee information
+function keepRebateAssignmentSelection() {
+    if (selectedRebateAssignment != '') {
+        $("input[value='" + selectedRebateAssignment + "']").attr('checked', 'checked');
+    }
+}
+
+// Stores the last selection of rebate assignment
+function setRebateAssignment(myNode) {
+    selectedRebateAssignment = $(myNode).val();
+}
+
+// Update measures selected incentive amounts
+function updateMeasuresSelected() {
+    // Reset all Selected Incentive cell values
+    $('.measureValue').text('');
+    // Update all Selected Incentive cell values
+    $('.measureItem').each(function() {
+        var $menuItem = $(this);
+        if ($menuItem.is(':checked')) {
+            var id = $menuItem.val().split('_')[0] + '_value';
+            var incentives = parseInt($menuItem.val().split('_')[1]);
+            $('#' + id).text('$' + incentives);
+            // Highlight selected incentives
+            $('#' + id).effect('highlight', {color:'#fcfce2'}, 'slow');
+        }
+    });
+}
+
+function calculateIncentive() {
+    var incentivesSum = 0;
+    var $installationCost = $(".jobCostInput");
+    // Currency validation: Optional thousands separators, optional two-digit fraction.
+    var regex = /^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$/;
+
+    // Get incentives subtotal
+    if ('{!application.Status__c}' == 'Correction Required') {
+        incentivesSum = parseFloat($('#incentivesSum').text().replace("$","").replace(",",""));
+    } else {
+        // Calculate sum of measures incentive amounts
+        $('.measureValue').each(function () {
+            var incentive = $(this).text().replace("$","");
+            if (incentive != '' && !isNaN(incentive)) {
+                incentivesSum += parseFloat(incentive);
+            }
+        });
+    }
+
+    // Get total installation cost
+    totalCost = $installationCost.val() !== undefined ? $installationCost.val().replace(/[^0-9\.]+/g,"") : totalCost;
+    // Validate installation cost
+    var isValidTotalCost = regex.test($installationCost.val()) && totalCost >= incentivesSum;
+
+    // Proceed with calculations when the following rules are true:
+    // 1) totalCost is a valid currency amount.
+    // 2) totalCost is equal or greater than the incentives summatory.
+    // 3) dwelling unit is not null.
+    if (isValidTotalCost && dwellingUnit != '') {
+        // Show progress bar
+        NProgress.start();
+        // Disable total installation cost input
+        $installationCost.attr("readOnly", true);
+        // Hide selection crosses
+        $('.removeSelection').hide();
+
+        // Call remoteAction method to process calculations
+        BIGPortalManageApplicationController.calculateIncentiveTotal(
+            incentivesSum, totalCost, minimumIncentive,
+            function(result, event) {
+                if (event.status) {
+                    // Set cap adjustment, maximum incentive, and incentive total
+                    $('#incentiveTotal').text(setCurrencyFormat(result['incentiveTotal']));
+                    $('#maximumIncentive').text(setCurrencyFormat(result['maximumIncentive']));
+                    $('#incentiveAdjustment').text(setCurrencyFormat(result['incentiveAdjustment']));
+                    // Enable total installation cost input
+                    $installationCost.attr("readOnly", false);
+                    // Show selection crosses
+                    $('.removeSelection').show();
+                }
+                // Hide progress bar
+                NProgress.done();
+            },
+            {escape: false}
+        );
+    }
+
+    // Set incentives sum
+    $('#incentivesSum').text(setCurrencyFormat(incentivesSum));
+
+    // Add validation rule to Completed Installation Cost input when action is not null
+    if ($installationCost.length > 0) {
+        $installationCost.rules('add', {
+            required: true,
+            currency: ["$", false],
+            min_comma: (incentivesSum > 0 ? incentivesSum : 1),
+            maxlength_currency: 16
+        });
+    }
+}
+
+function setCurrencyFormat(number) {
+    var regex = /(\d)(?=(\d\d\d)+(?!\d))/g;
+    return number >= 0
+            ? ('$' + number.toFixed(2).replace(regex, "$1,"))
+            : ('($' + Math.abs(number).toFixed(2).replace(regex, "$1,") + ')');
+}
+
+function clearErrorMsg() {
+    $('#errorMessages').hide().html('');
+}
+
+function removeJobCostInputValidation(){
+    $('.jobCostInput').rules('remove', "required min_comma");
+}
+
+function hideConversation(){
+    $("#conversation").hide("slow");
+    $("#hideConversation").hide();
+    $("#showConversation").show();
+}
+
+function showConversation(){
+    $(".conversation-note").show();
+    $("#showConversation").hide();
+}
+
+function addDownloadLinks(){
+    var link1 = '&nbsp;&nbsp;&nbsp;<a href="{!NonAccountOwnerDownloadLink}" target="_blank">Download Form</a>';
+    var link2 = '&nbsp;&nbsp;&nbsp;<a href="{!ContractorPayeeDownloadLink}" target="_blank">Download Form</a>';
+
+    $("table.options-table2 tr:nth-child(2) td label").append(link1);
+    $("table.options-table2 tr:nth-child(3) td label").append(link2);
+}
+
+// Set project description visibility and value.
+function setProjectDescription(selectedOption) {
+    var $projectFinancingDescription = $('textarea[id*="projectFinancingDescription"]');
+
+    if (selectedOption === 'Other') {
+        $("#projectFinancingDescriptionContainer").show();
+        $projectFinancingDescription.val(projectFinancingDescriptionValue);
+    } else {
+        $("#projectFinancingDescriptionContainer").hide();
+        $projectFinancingDescription.val('');
+    }
+}
+
+// Validate Form Fields
+function validateApplicationFormFields() {
+    $('.measuresFrm').validate({
+        onsubmit: true,
+        normalizer: function(value) {
+            return $.trim(value);
+        },
+        rules: {
+            '{!$Component.applicationForm.inputCompletedJobCost}': {
+                required: true,
+                currency: ["$", false],
+                min_comma: 1,
+                maxlength_currency: 16
+            }
+        },
+        highlight: function(element) {
+            $(element).closest('.control-group').removeClass('success').addClass('error');
+        },
+        success: function(element) {
+            element.closest('.control-group').removeClass('error');
+        },
+        errorPlacement: function(error, element) {
+            if (element.attr('name') == 'j_id0:applicationForm:inputDwellingSearch') {
+                error.insertAfter($(element).closest('div'));
+            } else {
+                error.insertAfter(element);
+            }
+        },
+        submitHandler: function() {
+            document.getElementById('j_id0:applicationForm').submit();
+        }
+    });
+}
+
+function prepareSaveValidation() {
+    resetFormValidation();
+    var incentivesSum = parseFloat($('#incentivesSum').text().replace("$","").replace(",",""));
+    var settings = $('.measuresFrm').validate().settings;
+
+    $.extend(settings, {
+        onsubmit: true,
+        rules: {
+            <apex:outputPanel layout="none" rendered="{!action != 'detail'}">
+                'j_id0:applicationForm:inputDwellingSearch': {
+                    required: function(element) {
+                        return dwellingUnit === '';
+                    },
+                    minlength: 2,
+                    validZipCode: true
+                },
+            </apex:outputPanel>
+            <apex:outputPanel layout="none" rendered="{!action == 'detail'}">
+                'j_id0:applicationForm:inputDwellingSearch': {
+                    validZipCode: true
+                },
+            </apex:outputPanel>
+            '{!$Component.applicationForm.inputCompletedJobCost}': {
+                required: true,
+                currency: ["$", false],
+                min_comma: (incentivesSum > 0 ? incentivesSum : 1),
+                maxlength_currency: 16
+            },
+            'BPIAnalyst': {
+                required: true
+            },
+            'j_id0:applicationForm:clientSignedContractSOW:inputFile:file': {
+                <apex:outputPanel layout="none" rendered="{!uploadedClientSignedContractSOW.Id == null}">
+                    required: true,
+                </apex:outputPanel>
+                extension: "pdf,doc,docx,jpg,gif,png",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            'j_id0:applicationForm:rebateAssignmetForm:inputFile:file': {
+                extension: "pdf",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            'j_id0:applicationForm:testInMeasureCASForm:inputFile:file': {
+                extension: "pdf",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            'j_id0:applicationForm:testOutMeasureCASForm:inputFile:file': {
+                extension: "pdf",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            'j_id0:applicationForm:casTestAcknowledgementForm:inputFile:file': {
+                extension: "pdf",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            "{!$Component.applicationForm.buildingPermit + ':inputFile:file'}": {
+                extension: "pdf,doc,docx,txt,jpeg,jpg,png,tif,tiff",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            "{!$Component.applicationForm.additionalDocuments + ':inputFile:file'}": {
+                extension: "pdf,zip,doc,docx,jpg,gif,png",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },'{!$Component.applicationForm.workStartDate}': {
+                date: true
+            }, '{!$Component.applicationForm.workFinishDate}': {
+                date: true
+            }, '{!$Component.applicationForm.testInDate}': {
+                date: true
+            }, '{!$Component.applicationForm.testOutDate}': {
+                date: true
+            }
+        },
+        messages: {
+            'j_id0:applicationForm:rebateAssignment': "Please select a Rebate Assignment"
+        },
+        highlight: function(element) {
+            $(element).closest('.control-group').removeClass('success').addClass('error');
+        },
+        success: function(element) {
+            element.closest('.control-group').removeClass('error');
+        },
+        errorPlacement: function(error, element) {
+            var string = $(element).attr('class');
+            if (string !== undefined && string.indexOf('jobCostInput') > -1) {
+                error.insertAfter($(element));
+            } else if (string !== undefined && string.indexOf('project-financing') > -1) {
+                error.insertAfter($(element));
+            } else {
+                error.insertAfter($(element).closest('div'));
+            }
+        },
+        submitHandler: function() {
+            $('label[for*="BPIAnalyst"]').remove();
+            var $bpiAnalyst = $('#BPIAnalyst');
+            if (($bpiAnalyst.val() !== '' && $bpiAnalyst.val() !== 'xxx') || isValidBpi) {
+                isValidBpi = true;
+                if (isValidIncentiveTotal()) {
+                    disableButtons();
+                    document.getElementById('j_id0:applicationForm').submit();
+                } else {
+                    $('#errorMessages').html("Rebate range for Home Upgrade pathway is " + setCurrencyFormat(minimumIncentive) + " to " +setCurrencyFormat(MAX_RANGE_INCENTIVE) + ". Rebates are capped at 50% of the completed installation cost.").show();
+                    $('html, body').animate({scrollTop: '0px'}, 400);
+                }
+            } else {
+                isValidBpi = false;
+                var node = $('<label for="BPIAnalyst" class="error">Please enter a valid BPI Analyst.</label>');
+                node.insertAfter($bpiAnalyst.closest('div'));
+                $('html, body').animate({scrollTop: $bpiAnalyst.offset().top}, 300);
+            }
+        }
+    });
+}
+
+function isValidIncentiveTotal() {
+    var incentivesSum = parseFloat($('#incentivesSum').text().replace("$","").replace(",",""));
+    var totalCost = Number($('.jobCostInput').val().replace(/[^0-9\.]+/g,""));
+    var result = false;
+
+    if ((totalCost/2 >= minimumIncentive) && (incentivesSum >= minimumIncentive)) {
+        result = true;
+    }
+    return result;
+}
+
+$.validator.addMethod('checkBpiAnalyst', function(value, element) {
+    var result = false;
+    var $bpiAnalyst = $('#BPIAnalyst');
+    if ($bpiAnalyst.val() !== '' && $bpiAnalyst.val() !== 'xxx') {
+        result = true;
+    } else if ($bpiAnalyst.val() == '') {
+            result = false;
+    } else {
+        result = validatorBpiModal({!hasAccountBPIAccreditation});
+    }
+    return result;
+}, "Please enter a valid BPI Analyst.");
+
+$.validator.addMethod('checkPayeeInfo', function(value, element) {
+    var result = validatePayeeInformation('HU');
+    return result;
+}, "");
+
+$.validator.addMethod('alphanumericwithbasicpunc', function(value, element) {
+    return minimumCharsDw(value);
+}, "Please enter at least 2 characters.");
+
+function prepareSubmitValidation() {
+    var settings = $('.measuresFrm').validate().settings;
+    var incentivesSum = parseFloat($('#incentivesSum').text().replace("$","").replace(",",""));
+
+    $.extend(settings, {
+        onsubmit: true,
+        rules:  {
+            <apex:outputPanel layout="none" rendered="{!action != 'detail'}">
+                'j_id0:applicationForm:inputDwellingSearch': {
+                    required: function(element) {
+                        return dwellingUnit === '';
+                    },
+                    minlength: 2,
+                    validZipCode: true
+                },
+            </apex:outputPanel>
+            <apex:outputPanel layout="none" rendered="{!action == 'detail'}">
+                'j_id0:applicationForm:inputDwellingSearch': {
+                    validZipCode: true
+                },
+            </apex:outputPanel>
+            '{!$Component.applicationForm.rebateAssignmentNew}': {
+                required: true,
+                checkPayeeInfo: true
+            },
+            '{!$Component.applicationForm.rebateAssignmentApp}': {
+                required: true,
+                checkPayeeInfo: true
+            },
+            '{!$Component.applicationForm.inputCompletedJobCost}': {
+                required: true,
+                currency: ["$", false],
+                min_comma: (incentivesSum > 0 ? incentivesSum : 1),
+                maxlength_currency: 16
+            },
+            'projectFinancingOptions': {
+                selectOptionEmpty: true
+            },
+            '{!$Component.applicationForm.projectFinancingDescription}': {
+                required: true
+            },
+            '{!$Component.applicationForm.workStartDate}': {
+                required: true
+            },
+            '{!$Component.applicationForm.workFinishDate}': {
+                required: true,
+            },
+            '{!$Component.applicationForm.testInDate}': {
+                required: true,
+            },
+            '{!$Component.applicationForm.testOutDate}': {
+                required: true,
+            },
+            'BPIAnalyst': {
+                required: true
+            },
+            'j_id0:applicationForm:clientSignedContractSOW:inputFile:file': {
+                <apex:outputPanel layout="none" rendered="{!uploadedClientSignedContractSOW.Id == null}">
+                    required: true,
+                </apex:outputPanel>
+                extension: "pdf,doc,docx,jpg,gif,png",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            'j_id0:applicationForm:rebateAssignmetForm:inputFile:file': {
+                <apex:outputPanel layout="none" rendered="{!uploadedRebateAssignmetForm.Id == null}">
+                    rebate_form_required: true,
+                </apex:outputPanel>
+                extension: "pdf",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            'j_id0:applicationForm:testInMeasureCASForm:inputFile:file': {
+                <apex:outputPanel layout="none" rendered="{!uploadedTestInMeasureCASForm.Id == null}">
+                    required: true,
+                </apex:outputPanel>
+                extension: "pdf",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            'j_id0:applicationForm:testOutMeasureCASForm:inputFile:file': {
+                <apex:outputPanel layout="none" rendered="{!uploadedTestOutMeasureCASForm.Id == null}">
+                    required: true,
+                </apex:outputPanel>
+                extension: "pdf",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            'j_id0:applicationForm:casTestAcknowledgementForm:inputFile:file': {
+                <apex:outputPanel layout="none" rendered="{!uploadedCasTestAcknowledgementForm.Id == null}">
+                    required: true,
+                </apex:outputPanel>
+                extension: "pdf",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            "{!$Component.applicationForm.buildingPermit + ':inputFile:file'}": {
+                <apex:outputPanel layout="none" rendered="{!uploadedBuildingPermit.Id == null}">
+                    required: function() {
+                        return $('.air-conditioning').find('input:radio:checked').length > 0;
+                    },
+                </apex:outputPanel>
+                extension: "pdf,doc,docx,txt,jpeg,jpg,png,tif,tiff",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            },
+            "{!$Component.applicationForm.additionalDocuments + ':inputFile:file'}": {
+                <apex:outputPanel layout="none" rendered="{!uploadedAdditionalDocuments.Id == null}">
+                    required: function() {
+                        return $('.kicker-measure').find('input:checked').length > 0;
+                    },
+                </apex:outputPanel>
+                extension: "pdf,zip,doc,docx,jpg,gif,png",
+                filenameLength: true,
+                filesize: MAX_FILE_SIZE
+            }
+        },
+        messages: {
+            <apex:outputPanel layout="none" rendered="{!action != 'detail'}">
+            'j_id0:applicationForm:inputDwellingSearch': {
+                "required": "This is required. Please use the search button for better results."
+            },
+            </apex:outputPanel>
+            '{!$Component.applicationForm.rebateAssignmentNew}': "Please select a Rebate Assignment",
+            '{!$Component.applicationForm.rebateAssignmentApp}': "Please select a Rebate Assignment",
+        },
+        highlight: function(element) {
+            $(element).closest('.control-group').removeClass('success').addClass('error');
+        },
+        success: function(element) {
+            element.closest('.control-group').removeClass('error');
+        },
+        errorPlacement: function(error, element) {
+            if (element.attr('name') === 'j_id0:applicationForm:testInMeasureCASForm:inputFile:file'
+                    || element.attr('name') === 'BPIAnalyst'
+                    || element.attr('name').indexOf('workStartDate') > -1
+                    || element.attr('name').indexOf('workFinishDate') > -1
+                    || element.attr('name').indexOf('testInDate') > -1
+                    || element.attr('name').indexOf('testOutDate') > -1) {
+                error.insertAfter($(element).closest('div'));
+            } else if (element.attr('name') == 'j_id0:applicationForm:inputDwellingSearch') {
+                error.insertAfter($(element).closest('div'));
+            } else if (element.attr('name') !== 'j_id0:applicationForm:rebateAssignmentNew'
+                    && element.attr('name') !== 'j_id0:applicationForm:rebateAssignmentApp') {
+                error.insertAfter(element);
+            }
+        },
+        submitHandler: function() {
+            $('label[for*="BPIAnalyst"]').remove();
+            var $bpiAnalyst = $('#BPIAnalyst');
+            var isBpiFromPicklist = ($bpiAnalyst.val() !== '' && $bpiAnalyst.val() !== 'xxx');
+
+            if (isValidIncentiveTotal()) {
+                if (checkMeasures() && checkKicker() && (isValidBpi || isBpiFromPicklist)) {
+                    disableButtons();
+                    document.getElementById('j_id0:applicationForm').submit();
+                } else if ((!isValidBpi) || ($bpiAnalyst.val() == '')) {
+                    var node = $('<label for="BPIAnalyst" class="error">Please enter a valid BPI Analyst.</label>');
+                    node.insertAfter($bpiAnalyst.closest('div'));
+                    $('html, body').animate({scrollTop: $bpiAnalyst.offset().top}, 300);
+                }
+            } else {
+                $('#errorMessages').html("Rebate range for Home Upgrade pathway is " + setCurrencyFormat(minimumIncentive) + " to " + setCurrencyFormat(MAX_RANGE_INCENTIVE) + ". Rebates are capped at 50% of the completed installation cost.").show();
+                $('html, body').animate({scrollTop: '0px'}, 400);
+            }
+        }
+    });
+}
+
+function disableButtons() {
+    // Disabled all buttons where user click on save/submit button and there isn't any error on any field
+    $('[class*=btn]').addClass('disabled');
+}
+
+function checkMeasures() {
+    var totalBaseMeasure = 0;
+    var nonEquipFlexMeasure = 0;
+    var equipFlexMeasure = 0;
+    var isValid = false;
+
+    if ($("input[name='j_id0:applicationForm:ductImprovement']").is(':checked')) {
+         totalBaseMeasure++;
+    }
+    if ($("input[name='j_id0:applicationForm:airSealing']").is(':checked')) {
+         totalBaseMeasure++;
+    }
+    if ($("input[name='j_id0:applicationForm:atticInsulation']").is(':checked')) {
+         totalBaseMeasure++;
+    }
+    var flexMeasuresArray = $('input[name=j_id0:applicationForm:flexMeasures]:checkbox:checked').map(function(){
+        return $(this).val();
+    }).get();
+    if (flexMeasuresArray !== null) {
+        nonEquipFlexMeasure = nonEquipFlexMeasure + flexMeasuresArray.length;
+    }
+    if ($("input[name='j_id0:applicationForm:flexMeasuresAirCond']").is(':checked')) {
+        equipFlexMeasure++;
+    }
+    if ($("input[name='j_id0:applicationForm:flexMeasuresGasHeating']").is(':checked')) {
+        equipFlexMeasure++;
+    }
+    if ($("input[name='j_id0:applicationForm:flexMeasuresWaterHeater']").is(':checked')) {
+        equipFlexMeasure++;
+    }
+    if ((totalBaseMeasure > 0) && ((equipFlexMeasure  + totalBaseMeasure + nonEquipFlexMeasure) > 2)) {
+        // Sum the measures' incentives to evaluate if the total is greater or equal than the minimum required incentive.
+        isValid = true;
+    }
+
+    if (!isValid && ('{!application.Status__c}' != 'Correction Required')) {
+        $('#errorMessages').html("A minimum of 1 Base measure, " + setCurrencyFormat(minimumIncentive) + " incentive total, and 3 "
+            + "measures are required.").show();
+        $('html, body').animate({scrollTop: '0px'}, 400);
+    } else {
+        isValid = true;
+        clearErrorMsg();
+    }
+
+    return isValid;
+}
+
+function checkKicker() {
+    var isValid = !($('.kicker-measure').find('input:checked').length > 0 && $('.air-conditioning').find('input:radio:checked').length == 0);
+
+    if (!isValid) {
+        $('#errorMessages').html("An Air Conditioning measure is required for the High Performance HVAC Install measure").show();
+        $('html, body').animate({scrollTop: '0px'}, 400);
+    } else {
+        clearErrorMsg();
+    }
+
+    return isValid;
+}
+
+function resetFormValidation(){
+    $('#j_id0:applicationForm:rebateAssignment').removeClass('required');
+    $('#j_id0:applicationForm:atticInsulation').removeClass('required');
+    $('.control-group').removeClass('error');
+    $('.error').hide();
+}
+
+function removeDwellingUnitValidation(){
+    $("#dwellingUnit").removeClass('error');
+    $("label[for='j_id0:applicationForm:inputDwellingSearch']").css('display','none');
+}
+
+$.validator.addMethod('filenameLength', function(value, element) {
+    var result = value.length > 80;
+    return this.optional(element) || !result;
+}, "Filename should not be more than 80 characters.");
+
+// Determines the minimum amount required, in currency format.
+$.validator.addMethod("min_comma", function(value, elem, params) {
+    return parseFloat(value.replace(/[^0-9\.]+/g,"")) >= parseFloat(params);
+}, function(params, element) {
+    return 'Please enter a value greater than or equal to ' + setCurrencyFormat(params);
+});
+// Determines the maximum integers allowed for a given currency amount. It allows a maximum of 2 decimals.
+$.validator.addMethod("maxlength_currency", function(value, elem, params) {
+    var regex = new RegExp("^[+-]?[0-9]{1," + params + "}(?:[.][0-9]{0,2})?$");
+    return regex.test(value.replace(/[^0-9\.]+/g,""));
+}, function(params, element) {
+    return 'Currency is too large.';
+});
+$.validator.addMethod("rebate_form_required", function(value, element) {
+    var rebateForm = document.getElementById('j_id0:applicationForm:rebateAssignmetForm').value;
+    var rebateAssignment = $('input[name=j_id0:applicationForm:rebateAssignment]:radio:checked').val();
+    if(rebateAssignment == 'Non Account Holder' || rebateAssignment == 'Contractor Payee') {
+        if(rebateForm == null || rebateForm == ''){
+            return false;
+        } else {
+            return true;
+        }
+    } else return true;
+}, "This field is required.");
+
+$.validator.addMethod("validZipCode", function(value, elem, params) {
+    return !zipCodeError;
+}, 'Attention: The job site Zipcode entered appears to be in a BayREN administrative area county. In order to submit this application, please contact BayREN at <a href="https://www.bayren.org" target="_blank">www.bayren.org</a> or 866-878-6008');
+
+$.validator.addMethod("selectOptionEmpty", function() {
+    return $('#projectFinancingOptions').val() != "--None--";
+}, 'This field is required.');
+</script>
+</head>
+<body>
+
+<div id="main-container" class="container main">
+    <c:BIGPortalHeader />
+    <div id="mainContent">
+        <div class="cushion">
+            <c:BIGPortalApplicationsList portalAccountId="{!account.Id}" advanceHUProgram="{!hasAdvancedHUProgram}" rendered="{!action == null}"/>
+            <apex:outputPanel rendered="{!action != null}">
+            <h1 class="page-header">Application</h1>
+            <apex:outputPanel layout="block" styleClass="{!IF(action == 'new' || action == null, 'message errorM3 alert alert-error', 'message infoM3 alert alert-info')}" rendered="{!AND(isHuTerminated, OR(action == 'new', action == 'detail', action == null))}">Enrollment in this program is currently terminated. {!IF(action == 'new' || action == null,' The action attempted is prohibited while the suspension is in effect.', '')}</apex:outputPanel>
+            <apex:pageMessages id="errors" escape="false"/>
+            <div id="errorMessages"></div>
+            <c:BIGPortalApplicationHeader application="{!application}" />
+            </apex:outputPanel>
+
+<apex:form >
+    <!-- ACTION FUNCTIONS FOR MAIN PAGE -->
+    <apex:actionFunction action="{!searchDwellingUnit}" name="searchDwellingUnit" rerender="dwelling_units_list" oncomplete="showSearchDwModal()" status="search-dwelling">
+        <apex:param name="searchText" assignTo="{!dwellingSearchText}" value=""/>
+    </apex:actionFunction>
+    <apex:actionFunction action="{!assignDwellingUnit}" name="assignDwellingUnit" rerender="payeeComponent, rebateAssignment, appDwInfo" oncomplete="hideSearchDwModal(); clearErrorMsg()">
+        <apex:param name="dwellingId" assignTo="{!dwellingToAssignId}" value=""/>
+    </apex:actionFunction>
+</apex:form>
+<apex:form id="applicationForm" styleClass="form-horizontal measuresFrm">
+<apex:outputPanel rendered="{!AND(!isHuTerminated, OR(action == 'new', application.Status__c == 'Created', application.Status__c == 'Correction Required'))}">
+<!-- DWELLING SEARCH MODAL -->
+
+    <div id="searchDwModal" class="modal hide fade" style="width:940px;margin:0 auto;left:auto;position:absolute;">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" style="font-size:45px;">&times;</button>
+            <h3 id="modalTitle">Search Building</h3>
+        </div>
+        <div class="modal-body" style="max-height:600px;">
+            <div class="control-group">
+                <div class="controls form-search">
+                    <div class="input-append">
+                            <input type="text" id="inputModalDwellingSearch" styleClass="span3 search-query"/>
+                            <button id="modalSearchDwelling" class="btn btn-primary">Search&nbsp;<i class="icon-search icon-white"></i></button>
+                            <label id="errorSearchDw"></label>
+                    </div>
+                </div>
+            </div>
+            <a href="{!$Site.Prefix}/bigportalmanagebuilding?action=new">If you cannot find the building, you can create a new one.</a>
+            <h4>Select a Building from the list</h4>
+            <!-- DWELLING UNITS LIST -->
+            <apex:outputPanel id="dwelling_units_list">
+                <apex:actionRegion >
+                <apex:outputPanel id="dwUnitModalTable">
+                        <table class="table table-striped" style="margin-top: 20px;">
+                            <tbody>
+                                <tr>
+                                    <th>Customer Name</th><th>Building Name</th><th>Address</th><th>Zip</th>
+                                </tr>
+                            <apex:repeat value="{!dwellingUnitsList}" var="dwUnit">
+                                <tr class="dw-row">
+                                    <td><a href="#" class="set-dw" rel="{!dwUnit.Id}" onclick="removeDwellingUnitValidation();">{!dwUnit.Property_Owner__r.LastName}, {!dwUnit.Property_Owner__r.FirstName}</a></td>
+                                    <td><a href="#" class="set-dw" rel="{!dwUnit.Id}" onclick="removeDwellingUnitValidation();">{!dwUnit.Dwelling_Unit_Name__c}</a></td>
+                                    <td><a href="#" class="set-dw" rel="{!dwUnit.Id}" onclick="removeDwellingUnitValidation();">{!dwUnit.Street_Address__c}</a></td>
+                                    <td><a href="#" class="set-dw" rel="{!dwUnit.Id}" onclick="removeDwellingUnitValidation();">{!dwUnit.Building__r.ZIP_Code__c}</a></td>
+                                </tr>
+                            </apex:repeat>
+                            </tbody>
+                        </table>
+                <apex:outputPanel rendered="{!dwellingUnitsList != null && dwellingUnitsList.size > 0}">
+                <!-- PAGINATION CONTROLS -->
+                    <apex:actionFunction action="{!setCurrentPageNumber}" name="setCurrentPageNumber" rerender="dwUnitModalTable">
+                        <apex:param name="pageNumber" assignTo="{!pageNumber}" value="" />
+                    </apex:actionFunction>
+                    <apex:actionFunction action="{!next}" name="goNextPage" rerender="dwUnitModalTable"/>
+                    <apex:actionFunction action="{!previous}" name="goPreviousPage" rerender="dwUnitModalTable"/>
+                    <div class="pagination">
+                        <ul>
+                            <li class="{!IF(hasPrevious,'','disabled')}">
+                                <apex:outputPanel rendered="{!hasPrevious}"><a id="goPreviousPage" href="#" class="pageStep">Prev</a></apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(hasPrevious)}">Prev</apex:outputPanel>
+                            </li>
+                        <apex:repeat value="{!pageItems}" var="pageItem">
+                            <li class="{!IF(pageItem.isCurrentPage,'active','')}"><a class="pageItem" href="#">{!pageItem.pageNumber}</a></li>
+                        </apex:repeat>
+                            <li class="{!IF(hasNext,'','disabled')}">
+                                <apex:outputPanel rendered="{!hasNext}"><a id="goNextPage" href="#" class="pageStep">Next</a></apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(hasNext)}">Next</apex:outputPanel>
+                            </li>
+                        </ul>
+                    </div>
+                    <script>
+                        // Action when click on a number on the pagination controls
+                        $('.pagination').on('click', '.pageItem', function(e) {
+                            e.preventDefault();
+                            if ($('.pageItem').find('.pageLoader').length == 0) {
+                                if ($('.pagination ul > li').length > 3) {
+                                    var num = parseInt($(this).text());
+                                    $(this).text('');
+                                    $(this).append("<img class=\"pageLoader\" src=\"{!URLFOR($Resource.bigutopia, '/img/ajax-loader-small.gif')}\" style=\"height:20px;\" />");
+                                    setCurrentPageNumber(num);
+                                }
+                            }
+                        });
+                        $('#goNextPage').on('click', function(e) {
+                            e.preventDefault();
+                            if ($('.pageItem').find('.pageLoader').length == 0 && $('.pageStep').find('.pageLoader').length == 0) { // No action in progress
+                                $(this).text('');
+                                $(this).append("<img class=\"pageLoader\" src=\"{!URLFOR($Resource.bigutopia, '/img/ajax-loader-small.gif')}\" style=\"height:20px;\" />");
+                                goNextPage();
+                            }
+                        });
+                        $('#goPreviousPage').on('click', function(e) {
+                            e.preventDefault();
+                            if ($('.pageItem').find('.pageLoader').length == 0 && $('.pageStep').find('.pageLoader').length == 0) { // No action in progress
+                                $(this).text('');
+                                $(this).append("<img class=\"pageLoader\" src=\"{!URLFOR($Resource.bigutopia, '/img/ajax-loader-small.gif')}\" style=\"height:20px;\" />");
+                                goPreviousPage();
+                            }
+                        });
+                    </script>
+                <!-- END OF PAGINATION CONTROLS -->
+                </apex:outputPanel>
+            </apex:outputPanel>
+            </apex:actionRegion>
+            </apex:outputPanel>
+            <!-- END OF DWELLING UNITS LIST -->
+        </div>
+    </div>
+    <apex:outputPanel layout="none" rendered="{!AND(!isHuTerminated, OR(action=='new', application.Status__c=='Created'))}">
+        <div id="dwellingUnit" class="control-group">
+            <label class="control-label">* Building / Dwelling Unit</label>
+            <div class="controls form-search">
+                <div class="input-append">
+                    <apex:inputText id="inputDwellingSearch" styleClass="search-dw-input span3 search-query" value="{!dwellingSearchText}"/>
+                    <button id="searchDwelling" class="btn btn-primary">Search&nbsp;<i class="icon-search icon-white"></i></button>
+                    <apex:outputPanel rendered="{!AND(multipleResultsFound,ISNULL(dwellingUnit))}" layout="none">
+                        <ul class="multipleItemsSearchResult">
+                            <apex:repeat value="{!dwellingUnitsList}" var="dwUnit">
+                                <li class="set-dw" rel="{!dwUnit.Id}">
+                                    {!dwUnit.Dwelling_Unit_Name__c}
+                                </li>
+                            </apex:repeat>
+                        </ul>
+                    </apex:outputPanel>
+                    <apex:actionStatus id="search-dwelling">
+                        <apex:facet name="start">
+                            <div class="search-dwelling-loader" style="position:absolute;text-align:center;display:inline-block!important;margin-left:15px;width:30px;">
+                                <img src="{!URLFOR($Resource.bigutopia, '/img/ajax-loader-small.gif')}" style="height:30px;" />
+                            </div>
+                        </apex:facet>
+                    </apex:actionStatus>
+                </div>
+            </div>
+        </div>
+
+        <apex:outputPanel id="appDwInfo">
+            <script>
+                zipCodeError = '{!zipCodeErrors}' !== '';
+                // If a building is being selected for the first time, consider that the minimum incentive is changing.
+                hasMinimumIncentiveChanged = (minimumIncentive != {!minimumIncentive} ||  dwellingUnit == '');
+                dwellingUnit = '{!dwellingUnit}';
+                minimumIncentive = {!minimumIncentive};
+                maximumIncentive = {!maximumIncentive};
+                updateMeasuresSelected();
+                // Update incentives calculations when minimum incentive has changed (due to a change of building)
+                if (hasMinimumIncentiveChanged) {
+                    calculateIncentive();
+                }
+                if (dwellingUnit !== "") {
+                    $("#btnSearchDwError").text("");
+                }
+            </script>
+            <apex:outputPanel rendered="{!dwellingUnit.Id != null}">
+                <h4>Building&nbsp;Information</h4>
+                <div class="building-dwelling-details">
+                    <div class="row" style="margin-left:0px;">
+                        <div class="span2 text-right">
+                            Address
+                        </div>
+                        <div class="span4 muted">
+                            {!dwellingUnit.Street_Address__c}
+                        </div>
+                    </div>
+                    <div class="row" style="margin-left:0px;">
+                        <div class="span2 text-right">
+                            City
+                        </div>
+                        <div class="span4 muted">
+                            {!dwellingUnit.Building__r.City__c}
+                        </div>
+                    </div>
+                    <div class="row" style="margin-left:0px;">
+                        <div class="span2 text-right">
+                            State
+                        </div>
+                        <div class="span4 muted">
+                            {!dwellingUnit.Building__r.State__c}
+                        </div>
+                    </div>
+                    <div class="row" style="margin-left:0px;">
+                        <div class="span2 text-right">
+                            Zip
+                        </div>
+                        <div class="span4 muted">
+                            {!dwellingUnit.Building__r.ZIP_Code__c}
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{!NOT(dwellingUnit.Unit_Number__c == null)}">
+                        <div class="row" style="margin-left:0px;">
+                            <div class="span2 text-right">
+                                Unit #
+                            </div>
+                            <div class="span4 muted">
+                                {!dwellingUnit.Unit_Number__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </apex:outputPanel>
+</apex:outputPanel>
+
+<apex:outputPanel rendered="{!AND(action == 'detail', OR(isHuTerminated, application.Status__c == 'Correction Required', application.Status__c=='Submitted', application.Status__c == 'Resubmitted', application.Status__c == 'Approved', application.Status__c == 'Rejected', application.Status__c == 'Rebate Issued', application.Status__c == 'Canceled'))}">
+    <!-- APPLICATION DETAILS -->
+    <h4>Building&nbsp;Information</h4>
+    <div class="row" style="margin-left:0px;">
+        <div class="span3">
+            Building / Dwelling Unit
+        </div>
+        <div class="span4 muted">
+            {!application.Dwelling_Unit_Name__c}
+        </div>
+    </div>
+    <div class="row" style="margin-left:0px;">
+        <div class="span3">
+            Address
+        </div>
+        <div class="span4 muted">
+            {!application.Dwelling_Unit_Street_Address__c}
+        </div>
+    </div>
+    <div class="row" style="margin-left:0px;">
+        <div class="span3">
+            City
+        </div>
+        <div class="span4 muted">
+            {!application.Building_City__c}
+        </div>
+    </div>
+    <div class="row" style="margin-left:0px;">
+        <div class="span3">
+            State
+        </div>
+        <div class="span4 muted">
+            {!application.Building_State__c}
+        </div>
+    </div>
+    <div class="row" style="margin-left:0px;">
+        <div class="span3">
+            Zip
+        </div>
+        <div class="span4 muted">
+            {!application.Building_ZIP_Code__c}
+        </div>
+    </div>
+    <apex:outputPanel rendered="{!NOT(dwellingUnit.Unit_Number__c == null)}">
+        <div class="row" style="margin-left:0px;">
+            <div class="span3">
+                Unit #
+            </div>
+            <div class="span4 muted">
+                {!application.Dwelling_Unit_Number__c}
+            </div>
+        </div>
+    </apex:outputPanel>
+</apex:outputPanel>
+<!-- Payee Information - Scenario 1: Just displaying information, no editing -->
+<apex:outputPanel rendered="{!AND(action == 'detail', OR(isHuTerminated, application.Status__c=='Submitted', application.Status__c == 'Resubmitted', application.Status__c == 'Approved', application.Status__c == 'Rejected', application.Status__c == 'Rebate Issued', application.Status__c == 'Canceled'))}">
+    <h4>Rebate Assignment</h4>
+    <div class="row" style="padding-left:40px;">{!application.Rebate_Assignment__c}</div>
+    <h5 class="text-info" style="margin-top:5px;">Payee Information</h5>
+    <div class="row" style="padding-left:40px;">
+        <div class="span3" style="margin-left:0px;">Name</div>
+        <div class="span4 muted">{!application.Payee_Full_Name__c}</div>
+    </div>
+    <div class="row" style="padding-left:40px;">
+        <div class="span3" style="margin-left:0px;">Address</div>
+        <div class="span4 muted">{!application.Payee_Street_Address__c}</div>
+    </div>
+    <div class="row" style="padding-left:40px;">
+        <div class="span3" style="margin-left:0px;"></div>
+        <div class="span4 muted">{!application.Payee_City__c}, {!application.Payee_State__c} {!application.Payee_ZIP_Code__c}</div>
+    </div>
+</apex:outputPanel>
+<!-- / Payee Information - Scenario 1 -->
+<apex:outputPanel id="rebateAssignment" rendered="{!NOT(isHuTerminated)}">
+    <apex:selectRadio id="rebateAssignmentNew" rendered="{!OR(action == 'new', AND(application.Status__c != '', dwellingToAssignId != ''))}" value="{!application.Rebate_Assignment__c}" layout="pageDirection" styleClass="options-table2"
+        onclick="getNewPayeeInfo(); setRebateAssignment(this)">
+        <h4>Rebate Assignment&nbsp;&nbsp;<small>*</small></h4>
+        <apex:selectOptions value="{!rebateTypes}" />
+    </apex:selectRadio>
+    <apex:selectRadio id="rebateAssignmentApp" rendered="{!AND(action == 'detail', dwellingToAssignId == '', OR(application.Status__c == 'Correction Required', application.Status__c == 'Created'))}" value="{!application.Rebate_Assignment__c}" layout="pageDirection" styleClass="options-table2" onclick="getPayeeInfoFromApp('{!application.Rebate_Assignment__c}'); setRebateAssignment(this)">
+        <h4>Rebate Assignment&nbsp;&nbsp;<small>*</small></h4>
+        <apex:selectOptions value="{!rebateTypes}" />
+    </apex:selectRadio>
+</apex:outputPanel>
+<!-- Payee Information - Scenario 2: Editing allowed -->
+<apex:outputPanel id="payeeComponent" styleClass="payeeHU" rendered="{!AND(!isHuTerminated, OR(application.Status__c == 'Correction Required', application.Status__c == 'Created', application.Status__c == ''))}">
+    <c:BIGPortalPayeeInfo application="{!application}" dwellingUnit="{!dwellingUnit}" utilityAccount="{!utilityAccount}" account="{!account}" actionate="{!action}" page="HU" dwellingToAssignId="{!dwellingToAssignId}"/>
+</apex:outputPanel>
+<!-- / Payee Information - Scenario 2 -->
+<!-- MEASURES -->
+    <apex:outputPanel rendered="{!AND(!isHuTerminated, OR(action == 'new', application.Status__c == 'Created'))}" styleClass="measure-container">
+        <!-- Base MEASURES -->
+        <h4>Base Measures&nbsp;&nbsp;<small>* <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="At least one Base Measure is required"><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></small></h4>
+        <h5 class="text-info options-table spanlike" style="width:621px">Duct Improvement</h5>
+        <div style="display:inline-block;">Available</div><div style="display:inline-block;margin-left:26px;">Selected</div>
+        <apex:selectRadio id="ductImprovement" value="{!measureDuctImprovement}" layout="pageDirection" styleClass="options-table">
+            <apex:selectOptions value="{!measureTypesDuctImprovement}" />
+        </apex:selectRadio>
+        <h5 class="text-info options-table">Whole Building Air Sealing</h5>
+        <apex:selectRadio id="airSealing" value="{!measureAirSealing}" layout="pageDirection" styleClass="options-table">
+            <apex:selectOptions value="{!measureTypesBuildingAirSealing}"/>
+        </apex:selectRadio>
+        <h5 class="text-info options-table" style="display:inline-block;">Attic Insulation &amp; Plane Air Sealing</h5>
+        <apex:selectRadio id="atticInsulation" value="{!measureAtticInsulation}" layout="pageDirection" styleClass="options-table">
+            <apex:selectOptions value="{!measureTypesAtticInsulation}" />
+        </apex:selectRadio>
+        <!-- Flex Measures -->
+        <h4>Flex Measures</h4>
+        <apex:selectCheckboxes id="flexMeasures" value="{!flexMeasures}" layout="pageDirection" styleClass="options-table">
+            <apex:selectOptions value="{!measureTypesFlexMeasures}"/>
+        </apex:selectCheckboxes>
+        <h5 class="text-info options-table"> Air Conditioning (Equipment Based Flex Measure)</h5>
+        <apex:selectRadio id="flexMeasuresAirCond" value="{!flexMeasureAirConditioning}" layout="pageDirection" styleClass="options-table air-conditioning">
+            <apex:selectOptions value="{!measuresFlexAirConditioner}"/>
+        </apex:selectRadio>
+        <apex:selectCheckboxes id="kickerMeasures" value="{!kickerMeasures}" layout="pageDirection" styleClass="options-table kicker-measure">
+            <apex:selectOptions value="{!measureTypesKicker}"/>
+        </apex:selectCheckboxes>
+        <h5 class="text-info options-table">Gas Heating (Equipment Based Flex Measure)</h5>
+        <apex:selectRadio id="flexMeasuresGasHeating" value="{!flexMeasureGasHeating}" layout="pageDirection" styleClass="options-table">
+            <apex:selectOptions value="{!measuresFlexGasHeating}"/>
+        </apex:selectRadio>
+
+        <!-- Water Heater -->
+        <h5 class="text-info options-table">Water Heater (Equipment Based Flex Measure)</h5>
+        <apex:selectRadio id="flexMeasuresWaterHeater" value="{!flexMeasureWaterHeater}" layout="pageDirection" styleClass="options-table">
+            <apex:selectOptions value="{!measuresFlexWaterHeater}"/>
+        </apex:selectRadio>
+    </apex:outputPanel>
+
+<apex:outputPanel rendered="{!AND(action == 'detail', OR(isHuTerminated, application.Status__c == 'Correction Required', application.Status__c=='Submitted', application.Status__c == 'Resubmitted', application.Status__c == 'Approved', application.Status__c == 'Rejected', application.Status__c == 'Rebate Issued', application.Status__c == 'Canceled'))}">
+    <apex:variable var="correctionRequired" value="{!IF(application.Status__c == 'Correction Required', 'correction-required', '')}" />
+
+    <!-- BASE MEASURES -->
+    <apex:outputPanel rendered="{!baseMeasuresList.size > 0}">
+        <h4>Base Measures</h4>
+            <table>
+                <tbody>
+                    <apex:repeat value="{!baseMeasuresList}" var="bMeasure">
+                        <tr>
+                            <th>
+                                <h5 class="text-info options-table" style="width:485px;display:inline-block;text-align:left;">{!bMeasure.Upgrade_Measure__c}</h5>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td class="measure-list-name {!correctionRequired}">
+                                {!bMeasure.Measure_Description__c}
+                            </td>
+                            <td class="measure-list-value">
+                                <apex:outputText value="{0, number, '$'0}">
+                                    <apex:param value="{!bMeasure.Incentive__c}" />
+                                </apex:outputText>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </tbody>
+            </table>
+    </apex:outputPanel>
+    <!-- FLEX MEASURES -->
+    <apex:outputPanel rendered="{!flexMeasuresList.size > 0 || FlexMeasuresAirConditioningList.size > 0 || FlexMeasuresGasHeatingList.size > 0 || FlexMeasuresWaterHeaterList.size > 0}">
+        <h4>Flex Measures</h4>
+        <apex:outputPanel rendered="{!flexMeasuresList.size > 0}">
+            <table>
+                <tbody>
+                    <apex:repeat value="{!flexMeasuresList}" var="fMeasure">
+                        <tr>
+                            <td class="measure-list-name {!correctionRequired}">
+                                {!fMeasure.Measure_Description__c}
+                            </td>
+                            <td class="measure-list-value">
+                                <apex:outputText value="{0, number, '$'0}">
+                                    <apex:param value="{!fMeasure.Incentive__c}" />
+                                </apex:outputText>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </tbody>
+            </table>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!FlexMeasuresAirConditioningList.size > 0}">
+            <!-- Air condition category -->
+            <h5 class="text-info options-table" style="width:485px;display:inline-block;text-align:left;"> Air Conditioning (Equipment Based Flex Measure)</h5>
+            <table>
+                <tbody>
+                    <apex:repeat value="{!FlexMeasuresAirConditioningList}" var="fMeasureAirCond">
+                        <tr>
+                            <td class="measure-list-name {!correctionRequired}">
+                                {!fMeasureAirCond.Measure_Description__c}
+                            </td>
+                           <td class="measure-list-value">
+                                <apex:outputText value="{0, number, '$'0}">
+                                    <apex:param value="{!fMeasureAirCond.Incentive__c}" />
+                                </apex:outputText>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                    <apex:outputPanel rendered="{!KickerMeasuresList.size > 0}">
+                        <apex:repeat value="{!KickerMeasuresList}" var="kMeasure">
+                            <tr>
+                                <td class="measure-list-name {!correctionRequired}">
+                                    {!kMeasure.Measure_Description__c}
+                                </td>
+                               <td class="measure-list-value">
+                                    <apex:outputText value="{0, number, '$'0}">
+                                        <apex:param value="{!kMeasure.Incentive__c}" />
+                                    </apex:outputText>
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </apex:outputPanel>
+                </tbody>
+            </table>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!FlexMeasuresGasHeatingList.size > 0}">
+            <!-- GasHeating category -->
+            <h5 class="text-info options-table" style="width:485px;display:inline-block;text-align:left;">Gas Heating (Equipment Based Flex Measure)</h5>
+            <table>
+                <tbody>
+                    <apex:repeat value="{!FlexMeasuresGasHeatingList}" var="fMeasureGasHeating">
+                        <tr>
+                            <td class="measure-list-name {!correctionRequired}">
+                                {!fMeasureGasHeating.Measure_Description__c}
+                            </td>
+                            <td class="measure-list-value">
+                                <apex:outputText value="{0, number, '$'0}">
+                                    <apex:param value="{!fMeasureGasHeating.Incentive__c}" />
+                                </apex:outputText>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </tbody>
+            </table>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!FlexMeasuresWaterHeaterList.size > 0}">
+            <!-- Water Heater -->
+            <h5 class="text-info options-table" style="width:485px;display:inline-block;text-align:left;">Water Heater (Equipment Based Flex Measure)</h5>
+            <table>
+                <tbody>
+                    <apex:repeat value="{!FlexMeasuresWaterHeaterList}" var="wMeasure">
+                        <tr>
+                            <td class="measure-list-name {!correctionRequired}">
+                                {!wMeasure.Measure_Description__c}
+                            </td>
+                            <td class="measure-list-value">
+                                <apex:outputText value="{0, number, '$'0}">
+                                    <apex:param value="{!wMeasure.Incentive__c}" />
+                                </apex:outputText>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </tbody>
+            </table>
+        </apex:outputPanel>
+    </apex:outputPanel>
+</apex:outputPanel>
+
+<apex:outputPanel rendered="{!OR(action == 'new', action == 'detail')}">
+    <apex:outputPanel rendered="{!AND(!isHuTerminated, OR(action == 'new', application.Status__c == 'Created', application.Status__c == 'Correction Required'))}">
+        <!-- EDIT - INCENTIVES CALCULATIONS -->
+        <table class="table calculationsTable mt20" style="width:770px;">
+        <tbody>
+            <tr class="info">
+                <td class="w60 pt20 pl20">
+                    <label class="spanlike ml0">Incentives Subtotal:</label>
+                </td>
+                <td class="w20"></td>
+                <td id="incentivesSum" class="w10 pt20 pr20 text-right-important">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:Param value="{!IF(application.Sub_Total__c != 0, application.Sub_Total__c, 0)}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            <tr class="info">
+                <td class="w60 pl20">
+                    <label class="spanlike mr15 ml0 mb0">Completed Installation Cost<br/>(Home Upgrade Measures Only)</label>
+                    <div class="input-prepend">
+                        <apex:outputPanel layout="block" style="width:170px">
+                            <span class="add-on">$</span>
+                            <apex:inputField id="inputCompletedJobCost" styleClass="span2 jobCostInput" value="{!application.Completed_Cost__c}"/>
+                        </apex:outputPanel>
+                    </div>
+                </td>
+                <td class="w20 vam">
+                    <label class="spanlike ml0 mb0">Incentive Adjustment:</label>
+                </td>
+                <td id="incentiveAdjustment" class="w10 pr20 vam text-right-important">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:param value="{!IF(application.Total_Incentive_Adjustment__c != 0, application.Total_Incentive_Adjustment__c, 0)}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            <tr class="info">
+                <td class="w60 pl20">
+                    <label class="spanlike mr15 ml0 mb0" style="margin-right: 113px;">Project Financing</label>
+                    <div class="controls" style="display:inline-block">
+                        <apex:outputPanel >
+                            <select name="projectFinancingOptions" id="projectFinancingOptions" size="1" class="project-financing">
+                                <option value="">--None--</option>
+                                <apex:repeat value="{!projectFinancingOptions}" var="financingSource">
+                                    <optgroup label="{!financingSource}">
+                                        <apex:repeat value="{!projectFinancingOptions[financingSource]}" var="financingOption">
+                                            <option value="{!financingOption}">{!financingOption}</option>
+                                        </apex:repeat>
+                                    </optgroup>
+                                </apex:repeat>
+                            </select>
+                        </apex:outputPanel>
+                    </div>
+                    <apex:inputHidden value="{!application.Project_Financing_Source__c}" id="projectFinancingSource"/>
+                    <apex:inputHidden value="{!application.Project_Financing_Detail__c}" id="projectFinancingDetail"/>
+                </td>
+                <td class="w20 vam w10 pr20 text-right-important"></td>
+                <td class="w10 pr20 vam text-right-important"></td>
+            </tr>
+            <tr class="info" id="projectFinancingDescriptionContainer">
+                <td class="w60 pl20">
+                    <label class="spanlike mr15 ml0 mb0" style="margin-right: 150px;">Description</label>
+                    <div class="controls" style="display:inline-block">
+                        <apex:inputTextarea id="projectFinancingDescription" value="{!application.Project_Financing_Description__c}" style="height:20px;margin:0px;width:206px;" html-maxlength="255" styleClass="vertical-resize"/>
+                    </div>
+                </td>
+                <td class="w20 vam w10 pr20 text-right-important"></td>
+                <td class="w10 pr20 vam text-right-important"></td>
+            </tr>
+            <tr class="info">
+                <td class="w60 pb20 pl20">
+                    <span class="mb0 bold">Estimated Incentive Total:</span><br/>
+                    <span class="text-small">Maximum Incentive Available: </span>
+                    <span id="maximumIncentive" class="text-small">
+                        <apex:outputText value="{0, number, currency}">
+                            <apex:Param value="{!IF(maximumIncentive != 0, maximumIncentive, 0)}"/>
+                        </apex:outputText>
+                    </span>
+                </td>
+                <td class="w20"></td>
+                <td id="incentiveTotal" class="w10 pr20 text-right-important bold">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:Param value="{!IF(application.Incentive_Total__c != 0, application.Incentive_Total__c, 0)}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!AND(action == 'detail', OR(isHuTerminated, application.Status__c=='Submitted', application.Status__c=='Resubmitted', application.Status__c == 'Rejected', application.Status__c == 'Approved', application.Status__c == 'Canceled', application.Status__c == 'Rebate Issued'))}">
+        <!-- VIEW - INCENTIVES CALCULATIONS -->
+        <table class="table calculationsTable mt20" style="width:700px;">
+        <tbody>
+            <tr class="info">
+                <td class="pt20 pl20">
+                    <label class="spanlike ml0">Incentives Subtotal:</label>
+                </td>
+                <td></td>
+                <td class="pt20 pr20 text-right-important">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:Param value="{!IF(application.Sub_Total__c != 0, application.Sub_Total__c, 0)}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            <!-- Display Total Incentive Adjusment when > 0-->
+            <apex:outputPanel layout="none" rendered="{!TEXT(application.Total_Incentive_Adjustment__c) != '' && application.Total_Incentive_Adjustment__c != 0}">
+                <tr class="info">
+                    <td class="w60 pl20">
+                        <label class="spanlike mr30 ml0 mb0">Completed Installation Cost<br/>(Home Upgrade Measures Only)</label>
+                        <apex:outputPanel layout="block" styleClass="mt10">
+                            <apex:outputText value="{0, number, currency}">
+                                <apex:Param value="{!IF(application.Completed_Cost__c != 0, application.Completed_Cost__c, 0)}"/>
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </td>
+                    <td class="vam">
+                        <label class="spanlike ml0 mb0">Incentive Adjustment:</label>
+                    </td>
+                    <td id="incentiveAdjustment" class="pr20 vam text-right-important">
+                        <apex:outputText value="{0, number, currency}">
+                            <apex:param value="{!IF(application.Total_Incentive_Adjustment__c != 0, application.Total_Incentive_Adjustment__c, 0)}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+            </apex:outputPanel>
+            <!-- Hide Total Incentive Adjusment when is 0 or null -->
+            <apex:outputPanel layout="none" rendered="{!TEXT(application.Total_Incentive_Adjustment__c) == '' || application.Total_Incentive_Adjustment__c == 0}">
+                <tr class="info">
+                    <td class="pl20">
+                        <label class="spanlike ml0 mb0">Completed Installation Cost<br/>(Home Upgrade Measures Only)</label>
+                    </td>
+                    <td></td>
+                    <td class="pr20 vam text-right-important">
+                        <apex:outputText value="{0, number, currency}">
+                            <apex:Param value="{!IF(application.Completed_Cost__c != 0, application.Completed_Cost__c, 0)}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+            </apex:outputPanel>
+            <tr class="info">
+                <td class="w60 pl20">
+                    <label class="spanlike mr15 ml0 mb0">Project Financing</label>
+                </td>
+                <td></td>
+                <td class="pr20 vam text-right-important">
+                    <apex:outputField value="{!application.Project_Financing_Source__c}" />
+                </td>
+            </tr>
+            <apex:outputPanel rendered="{!application.Project_Financing_Detail__c != ''}">
+                <tr class="info">
+                    <td class="w60 pl20">
+                        <label class="spanlike mr15 ml0 mb0">Project Financing Loan</label>
+                    </td>
+                    <td></td>
+                    <td class="pr20 vam text-right-important">
+                        <apex:outputField value="{!application.Project_Financing_Detail__c}"/>
+                    </td>
+                </tr>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!application.Project_Financing_Description__c != ''}">
+                <tr class="info">
+                    <td class="w60 pl20" style="width: 150px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">
+                        <label class="spanlike mr15 ml0 mb0">Description</label>
+                    </td>
+                    <td></td>
+                    <td class="pr20 vam text-right-important">
+                        <div style="width: 250px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">
+                            <apex:outputField style="margin-left:135px;" value="{!application.Project_Financing_Description__c}"/>
+                        </div>
+                    </td>
+                </tr>
+            </apex:outputPanel>
+            <tr class="info">
+                <td class="pb20 pl20">
+                    <span class="mb0 bold">Estimated Incentive Total:</span><br/>
+                    <span class="text-small">Maximum Incentive Available: </span>
+                    <span id="maximumIncentive" class="text-small">
+                        <apex:outputText value="{0, number, currency}">
+                            <apex:Param value="{!IF(maximumIncentive != 0, maximumIncentive, 0)}"/>
+                        </apex:outputText>
+                    </span>
+                </td>
+                <td class=""></td>
+                <td id="incentiveTotal" class="pr20 text-right-important bold">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:Param value="{!IF(application.Incentive_Total__c != 0, application.Incentive_Total__c, 0)}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    </apex:outputPanel>
+    <!-- BPI ANALYST -->
+    <apex:outputPanel layout="none" rendered="{!OR(AND(action=='new', !isHuTerminated), action=='detail')}">
+        <apex:variable var="editMode" value="{!AND(!isHuTerminated, OR(application.Status__c == 'Created', application.Status__c == 'Correction Required', action == 'new'))}" />
+        
+        <div class="row" style="margin-top:5px;">
+            <div class="span12">
+
+                <!-- Test-In Date -->
+                <div class="control-group" id="test-in-date">
+                    <label class="control-label"><strong>Test-In Date</strong></label>
+                    <apex:outputPanel layout="block" rendered="{!editMode}">
+                        <apex:inputField showDatepicker="false" id="testInDate" value="{!application.Test_In_Date__c}"/>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel layout="block" rendered="{!NOT(editMode)}">
+                        <apex:outputField value="{!application.Test_In_Date__c}"/>
+                    </apex:outputPanel>
+                </div>
+
+                <!-- Work Start Date -->
+                <div class="control-group" id="work-start-date">
+                    <label class="control-label"><strong>Work Start Date</strong></label>
+                    <apex:outputPanel layout="block" rendered="{!editMode}">
+                        <apex:inputField showDatepicker="false" id="workStartDate" value="{!application.Work_Start_Date__c}"/>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel layout="block" rendered="{!NOT(editMode)}">
+                        <apex:outputField value="{!application.Work_Start_Date__c}"/>
+                    </apex:outputPanel>
+                </div>
+
+                <div class="control-group" id="work-finish-date">
+                    <label class="control-label"><strong>Work Finish Date</strong></label>
+                    <apex:outputPanel layout="block" rendered="{!editMode}">
+                        <apex:inputField showDatepicker="false" id="workFinishDate" value="{!application.Work_Finish_Date__c}"/>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel layout="block" rendered="{!NOT(editMode)}">
+                        <apex:outputField value="{!application.Work_Finish_Date__c}"/>
+                    </apex:outputPanel>
+                </div>
+
+                <div class="control-group" id="test-out-date">
+                    <label class="control-label"><strong>Test-Out Date</strong></label>
+                    <apex:outputPanel layout="block" rendered="{!editMode}">
+                        <apex:inputField showDatepicker="false" id="testOutDate" value="{!application.Test_Out_Date__c}"/>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel layout="block" rendered="{!NOT(editMode)}">
+                        <apex:outputField value="{!application.Test_Out_Date__c}"/>
+                    </apex:outputPanel>
+                </div>
+
+                <div id="BPI-Analyst" class="control-group">
+                    <label class="control-label" style="text-align:left;width:381px;"><strong>BPI Analyst</strong> *</label>
+                    <div style="margin-left:25px;">
+
+                        <apex:outputPanel rendered="{!NOT(editMode)}" layout="none">
+                            <apex:repeat value="{!analysts}" var="a">
+                                <apex:outputPanel rendered="{!application.BPI_Analyst__c == a.Id}" style="line-height: 29px;">
+                                    {!a.LastName} <apex:outputText value=", {!a.FirstName}" rendered="{!NOT(ISBLANK(a.FirstName))}"/>
+                                </apex:outputPanel>
+                            </apex:repeat>
+                        </apex:outputPanel>
+
+                        <apex:outputPanel rendered="{!editMode}">
+                            <select name="BPIAnalyst" id="BPIAnalyst">
+                                <option value=""></option>
+                                    <apex:repeat value="{!analysts}" var="a">
+                                        <apex:outputPanel rendered="{!application.BPI_Analyst__c == a.Id}">
+                                            <option value="{!a.Id}" selected="yes">{!a.LastName} <apex:outputText value=", {!a.FirstName}" rendered="{!NOT(ISBLANK(a.FirstName))}"/></option>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!application.BPI_Analyst__c != a.Id}">
+                                            <option value="{!a.Id}">{!a.LastName} <apex:outputText value=", {!a.FirstName}" rendered="{!NOT(ISBLANK(a.FirstName))}"/></option>
+                                        </apex:outputPanel>
+                                    </apex:repeat>
+                            </select>
+                            <a data-toggle="modal" data-target="#bpiAnalystModal" data-controls-modal="#bpiAnalystModal" data-keyboard="false" class="btn btn-default" style="padding:2px 5px 6px 6px;"><i class="icon-plus icon-black" style="margin-top:3px;"></i></a>
+                         </apex:outputPanel>
+                     </div>
+                </div>
+
+            </div>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!action == 'detail'}">
+    <!-- ATTACHMENT DETAILS -->
+
+    <apex:outputPanel rendered="{uploadedClientSignedContractSOW.Id != null || !uploadedRebateAssignmetForm.Id != null || uploadedTestInMeasureCASForm.Id != null || uploadedTestOutMeasureCASForm.Id != null || uploadedCasTestAcknowledgementForm.Id != null || uploadedBuildingPermit.Id != null}">
+    <h4>Uploaded Attachments</h4>
+    </apex:outputPanel>
+        <apex:outputPanel rendered="{!uploadedClientSignedContractSOW.Id != null}">
+        <div class="row" style="margin-left:0;">
+            <div class="span4">
+            Client-Signed Contract/SOW
+            </div>
+            <div class="span5 filename-container">
+                <apex:outputLink rendered="{!NOT(uploadedClientSignedContractSOW.S3_Uploaded__c) && uploadedClientSignedContractSOW.Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, uploadedClientSignedContractSOW.Attachments[0].Id)}">{!uploadedClientSignedContractSOW.File_Name__c}</apex:outputLink>
+                <apex:outputPanel rendered="{!uploadedClientSignedContractSOW.S3_Uploaded__c}">{!uploadedClientSignedContractSOW.File_Name__c}</apex:outputPanel>
+            </div>
+        </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!uploadedRebateAssignmetForm.Id != null}">
+        <div class="row" style="margin-left:0;">
+            <div class="span4">
+            Rebate Assignment Form
+            </div>
+            <div class="span5 filename-container">
+                <apex:outputLink rendered="{!NOT(uploadedRebateAssignmetForm.S3_Uploaded__c) && uploadedRebateAssignmetForm.Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, uploadedRebateAssignmetForm.Attachments[0].Id)}">{!uploadedRebateAssignmetForm.File_Name__c}</apex:outputLink>
+                <apex:outputPanel rendered="{!uploadedRebateAssignmetForm.S3_Uploaded__c}">{!uploadedRebateAssignmetForm.File_Name__c}</apex:outputPanel>
+            </div>
+        </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!uploadedTestInMeasureCASForm.Id != null}">
+        <div class="row" style="margin-left:0;">
+            <div class="span4">
+            Test-In Test Measurements (CAS) Form
+            </div>
+            <div class="span5 filename-container">
+                <apex:outputLink rendered="{!NOT(uploadedTestInMeasureCASForm.S3_Uploaded__c) && uploadedTestInMeasureCASForm.Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, uploadedTestInMeasureCASForm.Attachments[0].Id)}">{!uploadedTestInMeasureCASForm.File_Name__c}</apex:outputLink>
+                <apex:outputPanel rendered="{!uploadedTestInMeasureCASForm.S3_Uploaded__c}">{!uploadedTestInMeasureCASForm.File_Name__c}</apex:outputPanel>
+            </div>
+        </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!uploadedTestOutMeasureCASForm.Id != null}">
+        <div class="row" style="margin-left:0;">
+            <div class="span4">
+            Test-Out Measurements (CAS) Form
+            </div>
+            <div class="span5 filename-container">
+                <apex:outputLink rendered="{!NOT(uploadedTestOutMeasureCASForm.S3_Uploaded__c) && uploadedTestOutMeasureCASForm.Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, uploadedTestOutMeasureCASForm.Attachments[0].Id)}">{!uploadedTestOutMeasureCASForm.File_Name__c}</apex:outputLink>
+                <apex:outputPanel rendered="{!uploadedTestOutMeasureCASForm.S3_Uploaded__c}">{!uploadedTestOutMeasureCASForm.File_Name__c}</apex:outputPanel>
+            </div>
+        </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!uploadedCasTestAcknowledgementForm.Id != null}">
+        <div class="row" style="margin-left:0;">
+            <div class="span4">
+            Safety &amp; Quality Acknowledgement (SQA) Form
+            </div>
+            <div class="span5 filename-container">
+                <apex:outputLink rendered="{!NOT(uploadedCasTestAcknowledgementForm.S3_Uploaded__c) && uploadedCasTestAcknowledgementForm.Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, uploadedCasTestAcknowledgementForm.Attachments[0].Id)}">{!uploadedCasTestAcknowledgementForm.File_Name__c}</apex:outputLink>
+                <apex:outputPanel rendered="{!uploadedCasTestAcknowledgementForm.S3_Uploaded__c}">{!uploadedCasTestAcknowledgementForm.File_Name__c}</apex:outputPanel>
+            </div>
+        </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!uploadedBuildingPermit.Id != null}">
+        <div class="row" style="margin-left:0;">
+            <div class="span4">
+            Closed/Finaled Building Permit
+            </div>
+            <div class="span5 filename-container">
+                <apex:outputLink rendered="{!NOT(uploadedBuildingPermit.S3_Uploaded__c) && uploadedBuildingPermit.Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, uploadedBuildingPermit.Attachments[0].Id)}">{!uploadedBuildingPermit.File_Name__c}</apex:outputLink>
+                <apex:outputPanel rendered="{!uploadedBuildingPermit.S3_Uploaded__c}">{!uploadedBuildingPermit.File_Name__c}</apex:outputPanel>
+            </div>
+        </div>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!uploadedAdditionalDocuments.Id != null}">
+            <div class="row" style="margin-left:0;">
+                <div class="span4">
+                    Additional Documents
+                </div>
+                <div class="span5 filename-container">
+                    <apex:outputLink rendered="{!NOT(uploadedAdditionalDocuments.S3_Uploaded__c) && uploadedAdditionalDocuments.Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, uploadedAdditionalDocuments.Attachments[0].Id)}">{!uploadedAdditionalDocuments.File_Name__c}</apex:outputLink>
+                    <apex:outputPanel rendered="{!uploadedAdditionalDocuments.S3_Uploaded__c}">{!uploadedAdditionalDocuments.File_Name__c}</apex:outputPanel>
+                </div>
+            </div>
+        </apex:outputPanel>
+
+    </apex:outputPanel>
+    <!-- ATTACHMENTS -->
+    <apex:outputPanel layout="none" rendered="{!AND(!isHuTerminated, OR(application.Status__c == null, application.Status__c == 'Created', application.Status__c == 'Correction Required'))}">
+        <apex:variable var="isRequired" value="{!AND(!isHuTerminated, OR(action == 'new', application.Status__c == 'Created'))}" />
+        <div class='attachments-wrapper'>
+            <h4>Attachments</h4>
+            <div class="control-group">
+                <label class="control-label" style="text-align:left;width:381px;">Client-Signed Contract/SOW&nbsp;<apex:outputPanel rendered="{!isRequired}">*</apex:outputPanel></label>
+                <div class="controls">
+                    <apex:inputFile id="clientSignedContractSOW" value="{!clientSignedContractSOW.body}" filename="{!clientSignedContractSOW.name}" contentType="{!clientSignedContractSOW.contentType}" styleClass="input-file" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" style="text-align:left;width:381px;">
+                    Rebate Assignment Form
+                    <span class="rebate-assignment-optional"></span>
+                </label>
+                <div class="controls">
+                    <apex:inputFile id="rebateAssignmetForm" value="{!rebateAssignmetForm.body}" filename="{!rebateAssignmetForm.name}" contentType="{!rebateAssignmetForm.contentType}" styleClass="input-file" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" style="text-align:left;width:381px;">Test-In Measurements (CAS) Form&nbsp;<apex:outputPanel rendered="{!isRequired}">*</apex:outputPanel></label>
+                <div class="controls">
+                    <apex:inputFile id="testInMeasureCASForm" value="{!testInMeasureCASForm.body}" filename="{!testInMeasureCASForm.name}" contentType="{!testInMeasureCASForm.contentType}" styleClass="input-file" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" style="text-align:left;width:381px;">Test-Out Measurements (CAS) Form&nbsp;<apex:outputPanel rendered="{!isRequired}">*</apex:outputPanel></label>
+                <div class="controls">
+                    <apex:inputFile id="testOutMeasureCASForm" value="{!testOutMeasureCASForm.body}" filename="{!testOutMeasureCASForm.name}" contentType="{!testOutMeasureCASForm.contentType}" styleClass="input-file" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" style="text-align:left;width:381px;">Safety &amp; Quality Acknowledgement (SQA) Form&nbsp;<apex:outputPanel rendered="{!isRequired}">*</apex:outputPanel></label>
+                <div class="controls">
+                    <apex:inputFile id="casTestAcknowledgementForm" value="{!casTestAcknowledgementForm.body}" filename="{!casTestAcknowledgementForm.name}" contentType="{!casTestAcknowledgementForm.contentType}" styleClass="input-file" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" style="text-align:left;width:381px;">
+                    Closed/Finaled Building Permit
+                    <span class="building-permit-optional">(If required for scope of work)</span>
+                </label>
+                <div class="controls">
+                    <apex:inputFile id="buildingPermit" value="{!buildingPermit.body}" filename="{!buildingPermit.name}" contentType="{!buildingPermit.contentType}" styleClass="input-file" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" style="text-align:left;width:381px;">
+                    Additional Documents
+                    <span class="additional-documents-optional">(As necessary/if requested by reviewer)</span>
+                    <h4>
+                        <small>
+                            <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="Photos, Specifications Documents, Heat Producing Devices (HPD) form, etc.">
+                                <img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" />
+                            </a>
+                        </small>
+                    </h4>
+                </label>
+                <div class="controls">
+                    <apex:inputFile id="additionalDocuments" value="{!additionalDocuments.body}" filename="{!additionalDocuments.name}" contentType="{!additionalDocuments.contentType}" filesize="{!additionalDocuments.BodyLength}" styleClass="input-file additionalAttachment" />
+                </div>
+            </div>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel layout="none" rendered="{!OR(action == 'detail', AND(action == 'new', !isHuTerminated))}"><h2 class="sub-header">NOTES</h2></apex:outputPanel>
+    <div id="conversation" style="display: {!IF(AND(action == 'new', isHuTerminated), 'none', '')};">
+        <textarea id="notes" name="notes" placeholder="Anything else you'd like to tell us about this application or the attached documents?"><apex:outputPanel layout="none" rendered="{!AND(!isHuTerminated, OR(HUPApplication.Status__c=='Correction Required', HUPApplication.Status__c == 'Created'))}">{!HUPApplication.Notes__c}</apex:outputPanel></textarea>
+
+        <apex:outputPanel layout="none" rendered="{!application.Status__c!=null && application.Status__c != 'Created'}">
+            <apex:repeat value="{!Notes}" var="note">
+                <div class="conversation-note">
+                    <strong>{!note.CreatedBy.Name} [<apex:outputField value="{!note.CreatedDate}"/>]:</strong>
+                    <apex:outputPanel rendered="{!note.Note__c != ''}">
+                        <br/>
+                        <label class="subtitles-comments"><strong>Issues: </strong></label>
+                        <apex:outputField value="{!note.Note__c}"/>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!note.Additional_Comments_Note__c != ''}">
+                        <br/>
+                        <label class="subtitles-comments"><strong>Comments: </strong></label>
+                        <apex:outputField value="{!note.Additional_Comments_Note__c}"/>
+                    </apex:outputPanel>
+                    <br/><br/>
+                </div>
+            </apex:repeat>
+            <a href="javascript:showConversation();" class="showConversation" id="showConversation">Show All</a>
+            <script>
+                if ($(".conversation-note").size() > 2) {
+                    var $el = $(".conversation-note");
+                    $("#showConversation").show();
+                    $el.hide();
+                    $($el.get(0)).show();
+                    $($el.get(1)).show();
+                }
+            </script>
+        </apex:outputPanel>
+    </div>
+    <apex:outputPanel layout="none" rendered="{!OR(isHuTerminated, AND(HUPApplication.Status__c!=null, HUPApplication.Status__c != 'Created', HUPApplication.Status__c != 'Correction Required'))}">
+        <script>
+            $("#notes").attr("disabled","true");
+        </script>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!AND(!isHuTerminated, OR(action == 'new', application.Status__c=='Created'))}" layout="none">
+        <div class="form-actions" style="padding-left:25px;">
+            <a href="{!$Site.Prefix}/BIGPortalManageApplication" class="btn btn-default disable-btn">Cancel</a>&nbsp;
+            <apex:commandButton action="{!saveApplication}" styleClass="btn btn-primary" value="Save" onclick="removeJobCostInputValidation(); prepareSaveValidation();"/>&nbsp;
+            <apex:commandButton action="{!submitApplication}" styleClass="btn btn-primary" value="Submit" onclick="prepareSubmitValidation();" />
+        </div>
+    </apex:outputPanel>
+    <apex:outputPanel layout="none" rendered="{!AND(action == 'detail', application.Status__c == 'Correction Required', !isHuTerminated)}">
+        <div class="form-actions" style="padding-left:25px;">
+            <a href="{!$Site.Prefix}/BIGPortalManageApplication" class="btn btn-default disable-btn">Cancel</a>&nbsp;
+            <apex:commandButton action="{!saveApplication}" styleClass="btn btn-primary" value="Save" onclick="removeJobCostInputValidation(); prepareSaveValidation();"/>&nbsp;
+            <apex:commandButton action="{!submitApplication}" styleClass="btn btn-primary" value="Resubmit" onclick="prepareSubmitValidation();" />
+        </div>
+    </apex:outputPanel>
+
+</apex:outputPanel>
+    <!-- BPI Analyst modal start -->
+    <c:BIGPortalBpiAnalystModal ahu="false" controllerHu="{!injectedController}"/>
+    <!-- BPI Analyst modal end -->
+</apex:form>
+</div>
+    </div>
+<c:BIGPortalFooter />
+<c:BIGPortalAHUSurvey />
+</div>
+
+</body>
+</apex:page>

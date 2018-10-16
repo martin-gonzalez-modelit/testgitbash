@@ -1,0 +1,147 @@
+<apex:component controller="BIGPortalBuildingsListController" id="buildingListComponent">
+
+<style>
+.headerLink {
+    color: black;
+    text-decoration:none;
+}
+.headerLink:hover {
+    color: black;
+    text-decoration:none;
+}
+.page-header {
+    padding-bottom: 15px;
+    margin: 10px 0px;
+    border-bottom: 3px solid #E5E5E5;
+    font-family: 'Open Sans' !important;
+    line-height: 20px;
+    font-size: 28px;
+    font-weight: 300;
+}
+.building-button {
+    margin-bottom: 10px;
+}
+.pagination_disabled {
+    color: lightgray;
+    cursor: default !important;
+}
+.pagination_disabled:hover {
+    color: lightgray;
+}
+</style>
+<script>
+$(document).ready(function() {
+    var oTable = $('#buildingsTable').dataTable({
+            "iDisplayLength": 20,
+            "bSort": true,
+            "sPaginationType": "full_numbers",
+            "aaData": {!jsonBuildings},
+            "bAutoWidth": false,
+            "aoColumns": [
+                            {
+                                "mData" : "propertyOnwerLastName",
+                                "mRender": function ( data, type, full ) {
+                                    if (data == null){
+                                        return '';
+                                    } else {
+                                        return '<a href="{!$Site.Prefix}/BIGPortalManageBuilding?action=detail&id='
+                                                + full.buildingId + '" title="View Application/Edit Attachments">'
+                                                + data + '</a>';
+                                    }
+                                }
+                            },
+                            {
+                                "mData" : "propertyOwnerFirstName",
+                                "mRender": function ( data, type, full ) {
+                                    if (data == null){
+                                        return '';
+                                    } else {
+                                        return '<a href="{!$Site.Prefix}/BIGPortalManageBuilding?action=detail&id='
+                                                + full.buildingId + '" title="View Application/Edit Attachments">'
+                                                + data + '</a>';
+                                    }
+                                }
+                            },
+                            {
+                                "mData": "buildingName",
+                                "mRender": function ( data, type, full ) {
+                                        return '<a href="{!$Site.Prefix}/BIGPortalManageBuilding?action=detail&id='
+                                                + full.buildingId + '" title="View Application/Edit Attachments">'
+                                                + data + '</a>';
+                                }
+                            },
+                            { "mData": "buildingType" },
+                            { "mData": "buildingAddress" },
+                            { "mData": "buildingCity" },
+                            { "mData": "buildingZipCode"}
+                         ]
+                    });
+
+    $("#buildingsTable thead").append("<tr id='searchFilters'><td><input type='text' placeholder='Search'></td>"
+            + "<td><input type='text' placeholder='Search'></td>"
+            + "<td><input type='text' placeholder='Search'></td>"
+            + "<td><input type='text' placeholder='Search'></td>"
+            + "<td><input type='text' placeholder='Search'></td>"
+            + "<td><input type='text' placeholder='Search'></td>"
+            + "<td><input type='text' placeholder='Search'></td></tr>");
+
+    $("#buildingsTable thead tr td input").keyup( function () {
+        /* Filter on the column (the index) of this element */
+        oTable.fnFilter( this.value, $("#buildingsTable thead tr td input").index(this) );
+    });
+
+    // Disable buttons
+    $(".previous").on("click", function(e) {
+        checkButtonDisabled();
+    });
+    $(".next").on("click", function(e) {
+        checkButtonDisabled();
+    });
+
+    var lastPage = $(".dataTables_paginate").children("span").children();
+    checkButtonDisabled();
+
+    function checkButtonDisabled(event) {
+        if ($(".paginate_active").html() === "1") {
+            $(".previous").addClass("pagination_disabled");
+        } else {
+            $(".previous").removeClass("pagination_disabled");
+        }
+
+        var lastPageNumber = lastPage.length;
+        if ($(".paginate_active").html() === lastPageNumber.toString()) {
+            $(".next").addClass("pagination_disabled");
+        } else {
+            $(".next").removeClass("pagination_disabled");
+        }
+    }
+
+    $(".dataTables_paginate").children("span").on("click", "a", function(e) {
+        checkButtonDisabled(e);
+    });
+});
+</script>
+
+<apex:attribute name="portalAccId" description="Id of the portal account. Is used to filter the query"
+                type="String" required="true" assignTo="{!accountId}"/>
+                <div class="page-header">Buildings</div>
+                <div class="building-button">
+                    <a href="{!$Site.Prefix}/BIGPortalManageBuilding?action=new" class="btn btn-primary">
+                    <i class="icon-plus icon-white"></i>&nbsp;Add Building</a>
+                </div>
+                <table id="buildingsTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th width="15%">Last Name</th>
+                            <th width="15%">First Name</th>
+                            <th width="14%">Building Name</th>
+                            <th width="13%">Building Type</th>
+                            <th width="18%">Building Address</th>
+                            <th width="15%">City</th>
+                            <th width="10%">ZIP Code</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot></tfoot>
+                </table>
+</apex:component>

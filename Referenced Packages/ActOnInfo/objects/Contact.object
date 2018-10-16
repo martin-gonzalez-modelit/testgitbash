@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <webLinks>
+        <fullName>ActOn_Activity_History</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <hasMenubar>false</hasMenubar>
+        <hasScrollbars>true</hasScrollbars>
+        <hasToolbar>false</hasToolbar>
+        <height>600</height>
+        <isResizable>true</isResizable>
+        <linkType>sControl</linkType>
+        <masterLabel>Act-On Activity History</masterLabel>
+        <openType>newWindow</openType>
+        <position>none</position>
+        <protected>false</protected>
+        <scontrol>ActonActivityHistory</scontrol>
+        <showsLocation>false</showsLocation>
+        <showsStatus>false</showsStatus>
+        <width>900</width>
+    </webLinks>
+    <webLinks>
+        <fullName>Send_Act_On_Email</fullName>
+        <availability>online</availability>
+        <description>Send email to current Contact</description>
+        <displayType>button</displayType>
+        <linkType>javascript</linkType>
+        <masterLabel>Send Act-On Email</masterLabel>
+        <openType>onClickJavaScript</openType>
+        <protected>false</protected>
+        <url>{!REQUIRESCRIPT(&quot;/soap/ajax/32.0/connection.js&quot;)}
+{!REQUIRESCRIPT(&quot;/soap/ajax/32.0/apex.js&quot;)}
+{!REQUIRESCRIPT(&quot;/resource/ActOn__ActOnLib&quot;)}
+
+invokeWithActOnServerUrl( function(url) 
+{ 
+url += &apos;/acton/sforce/sendSforceContactOrLead.jsp?id={!Contact.Id}&amp;server={!API.Partner_Server_URL_190}&amp;session={!API.Session_ID}&apos;;
+
+window.open(url,&quot;_blank&quot;, &quot;width=1200,height=768&quot;);
+});</url>
+    </webLinks>
+    <webLinks>
+        <fullName>Send_Act_On_Mass_Email</fullName>
+        <availability>online</availability>
+        <description>Send email to selected Contacts</description>
+        <displayType>massActionButton</displayType>
+        <linkType>javascript</linkType>
+        <masterLabel>Send Act-On Email</masterLabel>
+        <openType>onClickJavaScript</openType>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+        <url>{!REQUIRESCRIPT(&quot;/soap/ajax/32.0/connection.js&quot;)} 
+{!REQUIRESCRIPT(&quot;/soap/ajax/32.0/apex.js&quot;)} 
+
+function invokeWithActOnServerUrl(func) 
+{ 
+var callback = 
+{ 
+onSuccess: function(result) 
+{ 
+func(result); 
+}, 
+onFailure: function() 
+{ 
+func(&quot;https://sf.actonsoftware.com&quot;); 
+} 
+} 
+sforce.apex.execute(&apos;ActOn/ActonWebService&apos;,&apos;getServerUrl&apos;,{}, callback);	
+} 
+
+invokeWithActOnServerUrl( function(url) 
+{ 
+
+var records = {!GETRECORDIDS( $ObjectType.Contact)}; 
+
+if (records == null || records[0] == null) 
+{
+alert(&quot;Please select at least one record.&quot;);
+} 
+else 
+{
+// create the form. Set it up to POST the transaction
+ var f = document.createElement(&apos;form&apos;);
+ f.action=url + &apos;/acton/sforce/sendSforceContactOrLead.jsp&apos;;
+ f.method = &apos;post&apos;;
+ f.target = &apos;actonWin&apos;;
+
+
+// add the session id as a parameter
+ var i = document.createElement(&apos;input&apos;);
+ i.id = &apos;session&apos;;
+ i.name = &apos;session&apos;;
+ i.type = &apos;hidden&apos;;
+ i.value = &apos;{!$Api.Session_ID}&apos;;
+ f.appendChild(i);
+
+ 
+// add the server location as a parameter
+ i = document.createElement(&apos;input&apos;);
+ i.id = &apos;server&apos;;
+ i.name = &apos;server&apos;;
+ i.type = &apos;hidden&apos;;
+ i.value = &apos;{!$Api.Partner_Server_URL_190}&apos;;
+ f.appendChild(i);
+
+ 
+// Get the Lead IDs that were checked
+// add the idArray as a parameter
+ i = document.createElement(&apos;input&apos;);
+ i.id = &apos;id&apos;;
+ i.name = &apos;id&apos;;
+ i.type = &apos;hidden&apos;;
+ i.value = records;
+ f.appendChild(i);
+
+
+// add the form to the document.
+ document.body.appendChild(f);
+ 
+// submit the form
+window.open (&apos;&apos;,&apos;actonWin&apos;,&apos;modal=yes,dependent=yes,resizable=yes,scrollbars=yes,toobar=no,location=no,status=no,width=1200,height=768&apos;); 
+ f.submit();
+}
+});</url>
+    </webLinks>
+</CustomObject>

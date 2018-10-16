@@ -1,0 +1,568 @@
+<apex:component id="payeeInfo">
+    <script type="text/javascript">
+
+        function validatePayeeInformation(page) {
+            $("#payeeErrorMsg").empty();
+            if (page == 'HU') {
+                $("#payeeErrorMsg").addClass("errorValidationInputs");
+            } else {
+                $("#payeeErrorMsg").addClass("errorValidation");
+            }
+
+            var hasErrors = 0;
+            var addressErrors = 0;
+            var errorMsg = '';
+            var payeeStreet = $('input[type=hidden][id*="hStreet"]').val();
+            var payeeCity = $('input[type=hidden][id*="hCity"]').val();
+            var payeeState = $('input[type=hidden][id*="hState"]').val();
+            var payeeZipCode = $('input[type=hidden][id*="hZipCode"]').val();
+            var $payeeTitle = $(".payeeTitle");
+            var $errorMessages = $("#errorMessages");
+
+            payeeStreet = $.trim(payeeStreet);
+            payeeCity = $.trim(payeeCity);
+
+            if (!minLength(payeeStreet)) {
+                errorMsg += "<li>Invalid Street. Please enter at least 2 characters.</li>";
+                $(".payeeStreet .added").addClass("errorValidationInputs");
+                hasErrors = 1;
+            } else {
+                $(".payeeStreet .added").removeClass("errorValidationInputs");
+                $(".payeeStreet").append("<label class='error valid'>OK!</label>");
+            }
+
+            if (!checkCity(payeeCity)) {
+                errorMsg += "<li>Invalid City.</li>";
+                $(".city.added").addClass("errorValidationInputs");
+                hasErrors = 1;
+                addressErrors = 1;
+            } else {
+                $(".city.added").removeClass("errorValidationInputs");
+            }
+
+            if (!checkState(payeeState)) {
+                errorMsg += "<li>Invalid State.</li>";
+                $(".state.added").addClass("errorValidationInputs");
+                hasErrors = 1;
+                addressErrors = 1;
+            } else {
+                $(".state.added").removeClass("errorValidationInputs");
+            }
+
+            if (!checkPayeeZipCode(payeeZipCode)) {
+                errorMsg += "<li>Invalid Zip Code.</li>";
+                $(".zipCode.added").addClass("errorValidationInputs");
+                hasErrors = 1;
+                addressErrors = 1;
+            } else {
+                $(".zipCode.added").removeClass("errorValidationInputs");
+            }
+
+            if (page == 'AHU' && addressErrors == 0) {
+                $(".payeeAddress").append("<label class='error valid'>OK!</label>");
+            }
+
+            if (hasErrors == 1) {
+                var errorString = "<ul>" + errorMsg + "</ul>";
+                $("#payeeErrorMsg").append(errorString).show();
+                $payeeTitle.css("color", "#b94a48");
+                $("html, body").animate({scrollTop: "0px"}, 400);
+                if (page == 'HU') {
+                    $errorMessages.html("Please correct the errors on this page").show();
+                } else {
+                    $(".custom-error-box").show();
+                    $(".error-custom-message").html("Please correct the errors on this page");
+                    $payeeTitle.closest(".control-group").addClass("success");
+                }
+                return false;
+            }
+
+            if (page == 'HU') {
+                $payeeTitle.removeClass("errorValidationInputs");
+                $payeeTitle.css("color", "#393939");
+            } else {
+                $payeeTitle.removeClass("errorValidationInputs").addClass("success");
+                $payeeTitle.closest(".control-group").addClass("success");
+                $payeeTitle.css("color", "#468847");
+            }
+            return true;
+        }
+
+        function minLength(txt) {
+            txt = txt.trim();
+            if (txt.length >= 2) {
+                return true;
+            }
+            return false;
+        }
+
+        function checkCity(value) {
+            return checkPayeeCity(value)
+        }
+        
+        function checkPayeeCity(value) {
+            var patt = /^[a-zA-Z ,.'-]{2,}$/;
+            return auxValidations(value, patt);
+        }
+        
+        function auxValidations(value, patt) {
+            var str = value.trim();
+            var flag = true;
+
+            if (str !== "") {
+                if (str.length >= 2) {
+                    if (allCharsInvalid(str) == true) {
+                        flag = false;
+                    }
+                    if (str[0] === "-" || str[0] === "," || str[0] === ".") {
+                        flag = false;
+                    }
+                    if (str[str.length-1] === "-" || str[str.length-1] === ",") {
+                        flag = false;
+                    }
+                }
+
+                return patt.test(str) && flag;
+            } else {
+                return false;
+            }
+        }
+
+        function allCharsInvalid(myChars) {
+            var check = 0;
+
+            for (var i = 0; i < myChars.length; i++) {
+                if (myChars[i] === "'" || myChars[i] === "-" || myChars[i] === "." || myChars[i] === ",") {
+                    check++;
+                }
+            }
+            return check === myChars.length;
+        }
+
+        function checkState(txt) {
+            var patt = /^[A-z]{2}$/;
+            txt = txt.trim();
+            if (patt.test(txt)) {
+                return true;
+            }
+            return false;
+        }
+
+        function checkPayeeZipCode(txt) {
+            var patt = /^[0-9]{5}$/;
+            txt = txt.trim();
+            if (patt.test(txt)) {
+                return true;
+            }
+            return false;
+        }
+
+        function getNewPayeeInfo() {
+            var rebateAssignment = $('input[type=radio]:checked').val();
+            var selector = '';
+
+            // Hide payee section if present
+            $('#payee').hide();
+
+            if (rebateAssignment == 'Non Account Holder') {
+                $('#newAccountHolder').hide();
+                $('#newNonAccountHolder').show();
+                $('#newContractorPayee').hide();
+                selector = '#newNonAccountHolder';
+            } else if (rebateAssignment == 'Contractor Payee') {
+                $('#newAccountHolder').hide();
+                $('#newNonAccountHolder').hide();
+                $('#newContractorPayee').show();
+                selector = '#newContractorPayee';
+            } else {
+                // Set default to Account Holder
+                $('#newAccountHolder').show();
+                $('#newNonAccountHolder').hide();
+                $('#newContractorPayee').hide();
+                selector = '#newAccountHolder';
+            }
+
+            // Assign default values
+            var nameValue = $(selector + ' .payeeName .added').attr('placeholder');
+            var phoneValue = $(selector + ' .phone').attr('placeholder');
+
+            // Assign editable values
+            var $streetSelector = $(selector + ' .payeeStreet .added');
+            var streetValue = $streetSelector.val();
+            if (streetValue == '') {
+                streetValue = $streetSelector.attr('placeholder');
+            }
+            var $citySelector = $(selector + ' .payeeAddress .city');
+            var cityValue = $citySelector.val();
+            if (cityValue == '') {
+                cityValue = $citySelector.attr('placeholder');
+            }
+            var $stateSelector = $(selector + ' .payeeAddress .state');
+            var stateValue = $stateSelector.val();
+            if (stateValue == '') {
+                stateValue = $stateSelector.attr('placeholder');
+            }
+            var $zipCodeSelector = $(selector + ' .payeeAddress .zipCode');
+            var zipCodeValue = $zipCodeSelector.val();
+            if (zipCodeValue == '') {
+                zipCodeValue = $zipCodeSelector.attr('placeholder');
+            }
+
+            // Set values
+            var hName = $('input[type=hidden][id*="hName"]');
+            var hPhone = $('input[type=hidden][id*="hPhone"]');
+            var hStreet = $('input[type=hidden][id*="hStreet"]');
+            var hCity = $('input[type=hidden][id*="hCity"]');
+            var hState = $('input[type=hidden][id*="hState"]');
+            var hZipCode = $('input[type=hidden][id*="hZipCode"]');
+
+            hName.val(nameValue);
+            hPhone.val(phoneValue);
+            hStreet.val(streetValue);
+            hCity.val(cityValue);
+            hState.val(stateValue);
+            hZipCode.val(zipCodeValue);
+        }
+
+        function getPayeeInfoFromApp(appRebateAssignment) {
+            var rebateAssignment = $('input[type=radio]:checked').val();
+            var selector = '';
+
+            // Display the payee information. If any of the payee fields is empty, display the values corresponding to
+            // its rebate assignment.
+            if (!payeeHasEmptyValues && rebateAssignment === appRebateAssignment) {
+                $('#payee').show();
+                $('#accountHolder').hide();
+                $('#nonAccountHolder').hide();
+                $('#contractorPayee').hide();
+                selector = '#payee';
+            } else if (rebateAssignment === 'Non Account Holder' && rebateAssignment !== appRebateAssignment) {
+                $('#payee').hide();
+                $('#accountHolder').hide();
+                $('#nonAccountHolder').show();
+                $('#contractorPayee').hide();
+                selector = '#nonAccountHolder';
+            } else if (rebateAssignment === 'Contractor Payee' && rebateAssignment !== appRebateAssignment) {
+                $('#payee').hide();
+                $('#accountHolder').hide();
+                $('#nonAccountHolder').hide();
+                $('#contractorPayee').show();
+                selector = '#contractorPayee';
+            } else {
+                $('#payee').hide();
+                $('#accountHolder').show();
+                $('#nonAccountHolder').hide();
+                $('#contractorPayee').hide();
+                selector = '#accountHolder';
+            }
+
+            // Assign default values
+            var nameValue = $(selector + ' .payeeName .added').attr('placeholder');
+            var phoneValue = $(selector + ' .phone').attr('placeholder');
+
+            // Assign editable values
+            var $streetSelector = $(selector + ' .payeeStreet .added');
+            var streetValue = $streetSelector.val();
+            if (streetValue == '') {
+                streetValue = $streetSelector.attr('placeholder');
+            }
+            var $citySelector = $(selector + ' .payeeAddress .city');
+            var cityValue = $citySelector.val();
+            if (cityValue == '') {
+                cityValue = $citySelector.attr('placeholder');
+            }
+            var $stateSelector = $(selector + ' .payeeAddress .state');
+            var stateValue = $stateSelector.val();
+            if (stateValue == '') {
+                stateValue = $stateSelector.attr('placeholder');
+            }
+            var $zipCodeSelector = $(selector + ' .payeeAddress .zipCode');
+            var zipCodeValue = $zipCodeSelector.val();
+            if (zipCodeValue == '') {
+                zipCodeValue = $zipCodeSelector.attr('placeholder');
+            }
+
+            // Set values
+            var hName = $('input[type=hidden][id*="hName"]');
+            var hPhone = $('input[type=hidden][id*="hPhone"]');
+            var hStreet = $('input[type=hidden][id*="hStreet"]');
+            var hCity = $('input[type=hidden][id*="hCity"]');
+            var hState = $('input[type=hidden][id*="hState"]');
+            var hZipCode = $('input[type=hidden][id*="hZipCode"]');
+
+            hName.val(nameValue);
+            hPhone.val(phoneValue);
+            hStreet.val(streetValue);
+            hCity.val(cityValue);
+            hState.val(stateValue);
+            hZipCode.val(zipCodeValue);
+        }
+    </script>
+    <apex:attribute name="application" description="User's application" type="Application__c" />
+    <apex:attribute name="dwellingUnit" description="User's dwelling unit" type="Dwelling_Unit__c" />
+    <apex:attribute name="utilityAccount" description="User's utility account" type="Utility_Account__c" />
+    <apex:attribute name="account" description="User's account" type="Account" />
+    <apex:attribute name="actionate" description="Action" type="String" />
+    <apex:attribute name="page" description="Indicates if the page is HU or AHU" type="String" />
+    <apex:attribute name="dwellingToAssignId" description="New dwelling unit to assign" type="String"/>
+
+    <!-- Payee Information -->
+    <!-- Scenario 1: New Application, dwelling unit is set -->
+    <apex:outputPanel rendered="{!OR(actionate == 'new', AND(application.Dwelling_Unit__c != '', dwellingToAssignId != ''))}">
+        <div class="control-group controlGroupSeparation">
+        <apex:outputPanel rendered="{!page == 'AHU'}">
+            <label class="control-label inputLabelInline payeeTitle" style="float: left;">Payee Information</label>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!page == 'HU'}">
+            <h5 class="text-info" style="margin: 5px 0px 10px 0px">Payee Information</h5>
+        </apex:outputPanel>
+            <div class="controls" style="display:inline-block; margin-left: 0px; width: 360px;">
+                <!-- Account Holder -->
+                <div id="newAccountHolder">
+                    <apex:outputPanel layout="none" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px">Name</div>
+                    </apex:outputPanel>
+                    <div class="payeeName span muted">
+                        <apex:inputText id="accHolderNameNew" styleclass="added ignore" html-placeholder="{!IF(AND(utilityAccount.Account_Holder_First_Name__c != '', utilityAccount.Account_Holder_Last_Name__c != ''), utilityAccount.Account_Holder_First_Name__c + ' ' + utilityAccount.Account_Holder_Last_Name__c, 'Full Name')}" disabled="true"/>
+                    </div>
+                    <apex:inputText id="accHolderPhoneNew" styleclass="added phone ignore" style="display:none;" html-placeholder="{!utilityAccount.Phone__c}" disabled="true"/>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="payeeTitle span" style="margin: 8px 0 0 0; width:60px">Address</div>
+                    </apex:outputPanel>
+                    <div class="payeeStreet span muted">
+                        <apex:inputText id="accHolderStreetNew" styleclass="added ignore" maxlength="255" html-placeholder="{!IF(dwellingUnit.Building__r.Street_Address__c != '', dwellingUnit.Building__r.Street_Address__c, 'Street')}" disabled="false"/>
+                    </div>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px"></div>
+                    </apex:outputPanel>
+                    <div class="payeeAddress span muted">
+                        <apex:inputText id="accHolderCityNew" styleclass="added city ignore" maxlength="255" html-placeholder="{!IF(dwellingUnit.Building__r.City__c != '', dwellingUnit.Building__r.City__c, 'City')}" disabled="false"/>
+                        <apex:inputText id="accHolderStateNew" styleclass="added state ignore" maxlength="2" html-placeholder="{!IF(dwellingUnit.Building__r.State__c != '', dwellingUnit.Building__r.State__c, 'CA')}" disabled="false"/>
+                        <apex:inputText id="accHolderZipNew" styleclass="added zipCode ignore" maxlength="5" html-placeholder="{!IF(dwellingUnit.Building__r.ZIP_Code__c != '', dwellingUnit.Building__r.ZIP_Code__c, 'ZIP Code')}" disabled="false"/>
+                    </div>
+                </div>
+                <!-- Non-account Holder -->
+                <div id="newNonAccountHolder" style="display:none;">
+                    <apex:outputPanel layout="none" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px">Name</div>
+                    </apex:outputPanel>
+                    <div class="payeeName span muted">
+                        <apex:inputText id="nonAccHolderNameNew" styleclass="added ignore" html-placeholder="{!IF(dwellingUnit.Property_Owner__r.Name != '', dwellingUnit.Property_Owner__r.Name, 'Full Name')}" disabled="true"/>
+                    </div>
+                    <apex:inputText id="nonAccHolderPhoneNew" styleclass="added phone ignore" style="display:none;" html-placeholder="{!dwellingUnit.Property_Owner__r.Phone}" disabled="true"/>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="payeeTitle span" style="margin: 8px 0 0 0; width:60px">Address</div>
+                    </apex:outputPanel>
+                    <div class="payeeStreet span muted">
+                        <apex:inputText id="nonAccHolderStreetNew" styleclass="added ignore" maxlength="255" html-placeholder="{!IF(dwellingUnit.Property_Owner__r.MailingStreet != '', dwellingUnit.Property_Owner__r.MailingStreet, 'Street')}" disabled="false"/>
+                    </div>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px"></div>
+                    </apex:outputPanel>
+                    <div class="payeeAddress span muted">
+                        <apex:inputText id="nonAccHolderCityNew" styleclass="added city ignore" maxlength="255" html-placeholder="{!IF(dwellingUnit.Property_Owner__r.MailingCity != '', dwellingUnit.Property_Owner__r.MailingCity, 'City')}" disabled="false"/>
+                        <apex:inputText id="nonAccHolderStateNew" styleclass="added state ignore" maxlength="2" html-placeholder="{!IF(dwellingUnit.Property_Owner__r.MailingState != '', dwellingUnit.Property_Owner__r.MailingState, 'CA')}" disabled="false"/>
+                        <apex:inputText id="nonAccHolderZipNew" styleclass="added zipCode ignore" maxlength="5" html-placeholder="{!IF(dwellingUnit.Property_Owner__r.MailingPostalCode != '', dwellingUnit.Property_Owner__r.MailingPostalCode, 'ZIP Code')}" disabled="false"/>
+                    </div>
+                </div>
+                <!-- Contractor Payee -->
+                <div id="newContractorPayee" style="display:none;">
+                    <apex:outputPanel layout="none" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px">Name</div>
+                    </apex:outputPanel>
+                    <div class="payeeName span muted" >
+                        <apex:inputText id="contPayeeNameNew" styleclass="added ignore" html-placeholder="{!account.Name}" disabled="true"/>
+                    </div>
+                    <apex:inputText id="contPayeePhoneNew" styleclass="added phone ignore" style="display:none;" html-placeholder="{!account.Phone}" disabled="true"/>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="payeeTitle span" style="margin: 8px 0 0 0; width:60px">Address</div>
+                    </apex:outputPanel>
+                    <div class="payeeStreet span muted">
+                        <apex:inputText id="contPayeeStreetNew" styleclass="added ignore" html-placeholder="{!account.BillingStreet}" disabled="true"/>
+                    </div>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px"></div>
+                    </apex:outputPanel>
+                    <div class="payeeAddress span muted">
+                        <apex:inputText id="contPayeeCityNew" styleclass="added city ignore" html-placeholder="{!account.BillingCity}" disabled="true"/>
+                        <apex:inputText id="contPayeeStateNew" styleclass="added state ignore" html-placeholder="{!account.BillingState}" disabled="true"/>
+                        <apex:inputText id="contPayeeZipNew" styleclass="added zipCode ignore" html-placeholder="{!account.BillingPostalCode}" disabled="true"/>
+                    </div>
+                </div>
+                <!-- Display Validation Error Messages -->
+                <div id="payeeErrorMsg"></div>
+            </div>
+        </div>
+    <!-- / Payee Information: Scenario 1 -->
+    </apex:outputPanel>
+
+    <!-- Payee Information -->
+    <!-- Scenario 2: App Created, information can be edited -->
+    <apex:outputPanel rendered="{!AND(OR(actionate == 'edit', actionate == 'detail'), dwellingToAssignId == '', application.Dwelling_Unit__c != '')}">
+        <div class="control-group controlGroupSeparation">
+        <apex:outputPanel rendered="{!page == 'AHU'}">
+            <label class="control-label inputLabelInline payeeTitle" style="float: left;">Payee Information</label>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!page == 'HU'}">
+            <h5 class="text-info" style="margin: 5px 0px 10px 0px">Payee Information</h5>
+        </apex:outputPanel>
+            <div class="controls" style="display:inline-block; margin-left: 0px; width: 360px;">
+                <!-- Payee Fields -->
+                <div id="payee">
+                    <apex:outputPanel layout="none" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px">Name</div>
+                    </apex:outputPanel>
+                    <div class="payeeName span muted">
+                        <apex:inputText id="payeeName" styleclass="added ignore" html-placeholder="{!application.Payee_Full_Name__c}" disabled="true"/>
+                    </div>
+                    <apex:inputText id="payeePhone" styleclass="added phone ignore" style="display:none;" html-placeholder="{!application.Payee_Phone__c}" disabled="true"/>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="payeeTitle span" style="margin: 8px 0 0 0; width:60px">Address</div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!(application.Rebate_Assignment__c == 'Contractor Payee')}">
+                        <div class="payeeStreet span muted">
+                            <apex:inputText id="payeeStreetCont" styleclass="added ignore" html-placeholder="{!application.Payee_Street_Address__c}" disabled="true"/>
+                        </div>
+                        <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                            <div class="span" style="margin: 8px 0 0 0; width:60px"></div>
+                        </apex:outputPanel>
+                        <div class="payeeAddress span muted">
+                            <apex:inputText id="payeeCityCont" styleclass="added city ignore" html-placeholder="{!application.Payee_City__c}" disabled="true"/>
+                            <apex:inputText id="payeeStateCont" styleclass="added state ignore" html-placeholder="{!application.Payee_State__c}" disabled="true"/>
+                            <apex:inputText id="payeeZipCont" styleclass="added zipCode ignore" html-placeholder="{!application.Payee_ZIP_Code__c}" disabled="true"/>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!(application.Rebate_Assignment__c != 'Contractor Payee')}">
+                        <div class="payeeStreet span muted">
+                            <apex:inputText id="payeeStreetNonCont" styleclass="added ignore" maxlength="255" html-placeholder="{!application.Payee_Street_Address__c}" disabled="false"/>
+                        </div>
+                        <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                            <div class="span" style="margin: 8px 0 0 0; width:60px"></div>
+                        </apex:outputPanel>
+                        <div class="payeeAddress span muted">
+                            <apex:inputText id="payeeCityNonCont" styleclass="added city ignore" maxlength="255" html-placeholder="{!application.Payee_City__c}" disabled="false"/>
+                            <apex:inputText id="payeeStateNonCont" styleclass="added state ignore" maxlength="2" html-placeholder="{!application.Payee_State__c}" disabled="false"/>
+                            <apex:inputText id="payeeZipNonCont" styleclass="added zipCode ignore" maxlength="5" html-placeholder="{!application.Payee_ZIP_Code__c}" disabled="false"/>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                <!-- Account Holder -->
+                <div id="accountHolder" style="display:none;">
+                    <apex:outputPanel layout="none" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px">Name</div>
+                    </apex:outputPanel>
+                    <div class="payeeName span muted">
+                        <apex:inputText id="accHolderName" styleclass="added ignore" html-placeholder="{!IF(AND(application.Utility_Account_Holder_First_Name__c != '', application.Utility_Account_Holder_Last_Name__c != ''), application.Utility_Account_Holder_First_Name__c + ' ' + application.Utility_Account_Holder_Last_Name__c, 'Full Name')}" disabled="true"/>
+                    </div>
+                    <apex:inputText id="accHolderPhone" styleclass="added phone ignore" style="display:none;" html-placeholder="{!application.Utility_Account_Holder_Phone__c}" disabled="true"/>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="payeeTitle span" style="margin: 8px 0 0 0; width:60px">Address</div>
+                    </apex:outputPanel>
+                    <div class="payeeStreet span muted">
+                        <apex:inputText id="accHolderStreet" styleclass="added ignore" maxlength="255" html-placeholder="{!IF(application.Dwelling_Unit_Street_Address__c != '', application.Dwelling_Unit_Street_Address__c, 'Street')}" disabled="false"/>
+                    </div>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px"></div>
+                    </apex:outputPanel>
+                    <div class="payeeAddress span muted">
+                        <apex:inputText id="accHolderCity" styleclass="added city ignore" maxlength="255" html-placeholder="{!IF(application.Building_City__c != '', application.Building_City__c, 'City')}" disabled="false"/>
+                        <apex:inputText id="accHolderState" styleclass="added state ignore" maxlength="2" html-placeholder="{!IF(application.Building_State__c != '', application.Building_State__c, 'CA')}" disabled="false"/>
+                        <apex:inputText id="accHolderZip" styleclass="added zipCode ignore" maxlength="5" html-placeholder="{!IF(application.Building_ZIP_Code__c != '', application.Building_ZIP_Code__c, 'ZIP Code')}" disabled="false"/>
+                    </div>
+                </div>
+                <!-- Non-account Holder -->
+                <div id="nonAccountHolder" style="display:none;">
+                    <apex:outputPanel layout="none" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px">Name</div>
+                    </apex:outputPanel>
+                    <div class="payeeName span muted">
+                        <apex:inputText id="nonAccHolderName" styleclass="added ignore" html-placeholder="{!IF(AND(application.Customer_First_Name__c != '', application.Customer_Last_Name__c != ''), application.Customer_First_Name__c + ' ' + application.Customer_Last_Name__c, 'Full Name')}" disabled="true"/>
+                    </div>
+                    <apex:inputText id="nonAccHolderPhone" styleclass="added phone ignore" style="display:none;" html-placeholder="{!application.Customer_Phone__c}" disabled="true"/>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="payeeTitle span" style="margin: 8px 0 0 0; width:60px">Address</div>
+                    </apex:outputPanel>
+                    <div class="payeeStreet span muted">
+                        <apex:inputText id="nonAccHolderStreet" styleclass="added ignore" maxlength="255" html-placeholder="{!IF(application.Customer_Address__c != '', application.Customer_Address__c, 'Street')}" disabled="false"/>
+                    </div>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px"></div>
+                    </apex:outputPanel>
+                    <div class="payeeAddress span muted">
+                        <apex:inputText id="nonAccHolderCity" styleclass="added city ignore" maxlength="255" html-placeholder="{!IF(application.Customer_City__c!= '', application.Customer_City__c, 'City')}" disabled="false"/>
+                        <apex:inputText id="nonAccHolderState" styleclass="added state ignore" maxlength="2" html-placeholder="{!IF(application.Customer_State__c != '', application.Customer_State__c, 'CA')}" disabled="false"/>
+                        <apex:inputText id="nonAccHolderZip" styleclass="added zipCode ignore" maxlength="5" html-placeholder="{!IF(application.Customer_Zip_Code__c != '', application.Customer_Zip_Code__c, 'ZIP Code')}" disabled="false"/>
+                    </div>
+                </div>
+                <!-- Contractor Payee -->
+                <div id="contractorPayee" style="display:none;">
+                    <apex:outputPanel layout="none" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px">Name</div>
+                    </apex:outputPanel>
+                    <div class="payeeName span muted" >
+                        <apex:inputText id="contPayeeName" styleclass="added ignore" html-placeholder="{!application.Contractor__r.Name}" disabled="true"/>
+                    </div>
+                    <apex:inputText id="contPayeePhone" styleclass="added phone ignore" style="display:none;" html-placeholder="{!application.Contractor__r.Phone}" disabled="true"/>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="payeeTitle span" style="margin: 8px 0 0 0; width:60px">Address</div>
+                    </apex:outputPanel>
+                    <div class="payeeStreet span muted">
+                        <apex:inputText id="contPayeeStreet" styleclass="added ignore" html-placeholder="{!application.Contractor__r.BillingStreet}" disabled="true"/>
+                    </div>
+                    <apex:outputPanel layout="block" rendered="{!page == 'HU'}">
+                        <div class="span" style="margin: 8px 0 0 0; width:60px"></div>
+                    </apex:outputPanel>
+                    <div class="payeeAddress span muted">
+                        <apex:inputText id="contPayeeCity" styleclass="added city ignore" html-placeholder="{!application.Contractor__r.BillingCity}" disabled="true"/>
+                        <apex:inputText id="contPayeeState" styleclass="added state ignore" html-placeholder="{!application.Contractor__r.BillingState}" disabled="true"/>
+                        <apex:inputText id="contPayeeZip" styleclass="added zipCode ignore" html-placeholder="{!application.Contractor__r.BillingPostalCode}" disabled="true"/>
+                    </div>
+                </div>
+                <!-- Display Validation Error Messages -->
+                <div id="payeeErrorMsg"></div>
+            </div>
+        </div>
+    <!-- / Payee Information: Scenario 2 -->
+    </apex:outputPanel>
+    <!-- Hidden input fields used to save Payee Information -->
+    <apex:inputHidden id="hName" value="{!application.Payee_Full_Name__c}"/>
+    <apex:inputHidden id="hPhone" value="{!application.Payee_Phone__c}"/>
+    <apex:inputHidden id="hStreet" value="{!application.Payee_Street_Address__c}"/>
+    <apex:inputHidden id="hCity" value="{!application.Payee_City__c}"/>
+    <apex:inputHidden id="hState" value="{!application.Payee_State__c}"/>
+    <apex:inputHidden id="hZipCode" value="{!application.Payee_ZIP_Code__c}"/>
+
+    <script type="text/javascript">
+        // This variable prevents applications from having empty values for any of the payee fields.
+        // This was introduced particularly for the case where applications are created from AHU Step 1 - Building Info.
+        var payeeHasEmptyValues = ('{!application.Payee_Full_Name__c}' === ''
+                || '{!application.Payee_Street_Address__c}' === ''
+                || '{!application.Payee_City__c}' === ''
+                || '{!application.Payee_State__c}' === ''
+                || '{!application.Payee_ZIP_Code__c}' === '');
+
+        $(document).ready(function() {
+            if ('{!page}' === 'HU') {
+                // Keeps the selection of the rebate assignment when the user selects a new building.
+                keepRebateAssignmentSelection();
+            }
+
+            if (('{!actionate}' === 'new' && '{!dwellingUnit}' !== '')
+                    || ('{!application.Dwelling_Unit__c}' !== '' && '{!dwellingToAssignId}' !== '')) {
+                // Set payee information when dwelling unit is passed by parameter.
+                getNewPayeeInfo();
+            } else {
+                // Set payee information when the application has already been created.
+                getPayeeInfoFromApp('{!application.Rebate_Assignment__c}');
+            }
+            // Set payee values on keyup.
+            $('#newAccountHolder input:gt(1), #newNonAccountHolder input:gt(1)').on('keyup', function() {
+                getNewPayeeInfo();
+            });
+            $('#payee input:gt(1), #accountHolder input:gt(1), #nonAccountHolder input:gt(1)').on('keyup', function() {
+                getPayeeInfoFromApp('{!application.Rebate_Assignment__c}');
+            });
+        });
+    </script>
+
+</apex:component>

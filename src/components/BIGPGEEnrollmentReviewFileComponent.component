@@ -1,0 +1,17 @@
+<apex:component >
+    <apex:attribute name="attachmentId" description="Attachment Id" type="String" required="true" />
+    <apex:attribute name="linkTitle" description="Link to document" type="String" default="View File" />
+    <apex:attribute name="showFileNotFound" description="File Not Found" type="Boolean" default="true" />
+
+    <apex:outputPanel rendered="{!attachmentId != null}">
+        <apex:outputLink styleClass="pdml" target="_blank" value="/servlet/servlet.FileDownload?file={!attachmentId}">
+             {!linkTitle}
+        </apex:outputLink>
+        <br />
+    </apex:outputPanel>
+
+    <apex:outputPanel styleClass="pdml" rendered="{!AND(attachmentId == null, showFileNotFound)}">
+        No File Found
+        <br />
+    </apex:outputPanel>
+</apex:component>

@@ -1,0 +1,29 @@
+<apex:page standardStylesheets="false" tabStyle="ExactTargetPhoenix__tab">
+    <apex:includeLightning />      
+    <apex:stylesheet value="{!URLFOR($Resource.et4ae5__componentStyles)}" />
+        
+    <div id="lightning" />
+
+    <script>
+    $Lightning.use("et4ae5:IntegrateMarketingCloudUserApp", function() {
+        $Lightning.createComponent("et4ae5:IntegrateMarketingCloudUser", null, "lightning");      
+    });
+
+    </script>
+    <apex:outputPanel rendered="false">
+        <apex:outputText value="{!$Label.et4ae5__usercreds}"/>
+        <apex:outputText value="{!$Label.et4ae5__msg0084}"/>
+        <apex:outputText value="{!$Label.et4ae5__mcusrcreds}"/>
+        <apex:outputText value="{!$Label.et4ae5__mcusrabbr}"/>
+        <apex:outputText value="{!$Label.et4ae5__msg0238}"/>
+        <apex:outputText value="{!$Label.et4ae5__msg0239}"/>
+        <apex:outputText value="{!$Label.et4ae5__slctabu}"/>
+        <apex:outputText value="{!$Label.et4ae5__msg0240}"/>
+        <apex:outputText value="{!$Label.et4ae5__msg0241}"/>
+        <apex:outputText value="{!$Label.et4ae5__slctabutocnnct}"/>
+        <apex:outputText value="{!$Label.et4ae5__midnotfoundinjson}"/>
+        <apex:outputText value="{!$Label.et4ae5__busunit}" />
+        <apex:outputText value="{!$Label.et4ae5__mccbus}"/>
+        <apex:outputText value="{!$Label.et4ae5__mcusr}"/>
+    </apex:outputPanel>	    
+</apex:page>

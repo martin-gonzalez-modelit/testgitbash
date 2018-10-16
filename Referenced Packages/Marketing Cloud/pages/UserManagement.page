@@ -1,0 +1,47 @@
+<apex:page standardStylesheets="false">
+
+    <apex:includeLightning />  
+    <apex:stylesheet value="{!URLFOR($Resource.et4ae5__componentStyles)}" />    
+        
+    <div id="lightning" />
+
+    <script>
+    $Lightning.use("et4ae5:UserManagementApp", function() {
+        $Lightning.createComponent("et4ae5:UserManagement", null, "lightning");      
+    });
+
+    </script>
+    <apex:outputPanel rendered="false">
+		<apex:outputText value="{!$Label.et4ae5__previous}" />
+		<apex:outputText value="{!$Label.et4ae5__next}" />
+		<apex:outputText value="{!$Label.et4ae5__intusrmgmt}" />
+		<apex:outputText value="{!$Label.et4ae5__msg0036}" />
+		<apex:outputText value="{!$Label.et4ae5__save}" />
+		<apex:outputText value="{!$Label.et4ae5__cancel}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtableheaders}" />
+		<apex:outputText value="{!$Label.et4ae5__dtnodatalabel}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtnodatamsg}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtnodatafilter}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtentriesperpagepre}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtentriesperpagesuf}" /> 
+		<apex:outputText value="{!$Label.et4ae5__dtfilterprefix}" /> 
+		<apex:outputText value="{!$Label.et4ae5__dtfiltersuffix}" />
+		<apex:outputText value="{!$Label.et4ae5__dtinfoprefix}" />
+		<apex:outputText value="{!$Label.et4ae5__dtinfomid1}" />
+		<apex:outputText value="{!$Label.et4ae5__dtinfomid2}" />
+		<apex:outputText value="{!$Label.et4ae5__dtinfosuffix}" />    	
+		<apex:outputText value="{!$Label.et4ae5__dtbuildingtable}" />		
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtnochangeerror}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtnochangeerrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtrecordlimiterror}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtrecordlimiterrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtrecordloaderror}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtrecordloaderrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtsaveerror}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtsaveerrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtsaveservererror}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtsaveservererrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtsavesuccess}" />
+		<apex:outputText value="{!$Label.et4ae5__usrmgmtsavesuccesstitle}" />												
+	</apex:outputPanel>    
+</apex:page>

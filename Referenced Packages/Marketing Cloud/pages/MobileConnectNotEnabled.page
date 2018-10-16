@@ -1,0 +1,16 @@
+<apex:page controller="et4ae5.initialConfigControl" tabStyle="ExactTargetPhoenix__tab">
+    <apex:composition template="et4ae5__UserErrorTemplate">
+        <apex:define name="customMessage">
+            <div align="right">
+                <apex:outputpanel >
+                    <apex:commandLink rendered="{!isAdmin}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__configint}" onMouseOver="this.style.textDecoration='underline'"
+                    onMouseOut="this.style.textDecoration='none'" action="{!configure}" />&nbsp;&nbsp;&nbsp;
+                </apex:outputpanel>
+            </div>
+            <br />
+            <apex:pageBlock title="MobileConnect Not Enabled">
+                The Business Unit selected does not have MobileConnect enabled. Please contact your administrator to enable this feature.
+            </apex:pageBlock>
+        </apex:define>
+    </apex:composition>
+</apex:page>

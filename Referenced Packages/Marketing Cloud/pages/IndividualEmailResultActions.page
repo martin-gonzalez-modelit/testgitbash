@@ -1,0 +1,4 @@
+<apex:page standardController="et4ae5__IndividualEmailResult__c" extensions="et4ae5.SendActionsControl" showHeader="false">
+	<c:MarketingCloudActions sObjRecord="{!mysObject}" sObjType="IndividualEmailResult__c"/>
+	<apex:outputText value="{!et4ae5__IndividualEmailResult__c.et4ae5__SendDefinition__c}" rendered="false" />
+</apex:page>

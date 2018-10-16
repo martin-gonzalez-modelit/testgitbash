@@ -1,0 +1,42 @@
+<apex:component layout="none">
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/spinner.css')}"/>
+    <apex:attribute name="type" description="Note: attribute value can be: circle, wave, bubbles, cubes, dots"
+            type="String" default="circle" />
+
+    <div id="loading" class="sk-{!type}">
+        <apex:outputPanel layout="none" rendered="{!type == 'circle'}">
+            <div class="sk-circle1 sk-child"></div>
+            <div class="sk-circle2 sk-child"></div>
+            <div class="sk-circle3 sk-child"></div>
+            <div class="sk-circle4 sk-child"></div>
+            <div class="sk-circle5 sk-child"></div>
+            <div class="sk-circle6 sk-child"></div>
+            <div class="sk-circle7 sk-child"></div>
+            <div class="sk-circle8 sk-child"></div>
+            <div class="sk-circle9 sk-child"></div>
+            <div class="sk-circle10 sk-child"></div>
+            <div class="sk-circle11 sk-child"></div>
+            <div class="sk-circle12 sk-child"></div>
+        </apex:outputPanel>
+        <apex:outputPanel layout="none" rendered="{!type == 'wave'}">
+            <div class="sk-rect sk-rect1"></div>
+            <div class="sk-rect sk-rect2"></div>
+            <div class="sk-rect sk-rect3"></div>
+            <div class="sk-rect sk-rect4"></div>
+            <div class="sk-rect sk-rect5"></div>
+        </apex:outputPanel>
+        <apex:outputPanel layout="none" rendered="{!type == 'bubbles'}">
+            <div class="sk-child sk-bounce1"></div>
+            <div class="sk-child sk-bounce2"></div>
+            <div class="sk-child sk-bounce3"></div>
+        </apex:outputPanel>
+        <apex:outputPanel layout="none" rendered="{!type == 'cubes'}">
+            <div class="sk-cube sk-cube1"></div>
+            <div class="sk-cube sk-cube2"></div>
+        </apex:outputPanel>
+        <apex:outputPanel layout="none" rendered="{!type == 'dots'}">
+            <div class="sk-child sk-dot1"></div>
+            <div class="sk-child sk-dot2"></div>
+        </apex:outputPanel>
+    </div>
+</apex:component>

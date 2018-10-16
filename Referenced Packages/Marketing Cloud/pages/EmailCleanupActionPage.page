@@ -1,0 +1,385 @@
+<apex:page id="actionPage" controller="et4ae5.EmailCleanupController" tabstyle="et4ae5__SendDefinition__c" action="{!actionPageSetup}">
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__jQueryUI, 'jquery-ui-1.9.2.custom/js/jquery-1.8.3.js')}" />
+    <style>
+        .jOrgChart .line 
+        {
+            height : 20px;
+            width : 3px;
+        }
+        .jOrgChart .down 
+        {
+            background-color : #0075B0;        
+            margin : 0px auto;
+        }
+        .jOrgChart .top 
+        {
+            border-top : 2px solid #0075B0;
+        }
+        .jOrgChart .left 
+        {
+            border-right : 1px solid #0075B0;
+        }
+        .jOrgChart .right 
+        {
+            border-left : 1px solid #0075B0;
+        }
+        /* node cell */
+        .jOrgChart td 
+        {
+            text-align : center;
+            vertical-align : middle;
+            padding : 0;
+        }
+        /* selected node */
+        .jOrgChart .selectedNode 
+        {
+            border : 3px solid #0075B0;
+            background-color : #FCB53E;
+            display : inline-block;
+            width : 96px;
+            height : 50px;
+            z-index : 10;
+            margin : 0 2px;
+            border-radius : 6px;
+            /*-moz-border-radius : 6px;*/
+            vertical-align : middle;
+        }
+        /* unselected node */
+        .jOrgChart .unselectedNode 
+        {
+            border : 3px solid #0075B0;
+            background-color : white;
+            display : inline-block;
+            width : 96px;
+            height : 50px;
+            z-index : 10;
+            margin : 0 2px;
+            border-radius : 6px;
+            /*-moz-border-radius : 6px;*/
+            vertical-align : middle;
+        }
+        /* selected disabled node */
+        .jOrgChart .selectedDisabledNode 
+        {
+            border : 3px solid #0075B0;
+            background-color : #F8DE6E;
+            display : inline-block;
+            width : 96px;
+            height : 50px;
+            z-index : 10;
+            margin : 0 2px;
+            border-radius : 6px;
+            /*-moz-border-radius : 6px;*/
+            vertical-align : middle;
+        }
+        /* selected node for legend */
+        .jOrgChart .selectedNodeL
+        {
+            border : 3px solid #0075B0;
+            background-color : #FCB53E;
+            display : inline-block;
+            width : 50px;
+            height : 15px;
+            z-index : 10;
+            margin : 0 2px;
+            border-radius : 6px;
+            /*-moz-border-radius : 6px;*/
+            vertical-align : middle;
+        }
+        /* unselected node for legend */
+        .jOrgChart .unselectedNodeL
+        {
+            border : 3px solid #0075B0;
+            background-color : white;
+            display : inline-block;
+            width : 50px;
+            height : 15px;
+            z-index : 10;
+            margin : 0 2px;
+            border-radius : 6px;
+            /*-moz-border-radius : 6px;*/
+            vertical-align : middle;
+        }
+        /* selected disabled node for legend */
+        .jOrgChart .selectedDisabledNodeL 
+        {
+            border : 3px solid #0075B0;
+            background-color : #F8DE6E;
+            display : inline-block;
+            width : 50px;
+            height : 15px;
+            z-index : 10;
+            margin : 0 2px;
+            border-radius : 6px;
+            /*-moz-border-radius : 6px;*/
+            vertical-align : middle;
+        }
+        .jOrgChart .space 
+        {
+            width : 50px;
+            height : 6px;
+        }
+    </style>
+
+    <script type='text/javascript' src='https://www.google.com/jsapi' />
+    <script type='text/javascript'>
+        var erSelected;
+        var aldSelected;
+        var ierSelected;
+        var ildSelected;
+        function clickedNode(divClicked) 
+        {
+            if (divClicked.id == 'er') 
+            {
+                erSelected = toggleSelected(erSelected);
+            }
+            else if (divClicked.id == 'ier') 
+            {
+                ierSelected = toggleSelected(ierSelected);
+            }
+            else if (divClicked.id == 'ild') 
+            {
+                ildSelected = toggleSelected(ildSelected);
+            }
+            else if (divClicked.id == 'ald') 
+            {
+                aldSelected = toggleSelected(aldSelected);
+            }
+            if (erSelected) 
+            {
+                ierSelected = true;
+                ildSelected = true;
+                aldSelected = true;
+            }
+            else if (ierSelected) 
+            {
+                ildSelected = true;
+            }
+            setNodeClass(erSelected, 'er', false);
+            setNodeClass(ierSelected, 'ier', erSelected);
+            setNodeClass(ildSelected, 'ild', ierSelected);
+            setNodeClass(aldSelected, 'ald', erSelected);
+        }
+        function setSelected() {}
+        function toggleSelected(selected) 
+        {
+            if (selected) 
+            {
+                return false;
+            }
+            else 
+            {
+                return true;
+            }
+        }
+        function setNodeClass(selected, node, parentNodeSelected) 
+        {
+            cbNode = node + 'Cb';
+            cbNodeId = 'actionPage:theSecondForm:' + cbNode;
+            if (selected) 
+            {
+                document.getElementById(cbNodeId).checked = true;
+                if (parentNodeSelected) 
+                {
+                    document.getElementById(node).className = 'selectedDisabledNode';
+                }
+                else 
+                {
+                    document.getElementById(node).className = 'selectedNode';
+                }
+            }
+            else 
+            {
+                document.getElementById(cbNodeId).checked = false;
+                document.getElementById(node).className = 'unselectedNode';
+            }
+        }
+        function recolorTree() 
+        {
+            alert('recolorTree()');
+        }
+    </script>
+    <br />
+    <br />
+    <table>
+        <tr>
+            <td>
+                <img height="45" src="{!HTMLENCODE(URLFOR( $Resource.ExactTargetImages, 'cleanup.png' ))}" />
+            </td>
+            <td width="5" />
+            <td style="font-size: 36px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold; margin: 0 0 15px 0;">
+                {!$label.eCleanup}
+            </td>
+        </tr>
+    </table>
+    <br />
+    <apex:pageMessages />
+    <apex:form id="theSecondForm">
+        <!-- handle checkboxes -->
+        <apex:actionFunction name="notClicked" action="{!doNotClicked}"/>
+        <apex:actionFunction name="notOpened" action="{!doNotOpened}"/>
+        <apex:inputCheckBox id="erCb" value="{!emailSendSelected}" style="display:none"/>
+        <apex:inputCheckBox id="ierCb" value="{!individualEmailResultSelected}" style="display:none"/>
+        <apex:inputCheckBox id="ildCb" value="{!individualLinkLevelDetailSelected}" style="display:none"/>
+        <apex:inputCheckBox id="aldCb" value="{!aggregatLinkLevelDetailSelected}" style="display:none"/>
+        <apex:pageBlock id="pb1" >
+            <br/>
+            {!$Label.msg0120}
+            <br/>
+            <br/>
+            <hr color="#f0f0f0" />
+            <apex:pageBlockSection columns="1" id="informationTypes" >
+                <br/>
+                <table >
+                    <tr >
+                        <td rowspan="2">
+                            <table  name="theTable" class='jOrgChart' cellpadding='0' cellspacing='0' border='0'>
+                                <tr class='node-cells'>
+                                    <td class='node-cell' colspan='4' >
+                                        <div id='er' class='unselectedNode' onclick='clickedNode(this)'>
+                                            <table style="height:100%;width:100%;vertical-align:middle;" >
+                                                <tr style="height:100%;" >
+                                                    <td style="vertical-align:middle;">
+                                                        {!$Label.emailSends} <b>({!selectedErCount})</b>
+                                                    </td >
+                                                </tr >
+                                            </table >
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan='4'>
+                                        <div class='line down' />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="height:20px;width:3px;"/>
+                                    <td style="height:20px;width:3px;border-top:solid #0075B0 3px;border-left:solid #0075B0 3px;"/>
+                                    <td style="height:20px;width:3px;border-top:solid #0075B0 3px;border-right:solid #0075B0 3px;"/>
+                                    <td style="height:20px;width:3px;"/>
+                                </tr>
+                                <tr>
+                                    <td class='node-cell' colspan='2'>
+                                        <div id='ald' class='unselectedNode' onclick='clickedNode(this)'>
+                                            <table style="height:100%;width:100%;vertical-align:middle;" >
+                                                <tr style="height:100%;" >
+                                                    <td style="vertical-align:middle;">
+                                                        {!$Label.aggrLnkDet} <b>({!selectedAldCount})</b>
+                                                    </td >
+                                                </tr >
+                                            </table >
+                                        </div>
+                                    </td>
+                                    <td class='node-cell' colspan='2'>
+                                        <div id='ier' class='unselectedNode' onclick='clickedNode(this)'>
+                                            <table style="height:100%;width:100%;vertical-align:middle;" >
+                                                <tr style="height:100%;" >
+                                                    <td style="vertical-align:middle;">
+                                                        {!$Label.IERs} <b>({!selectedIerCount})</b>
+                                                    </td >
+                                                </tr >
+                                            </table >
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class='node-cell' colspan='2' />
+                                    <td class='node-cell' colspan='2'>
+                                        <div style="height:20px;width:2.5px;background-color:#0075B0;margin:0px auto" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class='node-cell' colspan='2' />
+                                    <td class='node-cell' colspan='2'>
+                                        <div style="height:20px;width:2.5px;background-color:#0075B0;margin:0px auto" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class='node-cell' colspan='2' />
+                                    <td class='node-cell' colspan='2'>
+                                        <div id='ild' class='unselectedNode' onclick='clickedNode(this)'>
+                                            <table style="height:100%;width:100%;vertical-align:middle;" >
+                                                <tr style="height:100%;" >
+                                                    <td style="vertical-align:middle;">
+                                                        {!$Label.indvLnkDet} <b>({!selectedIldCount})</b>
+                                                    </td >
+                                                </tr >
+                                            </table >
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td >
+                        <td style="width:35px;" rowspan="2" />
+                        <td style="height:95%;vertical-align:middle;" >
+                            <input type="checkbox" onclick="toggleCheckNotOpened(this);" />
+                            {!$Label.msg0121}
+                            <br />
+                            <input type="checkbox" onclick="toggleCheckNotClicked(this);" />
+                            {!$Label.msg0122}
+                        </td >
+                    </tr >
+                    <tr >
+                        <td style="height:5%;vertical-align:bottom;">
+                            <table class='jOrgChart' cellpadding='0' cellspacing='0' border='0'>
+                                <tr class='node-cells'>
+                                    <td class='node-cell' >
+                                        <div class='unselectedNodeL' />
+                                    </td>
+                                    <td style="padding-left:2px;vertical-align:middle;text-align:left;">
+                                        {!$Label.msg0123}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="space" />
+                                </tr>
+                                <tr class='node-cells'>
+                                    <td class='node-cell'>
+                                        <div class='selectedNodeL' />
+                                    </td>
+                                    <td style="padding-left:2px;vertical-align:middle;text-align:left;">
+                                        {!$Label.msg0124}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="space" />
+                                </tr>
+                                <tr class='node-cells'>
+                                    <td class='node-cell'>
+                                        <div class='selectedDisabledNodeL' />
+                                    </td>
+                                    <td style="padding-left:2px;vertical-align:middle;text-align:left;">
+                                        {!$Label.msg0125}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td >
+                    </tr >
+                </table >
+                <br/>
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons location="bottom">
+                <apex:commandButton value="{!$Label.et4ae5__previous}" action="{!back}" />
+                <apex:commandButton value="{!$Label.et4ae5__next}" action="{!next2}" />
+                <apex:commandButton value="{!$Label.et4ae5__cancel}" action="{!cancel}" />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        <apex:outputPanel rendered="false" >
+            <apex:inputCheckbox />
+        </apex:outputPanel>
+    </apex:form>
+    <script>
+        selectNodes();
+        function selectNodes() 
+        {
+            erSelected = document.getElementById('actionPage:theSecondForm:erCb').checked;
+            aldSelected = document.getElementById('actionPage:theSecondForm:aldCb').checked;
+            ierSelected = document.getElementById('actionPage:theSecondForm:ierCb').checked;
+            ildSelected = document.getElementById('actionPage:theSecondForm:ildCb').checked;
+            setNodeClass(erSelected, 'er', false);
+            setNodeClass(ierSelected, 'ier', erSelected);
+            setNodeClass(ildSelected, 'ild', ierSelected);
+            setNodeClass(aldSelected, 'ald', erSelected);
+        }
+    </script>
+</apex:page>

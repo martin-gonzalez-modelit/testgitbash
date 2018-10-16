@@ -1,0 +1,11 @@
+<apex:page standardController="Field_Trip__Object_Analysis__c" extensions="Field_Trip.fieldTripStatusExtension" showHeader="false">
+    <apex:form >
+        <div style="margin:2px"/>
+        <apex:outputPanel id="statusMessage">
+            <apex:outputPanel style="font-size:11pt; color:rgb(51,153,204); font-family:arial,verdana;" rendered="{!showMessage}">
+                <b>Field Trip analyzation in progress, click the "Analyze" button to check the status.</b>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:actionPoller reRender="statusMessage" interval="10"/>
+    </apex:form>
+</apex:page>

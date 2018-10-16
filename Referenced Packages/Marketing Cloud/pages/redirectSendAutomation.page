@@ -1,0 +1,11 @@
+<apex:page standardController="et4ae5__Automated_Send__c" extensions="et4ae5.sendAutomationRedirect" action="{!redirect}" >
+    <apex:form >
+    <apex:actionFunction name="redirecter" action="{!redirect}" />
+    </apex:form>
+    <script>
+        window.onload=function()
+        {
+            redirecter();
+        }
+    </script>
+</apex:page>

@@ -1,0 +1,74 @@
+<apex:page controller="AHUDesktopReviewConfirmationController" sidebar="false" action="{!checkAction}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractorreview, '/css/bootstrap.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractorreview, '/css/style.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-ui/jquery-ui.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-validate/jquery.validate.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-maskedinput/jquery.maskedinput.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigacqc, '/js/jquery.validate.additionalMethods.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <style>
+    .content-area {width:100%; float:left; text-align:left; font-weight:normal; height:auto !important}
+
+    .content-area label{
+        font-weight:bold;
+    }
+    
+    .content-area a{
+        text-decoration:underline;
+        font-size:85% !important;
+        color:rgb(1, 91, 167) !important;
+    }
+
+    div.panel-body{
+        padding:20px;
+    }   
+    
+    
+    .msgIcon{
+        min-width:24px;
+        min-height:24px;
+    }
+    
+    .pointer{
+        cursor: default;
+    }
+    </style>
+
+    <div class="content-area left">
+
+        <div class="cushion">
+        
+        <div class="panel top-border" id="iframePanel">
+            <h1>Rebate Application Form: {!app.Name}</h1>
+            <hr/>
+            <apex:pageMessages />
+            <apex:outputPanel rendered="{!review.Comments__c != null && review.Comments__c != ''}">
+                <br/>
+                <label class="pointer">Issues:</label> <apex:outputField value="{!review.Comments__c}"/>
+                <br/>
+                <br/>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!review.Additional_Comments__c != null && review.Additional_Comments__c != ''}">
+                <label class="pointer">Comments:</label> <apex:outputField value="{!review.Additional_Comments__c}"/>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!review.Comments__c == null && review.Additional_Comments__c == null}">
+                <label class="pointer">No Issues or Comments Reported</label>
+            </apex:outputPanel>
+            <hr/>
+            <apex:outputPanel rendered="{!review.Status__c == 'Under Review'}" layout="none">
+                <a href="{!URLFOR('/apex/AHUDesktopReview?appId=' + app.Id)}">Back to Review Page</a><br/>
+            </apex:outputPanel>
+            <apex:outputPanel layout="none">
+                <a href="/{!app.Id}">View Rebate Application Form</a>
+            </apex:outputPanel>
+            <br/>
+            <br/>
+        </div>
+        
+        </div><!--end of cushion-->
+    </div><!--end of content area-->
+
+</apex:page>

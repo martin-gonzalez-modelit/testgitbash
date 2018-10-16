@@ -1,0 +1,780 @@
+<apex:page standardController="et4ae5__abTest__c" extensions="et4ae5.abTestDetailControl" tabStyle="et4ae5__SendDefinition__c" action="{!initialize}">
+  <style>
+    /* Used to do the grid layout */
+    .row {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    white-space:nowrap;
+    }
+
+    .row.center {
+    text-align: center;
+    }
+
+    /* Make sure there is no whitespace between cells */
+    .cell {
+    display: inline-block;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+
+    vertical-align: top;
+    }
+
+    .cell.whole {
+    width: 100%;
+    }
+    .cell.one-third{
+    width: 33%;
+    }
+    .cell.one-fourth {
+    width: 24.7%;
+    }
+    .cell.one-fourth.chart{
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    color:#4f4f4f;
+    }
+    .cell.one-fourth.lfourpx{
+    margin-left:4px;
+    }
+
+    .cell.three-fourth {
+    width: 75%;
+    }
+
+    .cell.half {
+    width: 49.5%;
+    }
+    .cell.fifteen{
+    width: 14.7%;
+    }
+    .cell.eighty-five{
+    width:85%;
+    }
+    .cell.status{
+    margin-left:52px;
+    }
+    .cell.center{
+    text-align: center;
+    }
+    .cell .row .info {
+    white-space:normal;
+    width:100%;
+    color:#4f4f4f;
+    word-wrap: break-word;
+    }
+    .cell .row .infoT{
+    white-space:normal;
+    }
+    /* Widget styles */
+    .widget {
+    margin-right: 12px;
+    margin-left: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #e0e3e5;
+    padding: 12px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    white-space:nowrap;
+    }
+
+    .widget .header{
+    font-size: 14px;
+    font-weight: bold;
+    }
+
+    .widget .row{
+    margin-top:5px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    color: #999999;
+    }
+    .widget.top{
+    margin-bottom:0;
+    border-bottom:0;
+    border-bottom-left-radius:0;
+    border-bottom-right-radius:0;
+    overflow:auto;
+    }
+    .widget.bottom{
+    background-color:#f0f0f0;
+    text-align:right;
+    }
+    .row .headrow .header {
+    font-size: 14px;
+    font-weight: bold;
+    }
+    .row.bottom{
+    color:#4f4f4f
+    }
+    .header{
+    font-size: 36px;
+    color: #4f4f4f;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-weight: bold;
+    display: inline-block;
+    vertical-align: bottom;
+    }
+    .headbox{
+    padding-top:15px;
+    }
+    .picWrapper{
+    display:inline-block;
+    vertical-align: bottom;
+    background-color: #ffa100;
+    border-radius: 8px;
+    margin-right: 7px;
+
+    }
+    .label{
+    position:inline-block;
+    }
+    .thumb{
+    height: 45px;
+    }
+    .headrow{
+    border-top: 1px solid #e0e3e5;
+    border-left: 1px solid #e0e3e5;
+    border-right: 1px solid #e0e3e5;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    margin-left: 12px;
+    margin-top: 12px;
+    margin-right: 12px;
+    padding: 12px;
+    }
+    .headrow.bg{
+    background-color: #f0f0f0;
+    }
+    .legend {
+    display: inline-block;
+    float: right;
+    height: 1em;
+    width: 1em;
+    margin: 0;
+    margin-right: 2px;
+    border: 1px solid #e0e3e5;
+    padding: 0;
+
+    vertical-align: text-bottom;
+    }
+    .legend.blue {
+    background-color: hsl(200, 50%, 60%);
+    }
+    .legend.orange {
+    background-color: hsl(33, 85%, 57%);
+    }
+    .smallfont{
+    color:#999999;
+    font-weight:normal;
+    font-size:11px;
+    }
+    .right{
+    float:right;
+    }
+    .right.button{
+    margin-top:20px;
+    }
+    .right.link{
+    margin-top:30px;
+    }
+    .newScheduledDateTime{
+    float:left;
+    clear:left;
+    }
+    .dateFormat{
+    float:left;
+    clear:left;
+    }
+    .spinnerSmall{
+    width:40%;
+    }
+  </style>
+  <apex:includeScript value="{!URLFOR($Resource.et4ae5__jQueryUI, 'jquery-ui-1.9.2.custom/js/jquery-1.8.3.js')}" />
+  <apex:form >
+    <apex:actionFunction name="cancelABTest" action="{!cancelAB}" rerender=""/>
+    <div class="headbox">
+      <div class="cell half">
+        <div class="picWrapper">
+          <img class="thumb" src="{!URLFOR( $Resource.et4ae5__ExactTargetImages, 'custom90.svg' )}"/>
+        </div>
+        <div class="header">
+          {!testTitle}
+        </div>
+        <apex:outputPanel rendered="{!scheduledWaiting}" >
+          <apex:commandbutton value="{!$Label.et4ae5__cancel}" styleclass="right button" rerender=""
+                              onclick="if(confirm('{!$Label.et4ae5__confirmcancel}')){cancelABTest();};"/>
+        </apex:outputPanel>
+      </div>
+      <div class="cell half">
+        <a href="/apex/abtestlist" class="right link">{!$Label.lstAbTests}</a>
+      </div>
+    </div>
+    <div class="row">
+      <div class="cell status">
+        {!$Label.status}:
+      </div>
+      <div class="cell">
+        <span id="abStatus">{!testStatus}</span>
+      </div>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="cell three-fourth">
+          <div class="row">
+            <div class="headrow">
+              <div class="header">
+                {!$Label.results}  <span class="smallfont">{!timeNow}</span>
+              </div>
+            </div>
+            <div class="widget top">
+              <div class="row">
+                <div class="cell fifteen">
+                  <div class="row">
+                  </div>
+                </div>
+                <div class="cell eighty-five">
+                  <div class="row bottom">
+                    <div class="cell one-fourth chart">
+                      {!titleA}
+                    </div>
+                    <div class="cell one-fourth chart">
+                      {!titleB}
+                    </div>
+                    <div class="cell one-fourth chart">
+                      {!titleRemainder}
+                    </div>
+                    <div class="cell one-fourth chart">
+                      {!$Label.et4ae5__total}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <apex:chart width="100%" height="300px" data="{!abTestData}" colorSet="#6AC,#E93,#AD2" legend="false">
+                      <apex:axis rendered="true" grid="true" type="Numeric" position="left" fields="data1,data2" minimum="0" steps="3" maximum="100" />
+                      <apex:axis rendered="false" grid="true" type="Category" position="bottom" fields="name" />
+                      <apex:barSeries title="{!titleA}" orientation="vertical" axis="left" xField="name" yField="data1,data2" />
+                      <apex:barSeries title="{!titleB}" orientation="vertical" axis="left" xField="name" yField="data1,data2" />
+                      <apex:barSeries title="{!titleRemainder}" orientation="vertical" axis="left" xField="name" yField="data1,data2" />
+                      <apex:barSeries title="{!$Label.et4ae5__total}" orientation="vertical" axis="left" xField="name" yField="data1,data2" />
+                    </apex:chart>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="widget bottom">
+              <div class="cell fifteen">
+                <div class="row">
+                  <div class="row">
+                    <div class="cell one-fourth">
+                      <span class="legend blue"></span>
+                    </div>
+                    <div class="cell three-fourth">
+                      {!$Label.opnRate}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="cell one-fourth">
+                      <span class="legend orange"></span>
+                    </div>
+                    <div class="cell three-fourth">
+                      {!$Label.uniqueCtr}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="cell one-fourth">
+                    </div>
+                    <div class="cell three-fourth">
+                      {!$Label.delRate}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="cell one-fourth">
+                    </div>
+                    <div class="cell three-fourth">
+                      {!$Label.unsubRate}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="cell one-fourth">
+                    </div>
+                    <div class="cell three-fourth">
+                      {!$Label.subscribers}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="cell eighty-five center">
+                <div class="cell one-fourth lfourpx">
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!openRateA}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!uniqueCTRA}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!delRateA}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!unsubRateA}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    {!subscribersA}
+                  </div>
+                  <div class="row">
+                    <apex:commandlink onclick="detailsA(); return false;" value="{!$Label.et4ae5__trkdetails}" rendered="{!NOT(ISBLANK(SdIdA))}"/>
+                  </div>
+                </div>
+                <div class="cell one-fourth">
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!openRateB}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!uniqueCTRB}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!delRateB}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!unsubRateB}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    {!subscribersB}
+                  </div>
+                  <div class="row">
+                    <apex:commandlink onclick="detailsB(); return false;" value="{!$Label.et4ae5__trkdetails}" rendered="{!NOT(ISBLANK(SdIdB))}"/>
+                  </div>
+                </div>
+                <div class="cell one-fourth">
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!openRateRem}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!uniqueCTRRem}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!delRateRem}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!unsubRateRem}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    {!subscribersRem}
+                  </div>
+                  <div class="row">
+                    <apex:commandlink onclick="detailsRem(); return false;" value="{!$Label.et4ae5__trkdetails}" rendered="{!NOT(ISBLANK(SdIdRem))}"/>
+                  </div>
+                </div>
+                <div class="cell one-fourth">
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!openRateTot}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!uniqueCTRTot}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!delRateTot}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    <apex:outputText value="{0, number, ###.00%}">
+                      <apex:param value="{!unsubRateTot}"/>
+                    </apex:outputText>
+                  </div>
+                  <div class="row">
+                    {!subscribersTot}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cell one-fourth">
+          <div class="row" id="declareWinnerDetails">
+            <div class="headrow bg">
+              <div class="header">
+                {!$Label.abTestDeclareWinner}
+              </div>
+            </div>
+            <div class="widget">
+              <div id="declareWinnerContainer" class="cell whole">
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:selectRadio layout="pagedirection" value="{!declareWinner}">
+                      <apex:selectOptions value="{!DeclareWinnerOptions}" />
+                    </apex:selectRadio>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:outputLabel id="declareWinnerLabel" style="width:inherit" value="{!$Label.et4ae5__abdeclarewinnersendtoremainder}" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:selectList id="declareWinnerTransmissionType" style="width:inherit" value="{!declareWinnerTransmissionType}" size="1">
+                      <apex:selectOptions value="{!TransmissionTypeOptions}"/>
+                    </apex:selectList>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:selectList id="declareWinnerAutomaticTransmissionType" style="width:inherit" value="{!declareWinnerAutomaticTransmissionType}" size="1">
+                      <apex:selectOptions value="{!AutomaticTransmissionTypeOptions}"/>
+                    </apex:selectList>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:inputField id="declareWinnerScheduledDateTime" style="width:inherit" value="{!tempSendForDeclaringAWinner.et4ae5__Scheduled_Date_Time__c}"/>
+                  </div>
+                </div>
+                <apex:commandButton action="{!saveDeclareWinner}" value="{!$Label.et4ae5__confirm}" id="declareWinnerSave" onClick="showDeclareWinnerSavingSpinner()" onComplete="window.location.reload()"/>
+                <div id="declareWinnerSavingSpinner">
+                  <img class="spinnerSmall" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="headrow bg">
+              <div class="header">
+                {!$Label.details}
+              </div>
+            </div>
+            <div class="widget">
+              <div class="cell whole">
+                <div class="row">
+                  <div class="cell half">
+                    <div class="label">
+                      <span class="infoT">{!$Label.tstType}</span>
+                    </div>
+                  </div>
+                  <div class ="cell half">
+                    <span class="info">{!tstType}</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell half">
+                    <div class="label">
+                      <span class="infoT">{!$Label.emlASub}</span>
+                    </div>
+                  </div>
+                  <div class="cell half">
+                    <span class="info">{!emlASub}</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell half">
+                    <div class="label">
+                      <span class="infoT">{!$Label.emlBSub}</span>
+                    </div>
+                  </div>
+                  <div class="cell half">
+                    <span class="info">{!emlBSub}</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell half">
+                    <div class="label">
+                      <span class="infoT">{!$Label.fromName}</span>
+                    </div>
+                  </div>
+                  <div class="cell half">
+                    <span class="info">{!fromName}</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell half">
+                    <div class="label">
+                      <span class="infoT">{!$Label.dtrmnWinner}</span>
+                    </div>
+                  </div>
+                  <div class="cell half">
+                    <span class="info">{!dtrmnWinner}</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell half">
+                    <div class="label">
+                      <span class="infoT">{!$Label.winner}</span>
+                    </div>
+                  </div>
+                  <div class="cell half">
+                    <span class="info">{!winner}</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell half">
+                    <div class="label">
+                      <span class="infoT">{!$Label.testsSent}</span>
+                    </div>
+                  </div>
+                  <div class="cell half">
+                    <span class="info">{!testsSent}</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell half">
+                    <div class="label">
+                      <span class="infoT">{!$Label.et4ae5__absendtoremainder}</span>
+                    </div>
+                  </div>
+                  <div class="cell half">
+                    <span class="info">{!nxtSend}</span>
+                    <div>
+                      <apex:commandlink onclick="showEditDetails()" value="{!$Label.et4ae5__edit}" rendered="{!RenderEditTransmissionType}" rerender="none"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Edit Details -->
+          <div class="row" id="editDetails">
+            <div class="headrow bg">
+              <div class="header">
+                {!$Label.abEditDetails}
+              </div>
+            </div>
+            <div class="widget">
+              <div class="cell whole">
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:outputLabel value="{!$Label.et4ae5__absendtoremainder}" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:selectList id="newTransmissionType" value="{!newTransmissionType}" style="width:inherit" size="1">
+                      <apex:selectOptions value="{!TransmissionTypeOptions}"/>
+                    </apex:selectList>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:selectList id="newAutomaticTransmissionType" value="{!newAutomaticTransmissionType}" style="width:inherit" size="1">
+                      <apex:selectOptions value="{!AutomaticTransmissionTypeOptions}"/>
+                    </apex:selectList>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell whole">
+                    <apex:inputField id="newScheduledDateTime" style="width:inherit" value="{!tempSendForEditingTestDetails.et4ae5__Scheduled_Date_Time__c}"/>
+                  </div>
+                </div>
+                <apex:commandButton action="{!saveChanges}" value="Save Changes" id="EditDetailsSave" onClick="showSavingSpinner()" onComplete="window.location.reload()"/>
+                <div id="savingspinner">
+                  <img class="spinnerSmall" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </apex:form>
+  <script type="text/javascript">function setFocusOnLoad(){ /*NOOP*/ }</script>
+  <script type="text/javascript">
+    if(window.attachEvent) {
+      window.attachEvent('onresize', function() {
+      alert('attachEvent - resize');
+      window.location.reload();
+      });
+  }
+  else if(window.addEventListener) {
+      window.addEventListener('resize', function() {
+      console.log('addEventListener - resize');
+      window.location.reload();
+      }, true);
+  }
+  else {
+      //The browser does not support Javascript event binding
+    }
+
+    function detailsA(){
+      var sdId='{!JSENCODE(sdIdA)}';
+      buildURL(sdId);
+    }
+    function detailsB(){
+      var sdId='{!JSENCODE(sdIdB)}';
+      buildURL(sdId);
+    }
+    function detailsRem(){
+      var sdId='{!JSENCODE(sdIdRem)}';
+      buildURL(sdId);
+    }
+    function buildURL(sdId){
+      if(typeof sforce!=='undefined' && sforce.one){
+        sforce.one.navigateToSObject(sdId);
+      }
+      else{
+        var url= '/'+ sdId;
+        window.open(url,'_parent');
+      }
+    }
+
+    jQuery(document).ready(function ()
+    {
+      initialize();
+      setEditDetailsValues();
+    })
+
+    function initialize()
+    {
+      jQuery("input[value*='DECLAREWINNERA']").on('click', function() { showDeclareWinnerSendOptions(); });
+      jQuery("input[value*='DECLAREWINNERB']").on('click', function() { showDeclareWinnerSendOptions(); });
+      jQuery("select[id*='declareWinnerTransmissionType']").on('change', function() { toggleDeclareWinnerAutoSendSelector(); });
+      jQuery("select[id*='declareWinnerAutomaticTransmissionType']").on('change', function() { toggleDeclareWinnerDatePicker(); });
+      jQuery("select[id*='newAutomaticTransmissionType']").on('change', function() { toggleDatePicker(); });
+      jQuery("select[id*='newTransmissionType']").on('change', function() { toggleAutoWinnerSelector(); });
+      jQuery('#editDetails').hide();
+      jQuery('#declareWinnerDetails').hide();
+      jQuery('#savingspinner').hide();
+      if (jQuery('#abStatus').html() === 'Running')
+      {
+        showDeclareWinner();
+      }
+    }
+
+    function showDeclareWinner()
+    {
+      jQuery('#declareWinnerDetails').show();
+      jQuery('#declareWinnerContainer').show();
+      jQuery("label[id*='declareWinnerLabel']").closest('div').hide();
+      jQuery("select[id*='declareWinnerTransmissionType']").closest('div').hide();
+      jQuery("select[id*='declareWinnerAutomaticTransmissionType']").closest('div').hide();
+      jQuery("input[id*='declareWinnerScheduledDateTime']").closest('div').hide();
+      jQuery("input[id*='declareWinnerSave']").hide();
+      jQuery("#declareWinnerSavingSpinner").hide();
+    }
+
+    function showDeclareWinnerSendOptions()
+    {
+      jQuery("label[id*='declareWinnerLabel']").closest('div').show();
+      jQuery("select[id*='declareWinnerTransmissionType']").closest('div').show();
+      jQuery("input[id*='declareWinnerSave']").show();
+    }
+
+    function toggleDeclareWinnerAutoSendSelector()
+    {
+      if (jQuery("select[id*='declareWinnerTransmissionType']").val() == '1')
+      {
+        jQuery("select[id*='declareWinnerAutomaticTransmissionType']").closest('div').hide();
+        jQuery("input[id*='declareWinnerScheduledDateTime']").closest('div').hide();
+      }
+      else
+      {
+        jQuery("select[id*='declareWinnerAutomaticTransmissionType']").closest('div').show();
+        if (jQuery("select[id*='declareWinnerAutomaticTransmissionType']").val() == 'SCHEDULEDTIME')
+        {
+          jQuery("input[id*='declareWinnerScheduledDateTime']").closest('div').show();
+        }
+      }
+    }
+
+    function toggleDeclareWinnerDatePicker()
+    {
+      if (jQuery("select[id*='declareWinnerAutomaticTransmissionType']").val() == 'WINNERDECLARED')
+      {
+        jQuery("input[id*='declareWinnerScheduledDateTime']").closest('div').hide();
+      }
+      else
+      {
+        jQuery("input[id*='declareWinnerScheduledDateTime']").closest('div').show();
+      }
+    }
+
+    function showDeclareWinnerSavingSpinner()
+    {
+      jQuery("input[id*='declareWinnerSave']").hide();
+      jQuery("input[id*='EditDetailsSave']").hide();
+      jQuery('#declareWinnerSavingSpinner').show();
+    }
+
+    function setEditDetailsValues()
+    {
+      jQuery("select[id*='newTransmissionType']").val('1');
+      jQuery("select[id*='newAutomaticTransmissionType']").val('WINNERDECLARED');
+    }
+
+    function showEditDetails()
+    {
+      if (!jQuery(editDetails).is(":visible"))
+      {
+        jQuery('#editDetails').show();
+        jQuery("select[id*='newAutomaticTransmissionType']").hide();
+        jQuery("input[id*='newScheduledDateTime']").closest('div').hide();
+        }
+    }
+
+    function toggleDatePicker()
+    {
+      if (jQuery("select[id*='newAutomaticTransmissionType']").val() == 'WINNERDECLARED')
+      {
+        jQuery("input[id*='newScheduledDateTime']").closest('div').hide();
+      }
+      else
+      {
+        jQuery("input[id*='newScheduledDateTime']").closest('div').show();
+      }
+    }
+
+    function toggleAutoWinnerSelector()
+    {
+      if (jQuery("select[id*='newTransmissionType']").val() == '1')
+      {
+        jQuery("select[id*='newAutomaticTransmissionType']").hide();
+        jQuery("input[id*='newScheduledDateTime']").closest('div').hide();
+      }
+      else
+      {
+        jQuery("select[id*='newAutomaticTransmissionType']").show();
+        if (jQuery("select[id*='newAutomaticTransmissionType']").val() == 'SCHEDULEDTIME')
+        {
+          jQuery("input[id*='newScheduledDateTime']").closest('div').show();
+        }
+      }
+    }
+
+    function showSavingSpinner()
+    {
+      jQuery("input[id*='EditDetailsSave']").hide();
+      jQuery("input[id*='declareWinnerSave']").hide();
+      jQuery('#savingspinner').show();
+    }
+  </script>
+</apex:page>

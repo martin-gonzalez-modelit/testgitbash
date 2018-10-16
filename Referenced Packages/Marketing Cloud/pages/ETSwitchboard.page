@@ -1,0 +1,49 @@
+<apex:page controller="et4ae5.etSwitchboard">
+    <apex:form >
+        <apex:actionFunction action="{!initialize}" name="initializeJS" />
+        <div style="width:100%; height:390px; padding-top: 10px; display: block;">
+            <span style="font-size:16px;">{!$Label.et4ae5__launchingmarketingcloudconnector}</span>
+        </div>
+    </apex:form>
+    <script type="text/javascript">
+        if ((typeof sforce != 'undefined') && sforce && (!!sforce.one)) {
+            // Lightning Experience - Redirect to ETSwitchboard page in classic view.
+            window.top.location.href = "/apex/et4ae5__ETSwitchboard";
+        }
+        else {
+            // Classic view - call the initialize method in the controller.
+            if (!{!tokenWebserviceAvailable}) {
+                createRemoteSite();
+            }
+            initializeJS();
+        }
+
+        function createRemoteSite() { 
+            var binding = new XMLHttpRequest();
+            var request = 
+                '<?xml version="1.0" encoding="utf-8"?>' + 
+                '<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'+
+                    '<env:Header>' + 
+                        '<urn:SessionHeader xmlns:urn="http://soap.sforce.com/2006/04/metadata">' + 
+                            '<urn:sessionId>{!$Api.Session_ID}</urn:sessionId>' + 
+                        '</urn:SessionHeader>' + 
+                    '</env:Header>' + 
+                    '<env:Body>' +
+                        '<upsertMetadata xmlns="http://soap.sforce.com/2006/04/metadata">' + 
+                            '<metadata xsi:type="RemoteSiteSetting">' + 
+                                '<fullName>ET4AE5_MCC_TokenService</fullName>' + 
+                                '<description>Remote Site setting to make callouts</description>' + 
+                                '<disableProtocolSecurity>false</disableProtocolSecurity>' + 
+                                '<isActive>true</isActive>' + 
+                                '<url>https://{!JSENCODE(tokenWebServiceEndpoint)}</url>' +
+                            '</metadata>' +
+                        '</upsertMetadata>' +
+                    '</env:Body>' + 
+                '</env:Envelope>'; 
+            binding.open('POST', 'https://{!JSENCODE(host)}/services/Soap/m/31.0');
+            binding.setRequestHeader('SOAPAction','""');
+            binding.setRequestHeader('Content-Type', 'text/xml');
+            binding.send(request); 
+        }
+    </script>
+</apex:page>

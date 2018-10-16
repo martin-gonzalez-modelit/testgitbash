@@ -1,0 +1,19 @@
+<!-- 
+    This template is used in the following Visualforce Pages
+        - BusinessUnitNoSendClassifications
+        - CampaignsNotEnabled
+        - connectionError
+        - IntegrationNotConfigured
+        - needCustomSetting
+        - noSendTypes
+        - UserNoBusinessUnits
+        - UserNotETIntegrated
+        - UserNotIntegrated
+        - UserNotPermittedToSend
+ -->
+<apex:page tabStyle="ExactTargetPhoenix__tab">
+    <c:ETHeader message="{!$Label.et4ae5__error}" image="error.png" />
+    <apex:form >
+        <apex:insert name="customMessage" />
+    </apex:form>
+</apex:page>

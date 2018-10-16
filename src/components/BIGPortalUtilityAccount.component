@@ -1,0 +1,471 @@
+<apex:component controller="BIGPortalUtilityAccountController" id="utility-account-component" allowDML="true">
+
+<apex:attribute name="uabuilding" description="Building For the Dwelling Unit"
+                  type="Building__c" required="true" assignTo="{!building}"/>
+
+<apex:attribute name="uadwellingunit" description="Dwelling Unit"
+                  type="Dwelling_Unit__c" required="true" assignTo="{!dwellingUnit}"/>
+
+<apex:attribute name="propowner" description="Property Owner"
+                  type="Contact" required="true" assignTo="{!propertyOwner}"/>
+
+<apex:attribute name="uautilityaccount" description="Utility Account"
+                  type="Utility_Account__c" required="true" assignTo="{!utilityAccount}"/>
+<script>
+    function vfToJQ(vfId) {
+        return '#' + vfId.replace(/(:|\.)/g,'\\\\$1');
+    }
+</script>
+
+<div id="info-section-acc">
+<apex:actionStatus id="acc-section-status">
+<apex:facet name="start">
+<div class="section-content-loader" style="text-align:center;margin-bottom:20px;">
+    <img src="{!URLFOR($Resource.bigutopia, '/img/ajax-loader.gif')}" style="height:60px;" />
+</div>
+</apex:facet>
+</apex:actionStatus>
+<apex:outputPanel id="info-panel-acc">
+<apex:outputPanel rendered="{!showAccInfo}">
+<!-- Utility Account Information -->
+<div class="utility-account-info" style="margin-bottom:20px;">
+    <div class="row">
+        <div class="span8">
+            <div class="span3 text-right muted">Account Holder First Name</div>
+            <div class="span3">{!utilityAccount.Account_Holder_First_Name__c}</div>
+        </div>
+        <div class="span8">
+            <div class="span3 text-right muted">Account Holder Last Name</div>
+            <div class="span3">{!utilityAccount.Account_Holder_Last_Name__c}</div>
+        </div>
+        <div class="span8">
+            <div class="span3 text-right muted">Account Holder Phone</div>
+            <div class="span3">{!utilityAccount.Phone__c}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="span3 text-right muted">Electric Provider</div>
+            <div class="span4 dElectricProvider">{!utilityAccount.Electric_Provider__c}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="span3 text-right muted">Electric Service ID</div>
+            <div class="span4">{!utilityAccount.Electric_Account_Number__c}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="span3 text-right muted">Gas Provider</div>
+            <div class="span4 dGasProvider">{!utilityAccount.Gas_Provider__c}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="span3 text-right muted">Gas Service ID</div>
+            <div class="span4">{!utilityAccount.Gas_Account_Number__c}</div>
+        </div>
+    </div>
+</div>
+</apex:outputPanel>
+</apex:outputPanel>
+<apex:form id="utility_account_form" styleClass="form-horizontal utility-account-frm" style="display:none;">
+    <apex:actionFunction action="{!saveUtilityAccount}" name="saveUtilityAccount" rerender="utility_account_form,info-panel-acc,addApplicationBlock,addApplicationBlock2-4" status="acc-saving-status" />
+    <script>
+        try {
+            validateAccFormFields();
+        } catch (error) {
+        }
+    </script>
+
+    <!-- Edit Utility Account Form -->
+    <div class="row">
+        <div class="span4" style="padding-left: 255px; margin-bottom: 20px;">
+            <label class="checkbox">
+                <apex:inputCheckbox value="{!sameCustomerInfo}" styleClass="contactCheckbox"/>
+                Same as contract-signing customer
+            </label>
+        </div>
+    </div>
+    <div class="row utilityContact">
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Account Holder First Name</label>
+                <div class="controls">
+                    <apex:inputField id="inputAccFirstName" styleClass="span3 accHolderFirstName" value="{!utilityAccount.Account_Holder_First_Name__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Account Holder Last Name</label>
+                <div class="controls">
+                    <apex:inputField id="inputAccLastName" styleClass="span3 accHolderLastName" value="{!utilityAccount.Account_Holder_Last_Name__c}"/>
+                </div>
+            </div>
+        </div>
+        <div class="span8">
+            <div class="control-group">
+                <label class="control-label">Account Holder Phone</label>
+                <div class="controls">
+                    <apex:inputField id="inputAccPhone" styleClass="span3 phoneMaskedInput" value="{!utilityAccount.Phone__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="control-group">
+                <label class="control-label">Electric Provider</label>
+                <div class="controls">
+                    <apex:inputField id="inputElcProv" styleClass="span4 electricProviderSelect" value="{!utilityAccount.Electric_Provider__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row electricServiceID">
+        <div class="span12">
+            <div class="control-group">
+                <label class="control-label">Electric Service ID</label>
+                <div class="controls">
+                    <apex:inputText id="inputElecAcc" styleClass="span4 electricAccNumber" maxlength="12" value="{!utilityAccount.Electric_Account_Number__c}"/>
+                    <span class="tip-text">Enter 10-digit number</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="control-group">
+                <label class="control-label">Gas Provider</label>
+                <div class="controls">
+                    <apex:inputField id="inputGasProv" styleClass="span4 gasProviderSelect" value="{!utilityAccount.Gas_Provider__c}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row gasServiceID">
+        <div class="span12">
+            <div class="control-group">
+                <label class="control-label">Gas Service ID</label>
+                <div class="controls">
+                    <apex:inputText id="inputGasAcc" styleClass="span4 gasAccNumber" maxlength="10" value="{!utilityAccount.Gas_Account_Number__c}"/>
+                    <span class="tip-text">Enter 10-digit number</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-actions" style="padding-left:25px;">
+        <button id="cancel-acc" type="button" class="btn btn-default">Cancel</button>
+        <a id="save-info-acc" href="#" class="btn btn-primary">Save</a>
+        <apex:actionStatus id="acc-saving-status" onstart="hideAccButtons()" onstop="showAccButtons()">
+            <apex:facet name="start">
+                <div class="section-content-loader" style="text-align:center;">
+                    <img src="{!URLFOR($Resource.bigutopia, '/img/ajax-loader.gif')}" style="height:40px;" />
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+    </div>
+    <script>
+        function showHideGasService(pVal) {
+            if (pVal === "Other" || pVal === "No Gas (All Electric Home)" || pVal === "Propane") {
+                helpShowHideService('.gasServiceID', false);
+            } else {
+                helpShowHideService('.gasServiceID', true);
+            }
+            $('.gasServiceID').find('.error,.success').remove('label.error').removeClass('success error');
+        }
+
+        function showHideElectricService(pVal) {
+            if (pVal === "Other") {
+                helpShowHideService('.electricServiceID', false);
+            } else {
+                var maxLength = 10;
+                var hintText = 'Enter 10-digit number';
+                if (pVal === "Sacramento Municipal Utility District") {
+                    maxLength = 12;
+                    hintText = 'Enter 1-12 digit number';
+                }
+                $('.electricAccNumber').attr("maxlength", maxLength);
+                $('.electricServiceID .tip-text').text(hintText);
+
+                helpShowHideService('.electricServiceID', true);
+            }
+            $('.electricServiceID').find('.error,.success').remove('label.error').removeClass('success error');
+        }
+
+        function helpShowHideService(pVal, pFlag) {
+            if (pFlag) {
+                $(pVal).show();
+            } else {
+                $(pVal).hide();
+            }
+        }
+    </script>
+</apex:form>
+</div>
+
+<script>
+    var accvalidator = null;
+    validateAccFormFields();
+    $('input[id*="inputAccPhone"]').mask('(999) 999-9999', { autoclear: false });
+
+    // Save Info Button behaviour
+    $('#info-section-acc').on('click','#save-info-acc' , function(e) {
+        e.preventDefault();
+        if ($('.utility-account-frm').valid()) {
+            saveUtilityAccount();
+        }
+    });
+
+    // Cancel button behaviour
+    $('#info-section-acc').on('click', '#cancel-acc', function() {
+        // Enable edit buttons.
+        $(".btn-edit").removeClass("disabled");
+        // Hide Form
+        $('.utility-account-frm').slideUp('fast');
+        // Reset Form
+        accvalidator.resetForm();
+        $('.utility-account-frm .control-group').removeClass('success error');
+        $(".utility-account-frm")[0].reset();
+        // Remove icon next to the input.
+        $('.error.valid').remove();
+        showAccInfoPanel();
+        // Show pencil icon
+        $('#edit-info-utility-account').show();
+    });
+
+    function showAccInfoPanel() {
+        // Show Info
+        $('.utility-account-info').show();
+    }
+
+    function hideAccInfoPanel() {
+        // Hide Info
+        $('.utility-account-info').hide();
+    }
+
+    function hideAccButtons() {
+        $('#save-info-acc').hide();
+        $('#cancel-acc').hide();
+    }
+
+    function showAccButtons() {
+        $('#save-info-acc').show();
+        $('#cancel-acc').show();
+    }
+
+    // Show/Hide Electric Service ID when Electric Provider values change
+    $('#info-section-acc').on('change', '.electricProviderSelect', function () {
+        $(this).valid();
+        showHideElectricService($(this).val(), true);
+        $('.electricAccNumber').val("");
+    });
+
+    // Show/Hide Gas Service ID when Gas Provider values change
+    $('#info-section-acc').on('change', '.gasProviderSelect', function () {
+        $(this).valid();
+        showHideGasService($(this).val(), true);
+        $('.gasAccNumber').val("");
+    });
+
+    //Validate Form Fields
+    function validateAccFormFields() {
+        accvalidator = $('.utility-account-frm').validate({
+                onsubmit: true,
+                focusInvalid: true,
+                normalizer: function(value) {
+                    return $.trim(value);
+                },
+                rules: {
+                    '{!$Component.utility_account_form.inputElcProv}': {
+                        required: true,
+                    },
+                    '{!$Component.utility_account_form.inputElecAcc}': {
+                        required: true,
+                        digits: true,
+                        elec_provider_check: true
+                    },
+                    '{!$Component.utility_account_form.inputGasProv}': {
+                        required: true,
+                    },
+                    '{!$Component.utility_account_form.inputGasAcc}': {
+                        required: true,
+                        digits: true,
+                        gas_provider_check: true,
+                        gas_provider_check_SCGC: true
+                    },
+                    '{!$Component.utility_account_form.inputAccFirstName}': {
+                        required: true,
+                        accHolderFirstName_check: true
+                    },
+                    '{!$Component.utility_account_form.inputAccLastName}': {
+                        required: true,
+                        accHolderLastName_check: true
+                    },
+                    '{!$Component.utility_account_form.inputAccPhone}': {
+                        required: true,
+                        phoneDigitsLength: 10
+                    }
+                },
+                highlight: function(element) {
+                    $(element).closest('.control-group').removeClass('success').addClass('error');
+                    // Display tip-text before error message
+                    $(element).parent().find("label").appendTo($(element).parent());
+                },
+                success: function(label, element) {
+                    label.text('OK!').addClass('valid').closest('.control-group').removeClass('error')
+                            .addClass('success');
+                    // Display tip-text after success label (check)
+                    label.insertAfter(element);
+                },
+                errorPlacement: function(error, element) {
+                    error.appendTo($(element).parent());
+                }
+        });
+    }
+
+    $.validator.addMethod("phoneDigitsLength", function(value, element, param) {
+        return (this.optional(element) || value.replace(/[^0-9]+/g, "").length === param);
+    }, function (params, element) {
+        var phoneDigits = $(element).val().replace(/[^0-9]+/g, "").length;
+        return (phoneDigits === 0 ? "This field is required." : "Please enter a valid phone number.");
+    });
+
+    $.validator.addMethod("elec_provider_check", function(value, element) {
+        return checkServiceProvider($(".electricProviderSelect").val(), $(".electricAccNumber").val());
+    },"Service IDs for Pacific Gas and Electric Company must be 10 digits and greater than 0.");
+
+    $.validator.addMethod("gas_provider_check", function(value, element) {
+        return checkServiceProvider($(".gasProviderSelect").val(), $(".gasAccNumber").val());
+    }, "Service IDs for Pacific Gas and Electric Company must be 10 digits and greater than 0.");
+
+    $.validator.addMethod("gas_provider_check_SCGC", function(value, element) {
+        var provider = $(".gasProviderSelect").val();
+        var serviceId = $.trim($(".gasAccNumber").val());
+
+        if (provider === 'Southern California Gas Company'){
+            if (!$.isNumeric(serviceId) || serviceId.length !== 10) {
+                return false;
+            }
+        }
+        return true;
+    }, "Service IDs for Southern California Gas Company must be 10 digits. <br/><a href='https://myaccountum.socalgas.com/register/viewLargeBill.xhtml' target='_blank'>(The first 10 digits of your account number.)</a>");
+
+    function checkServiceProvider(provider, serviceId) {
+        serviceId = $.trim(serviceId);
+        if (provider === 'Pacific Gas and Electric Company' && serviceId !== '') {
+            if (!$.isNumeric(serviceId) || serviceId.length !== 10 || serviceId === '0000000000') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    $.validator.addMethod("accHolderFirstName_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return checkFirstLastName('.accHolderFirstName');
+    }, "Please enter a valid first name.");
+
+    $.validator.addMethod("accHolderLastName_check", function(value, element) {
+        //false error, true ok
+        //Please enter at least 2 characters.
+        return checkFirstLastName('.accHolderLastName');
+    }, "Please enter a valid last name.");
+
+    function checkFirstLastName(pClassName) {
+        var patt = /^[a-zA-Z &,.'-]{2,}$/;
+        return auxValidations(pClassName, patt);
+    }
+
+    function auxValidations(pClassName, patt) {
+        /* In case that the user hit on Next the field is required, therefore the "return true" is ignored. I mean,
+         * this function is ignored entirely.
+         * I have specified this because I should control the field even if the user hit on Save but if the user
+         * leaves blank this field I should allow to save the building because this field is not required in order
+         * to save a building
+         */
+
+        var str = $(pClassName).val();
+        var flag = true;
+        str = str.trim();
+        str = str.replace(/\n/,'');
+
+        if (str.length >= 2) {
+
+            if (allCharsInvalid(str) === true) {
+                flag = false;
+            }
+            if (str[0] === "-" || str[0] === "," || str[0] === "." || str[0] === "&") {
+                flag = false;
+            }
+            if (str[str.length-1] === "-" || str[str.length-1] === "," || str[str.length-1] === "&") {
+                flag = false;
+            }
+        }
+
+        return patt.test(str) && flag;
+    }
+
+    function allCharsInvalid(myChars) {
+        var check = 0;
+        var res = false;
+
+        for (var i = 0; i < myChars.length; i++) {
+            if (myChars[i] === "'" || myChars[i] === "-" || myChars[i] === "." || myChars[i] === ",") {
+                check++;
+            }
+        }
+
+        if (check === myChars.length) {
+            res = true;
+        }
+
+        return res;
+    }
+
+    // Set account holder information: First Name, Last Name and Phone.
+    function setAccountHolderInformation(resetValues) {
+        var $utility = $('.utilityContact input');
+
+        if ($('.contactCheckbox').is(':checked')) {
+            // Copy contact information from contract-signing customer to utility account holder, and disable inputs.
+            $('.customerContact [id*="input"]').not('[id*="inputEmail"]').each(function(i, el) {
+                var $input = $($utility.get(i));
+                $input.val($(this).val()).prop('disabled', true);
+            });
+            // Hide account holder's information.
+            $('.utilityContact').hide();
+        } else {
+            // Enable account holder's inputs.
+            $utility.each(function(i, el) {
+                $(el).prop('disabled', false);
+                // Remove values and error/success message.
+                if (resetValues) {
+                    $(el).val("");
+                    $('.utilityContact').find('.error,.success').remove('label.error').removeClass('success error');
+                }
+            });
+            // Show account holder's information.
+            $('.utilityContact').show();
+        }
+    }
+
+    $(document).ready(function() {
+        setAccountHolderInformation(false);
+        // Functionality when "Account holder is different than contract-signing customer" checkbox is clicked.
+        $('.contactCheckbox').click(function() {
+            setAccountHolderInformation(true);
+        });
+
+        $('#edit-info-utility-account').on('click', function(e) {
+            // Show or hide Gas/Electric Provider id input.
+            showHideGasService($('.gasProviderSelect').val());
+            showHideElectricService($('.electricProviderSelect').val());
+        });
+    });
+</script>
+</apex:component>

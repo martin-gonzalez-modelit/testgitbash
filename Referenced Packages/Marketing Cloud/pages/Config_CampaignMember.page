@@ -1,0 +1,110 @@
+<apex:page controller="et4ae5.Config_CampaignMember" tabStyle="ExactTargetPhoenix__tab">
+  <c:ConfigIncludes />
+  <style>
+    .bPageBlock .detailList td .mappingLabel {
+    padding-right: 20px;
+    vertical-align: middle;
+    }
+    .mappingSelect {
+    width: 200px;
+    }
+    #campaignMemberSetupMessage {
+    width: 400px;
+    }
+
+  </style>
+  <c:ETHeader message="{!$Label.et4ae5__etconfig}" image="configuration.png" />
+  <apex:pageMessages />
+  <apex:form >
+    <apex:actionFunction name="valueMappingFieldChanged" action="{!valueMappingFieldChanged}" rerender="fieldMappings" />
+    <apex:outputPanel id="pageMessages">
+      <c:pageMessages closableErrors="true" />
+    </apex:outputPanel>
+    <apex:pageBlock mode="view" id="thisDiv">
+      <apex:pageBlockSection columns="1">
+        <apex:outputLabel value="The Tracking Event will be mapped to the following field:" />
+        <apex:outputPanel >
+          <apex:selectRadio value="{!updateStatusOrActivity}"  layout="pageDirection" onChange="valueMappingFieldChanged()" >
+            <apex:selectOptions value="{!StatusOrActivity}"/>
+          </apex:selectRadio>
+        </apex:outputPanel>
+      </apex:pageBlockSection>
+      <apex:pageBlockSection columns="1" id="fieldMappings">
+        <apex:outputPanel >
+          <table>
+            <tr>
+              <td class="mappingLabel">
+                <apex:outputLabel value="{!$Label.et4ae5__sent}" />
+              </td>
+              <td>
+                <apex:selectList value="{!mapSentTo}" size="1" styleclass="mappingSelect">
+                  <apex:selectOptions value="{!MappableValues}"/>
+                </apex:selectList>
+              </td>
+            </tr>
+            <tr>
+              <td class="mappingLabel">
+                <apex:outputLabel value="{!$Label.et4ae5__soft_bounce}" />
+              </td>
+              <td>
+                <apex:selectList value="{!mapSoftBounceTo}" size="1" styleclass="mappingSelect">
+                  <apex:selectOptions value="{!MappableValues}"/>
+                </apex:selectList>
+              </td>
+            </tr>
+            <tr>
+              <td class="mappingLabel">
+                <apex:outputLabel value="{!$Label.et4ae5__hard_bounce}" />
+              </td>
+              <td>
+                <apex:selectList value="{!mapHardBounceTo}" size="1" styleclass="mappingSelect">
+                  <apex:selectOptions value="{!MappableValues}"/>
+                </apex:selectList>
+              </td>
+            </tr>
+            <tr>
+              <td class="mappingLabel">
+                <apex:outputLabel value="{!$Label.et4ae5__opened}" />
+              </td>
+              <td>
+                <apex:selectList value="{!mapOpenedTo}" size="1" styleclass="mappingSelect">
+                  <apex:selectOptions value="{!MappableValues}"/>
+                </apex:selectList>
+              </td>
+            </tr>
+            <tr>
+              <td class="mappingLabel">
+                <apex:outputLabel value="{!$Label.et4ae5__clicked}" />
+              </td>
+              <td>
+                <apex:selectList value="{!mapClickedTo}" size="1" styleclass="mappingSelect">
+                  <apex:selectOptions value="{!MappableValues}"/>
+                </apex:selectList>
+              </td>
+            </tr>
+            <tr>
+              <td class="mappingLabel">
+                <apex:outputLabel value="{!$Label.et4ae5__unsubscribed}" />
+              </td>
+              <td>
+                <apex:selectList value="{!mapUnsubscribedTo}" size="1" styleclass="mappingSelect">
+                  <apex:selectOptions value="{!MappableValues}"/>
+                </apex:selectList>
+              </td>
+            </tr>
+          </table>
+        </apex:outputPanel>
+        <apex:outputPanel >
+          <div id="campaignMemberSetupMessage">{!$Label.et4ae5__campaignmembersetupmessage}</div>
+        </apex:outputPanel>
+        <apex:pageBlockSectionItem id="EditBtn">
+          <apex:outputLabel value=""/>
+          <apex:outputpanel >
+            <apex:commandButton value="{!$Label.et4ae5__save}" action="{!save}" rerender="pageMessages, thisDiv, EditBtn"/>
+            <apex:commandButton value="{!$Label.et4ae5__cancel}" action="{!cancel}" rerender="pageMessages, thisDiv, EditBtn"/>
+          </apex:outputpanel>
+        </apex:pageBlockSectionItem>
+      </apex:pageBlockSection>
+    </apex:pageBlock>
+  </apex:form>
+</apex:page>

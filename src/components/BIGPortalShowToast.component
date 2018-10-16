@@ -1,0 +1,14 @@
+<apex:component layout="none">
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap-notify/bootstrap-notify.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap-notify/animate.css')}"/>
+    <apex:attribute name="options" type="String" required="true" description="List of options in javascript object literal syntax, or just a basic string message" />
+    <apex:attribute name="settings" type="String" description="List of settings in javascript object syntax" />
+    <apex:attribute name="defaults" type="String" description="Set the plugin with default options" />
+
+    <script>
+        $(function() {
+            $.notifyDefaults({!defaults});
+            $.notify({!options}, {!settings});
+        });
+    </script>
+</apex:component>

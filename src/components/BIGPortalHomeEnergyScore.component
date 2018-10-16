@@ -1,0 +1,72 @@
+<apex:component id="hesComponent">
+    <apex:attribute name="isPostAhu" description="Post application fields" type="Boolean" required="true"/>
+    <apex:attribute name="isAhuProgram" description="Program" type="Boolean" required="true"/>
+    <apex:attribute name="ahuController" description="Application record" type="BIGPortalAdvancedHUAppController" required="false"/>
+    <apex:attribute name="huController" description="Application record" type="BIGPortalManageApplicationController" required="false"/>
+    <script>
+        $(document).ready(function() {
+            // Set-Up date picker for date fields
+            $("input[id*=HesScoreDate]").datepicker({
+                dateFormat: 'm/d/yy',
+                showOn: "both",
+                maxDate: new Date(),
+                buttonImage: "{!URLFOR($Resource.bigutopia, 'img/calendar.png')}",
+                buttonImageOnly: true
+            });
+            $('.hasDatepicker').attr('readonly', true);
+        });
+    </script>
+
+    <div class="control-group controlGroupSeparation">
+        <label class="control-label inputLabelInline">Home Energy Score
+            <small>
+                <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="Actual Home Energy Score value (1-10) generated at Pre-Installation (Audit) or Post-Installation (Retrofit), as represented in the Home Energy Score report that you will upload with this application.">
+                    <img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" />
+                </a>
+            </small>
+        </label>
+        <div class="controls" style="display:inline-block;margin-left: 20px;">
+            <div class="input">
+                <apex:inputField id="preHesScore" value="{!ahuController.application.Pre_Home_Energy_Score__c}" rendered="{!NOT(isPostAhu) && isAhuProgram}"/>
+                <apex:inputField id="postHesScore" value="{!ahuController.application.Post_Home_Energy_Score__c}" rendered="{!isPostAhu && isAhuProgram}"/>
+            </div>
+        </div>
+    </div>
+
+    <div class="control-group controlGroupSeparation">
+        <label class="control-label inputLabelInline">Home Energy Score Assessment Date
+            <small>
+                <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="Actual date that field-data was collected for the generation of the Home Energy Score, as represented in the Home Energy Score report that you will upload with this application.">
+                    <img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" />
+                </a>
+            </small>
+        </label>
+        <div id="scoreDate" class="controls" style="display:inline-block;margin-left: 20px;">
+            <div class="input">
+                <apex:inputText id="preHesScoreDate" styleClass="span3" value="{!ahuController.formattedHomeEnergyScoreAssessmentDate}" rendered="{!NOT(isPostAhu) && isAhuProgram}"/>
+                <apex:inputText id="postHesScoreDate" styleClass="span3" value="{!ahuController.formattedPostHomeEnergyScoreAssessmentDate}" rendered="{!isPostAhu && isAhuProgram}"/>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:5px;">
+        <div class="span12">
+            <div class="control-group controlGroupSeparation">
+                <label class="control-label inputLabelInline">Home Energy Score Assessor
+                    <small>
+                        <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="The individual with a valid, current HES Assessor ID who performed field-data collection for the generation of the Home Energy Score, as represented in the Home Energy Score report that you will upload with this application.">
+                            <img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" />
+                        </a>
+                    </small>
+                </label>
+                <div class="controls" style="display:inline-block;margin-left:20px;">
+                    <apex:selectList id="hesAssessor" value="{!ahuController.selectedHESAssessor}" size="1">
+                        <apex:selectOption itemValue="" itemLabel="< Select contact >"/>
+                        <apex:selectOptions value="{!ahuController.HomeEnergyScoreContacts}"/>
+                    </apex:selectList>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</apex:component>

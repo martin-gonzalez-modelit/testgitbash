@@ -1,0 +1,459 @@
+<apex:page showheader="false" sidebar="false" cache="false" standardstylesheets="false" doctype="html-5.0"
+    applyHtmlTag="false" controller="BIGPortalHVACDashboardController" readonly="true" action="{!checkUserAccess}">
+<html>
+<head>
+    <title>PG&amp;E Portal - Customer Rebate Application</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/datatables.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap-daterangepicker/daterangepicker.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/datatable/jquery.dataTables.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/moment/moment.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap-daterangepicker/daterangepicker.js')}"/>
+
+<style>
+    .btn-primary{
+        background-color: rgb(66, 139, 202);
+        background-image:none;
+    }
+
+    .bold {
+        font-weight: bold;
+    }
+
+    .left{
+        float:left;
+    }
+    .right{
+        float:right;
+    }
+
+    #error {
+        padding-left: 20px;
+        padding-bottom: 20px;
+        color: red;
+    }
+
+    #filters{
+        padding:10px;
+        padding-top: 0px;
+    }
+
+    #filters a:hover{
+        text-decoration:none !important;
+    }
+
+    a#applications_next:hover, a#applications_previous:hover {
+        text-decoration:underline !important;
+    }
+
+    a.paginate_button:hover {
+        text-decoration: underline !important;
+    }
+
+    a#showFiltersLink:hover, a#hideFiltersLink:hover {
+        text-decoration:underline !important;
+    }
+
+    .btn {
+        padding-left: 6px;
+    }
+
+    select {
+        line-height: 1.5;
+        vertical-align: middle!important;
+        margin: 0 0 0 5px;
+        padding:.3em;/.4em!important;
+    }
+
+    @-moz-document url-prefix() {
+        select {
+            padding-top: 3px!important;
+            padding-bottom: 3px!important;
+        }
+    }
+</style>
+
+<script>
+    (function($) {
+        var DATE_OPTIONS = {
+            FORMAT: "MM/DD/YYYY"
+        }
+
+        var acqcFieldQCStatuses = JSON.parse('{!ACQCFieldQCStatuses}');
+        var acqcStatuses = JSON.parse('{!ACQCStatuses}');
+        /*
+         * Function: fnGetColumnData
+         * Purpose:  Return an array of table values from a particular column.
+         * Returns:  array string: 1d data array
+         * Inputs:   object:oSettings - dataTable settings object. This is always the last argument past to the function
+         *           int:iColumn - the id of the column to extract the data from
+         *           bool:bUnique - optional - if set to false duplicated values are not filtered out
+         *           bool:bFiltered - optional - if set to false all the table data is used (not only the filtered)
+         *           bool:bIgnoreEmpty - optional - if set to false empty values are not filtered from the result array
+         * Author:   Benedikt Forchhammer <b.forchhammer /AT\ mind2.de>
+         */
+        $.fn.dataTableExt.oApi.fnGetColumnData = function ( oSettings, iColumn, bUnique, bFiltered, bIgnoreEmpty ) {
+            // check that we have a column id
+            if ( typeof iColumn == "undefined" ) return new Array();
+
+            // by default we only want unique data
+            if ( typeof bUnique == "undefined" ) bUnique = true;
+
+            // by default we do want to only look at filtered data
+            if ( typeof bFiltered == "undefined" ) bFiltered = true;
+
+            // by default we do not want to include empty values
+            if ( typeof bIgnoreEmpty == "undefined" ) bIgnoreEmpty = true;
+
+            // list of rows which we're going to loop through
+            var aiRows;
+
+            // use only filtered rows
+            if (bFiltered == true) aiRows = oSettings.aiDisplay;
+            // use all rows
+            else aiRows = oSettings.aiDisplayMaster; // all row numbers
+
+            // set up data array
+            var asResultData = new Array();
+
+            for (var i=0,c=aiRows.length; i<c; i++) {
+                iRow = aiRows[i];
+                var aData = this.fnGetData(iRow);
+                var sValue = aData[iColumn];
+                if(sValue==null) {
+                    sValue="";
+                }
+
+                if(sValue.Name){
+                    sValue = sValue.Name;
+                }
+
+                // ignore empty values?
+                if (bIgnoreEmpty == true && sValue.length == 0) continue;
+
+                // ignore unique values?
+                else if (bUnique == true && jQuery.inArray(sValue, asResultData) > -1) continue;
+
+                // else push the value onto the result data array
+                else asResultData.push(sValue);
+            }
+
+            return asResultData;
+        }
+
+        $(document).ready(function() {
+            var filterBy = "{!$CurrentPage.parameters.filterby}";
+            var minDate = moment('2000-01-01');
+            var maxDate = moment(new Date().getFullYear() + '-12-31');
+            var dateRangeSettings = {
+                autoApply: true,
+                startDate: filterBy == "" ? moment().subtract(89, 'days') : minDate,
+                endDate: filterBy == "" ? moment() : maxDate,
+                minDate: minDate,
+                maxDate: maxDate,
+                opens: 'left',
+                showDropdowns: true,
+                ranges: {
+                    'View All': [minDate, maxDate],
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'Last 90 Days': [moment().subtract(89, 'days'), moment()],
+                    'Last 180 Days': [moment().subtract(179, 'days'), moment()],
+                    'Last 365 Days': [moment().subtract(364, 'days'), moment()]
+                }
+            };
+
+            $('.range-filter .fa-calendar').on('click', function() {
+                $(this).prev().click();
+            });
+            $('.dateRange').on('hide.daterangepicker', function(ev, picker) {
+                var _startDate = picker.startDate.format() == picker.minDate.format();
+                var _endDate = picker.endDate.format(DATE_OPTIONS.FORMAT) == picker.maxDate.format(DATE_OPTIONS.FORMAT);
+                if (_startDate && _endDate ) {
+                    $(this).val('');
+                }
+            });
+            $('.dateRange').daterangepicker(dateRangeSettings);
+            $('.daterangepicker').find('input').attr('readonly', 'readonly');
+            $('.dateRange').on('apply.daterangepicker', function(ev, picker) {
+                processLoading();
+                var _startDate = picker.startDate.format() == picker.minDate.format();
+                var _endDate = picker.endDate.format(DATE_OPTIONS.FORMAT) == picker.maxDate.format(DATE_OPTIONS.FORMAT);
+
+                if (_startDate && _endDate) {
+                    $(this).val('');
+                }
+                var status = $('#searchStatus').val();
+                var fieldQCStatus = $('#searchFieldQCStatus').val();
+
+                var jsonData = {
+                    recordType: 'ACQC',
+                    status: status != '' ? status : null,
+                    fieldQCStatus: fieldQCStatus != '' ? fieldQCStatus : null,
+                    startDate: !_startDate ? picker.startDate.format() : null,
+                    endDate: !_endDate ? moment(picker.endDate.format()).add(1, 'days').hour(0).minute(0).second(0).format(): null
+                }
+                BIGPortalHVACDashboardController.getFilteredApplications(JSON.stringify(jsonData),
+                        function(result, event) {
+                    if (event.status) {
+                        handleResponse(oTable, result);
+                    }
+                    processLoading();
+                });
+            });
+
+            var oTable = $('#applications').dataTable({
+                "bAutoWidth": false,
+                "bSort": true,
+                "aaSorting": [[ 0, "desc" ]],
+                "processing": true,
+                "sPaginationType": "full_numbers",
+                "oLanguage": {
+                     sInfoFiltered: ""
+                 },
+                "aoColumns": [
+                  {
+                    "mData": "Name",
+                    "mRender": function ( data, type, full ) {
+                        return '<a href="{!$Site.Prefix}/BIGACQCRebateApplicationForm?appId=' + full.Id +
+                                '" title="View Application">' + data + '</a>';
+                     }
+                  },
+                  { "mData": "Building_Name__c" },
+                  {
+                    "mData": "Building_Street_Address__c",
+                    "mRender": function ( data, type, full ) {
+                        var result = full.Building_Street_Address__c ? full.Building_Street_Address__c : '';
+
+                        if (full.Building_City__c) {
+                            var city = result !== '' ? (', ' + full.Building_City__c) : full.Building_City__c;
+                            result += city;
+                        }
+                        if (full.Building_ZIP_Code__c) {
+                            var zip = result !== '' ? (' ' + full.Building_ZIP_Code__c) : full.Building_ZIP_Code__c;
+                            result += zip;
+                        }
+
+                        return result;
+                     }
+                  },
+                  {
+                    "mData": "Unit__r",
+                    "mRender": function ( data, type, full ) {
+                        if(data) return data.Name;
+                        return "";
+                     }
+                    },
+                    { "mData": "Status__c" },
+                    {
+                        "mData": "Check__c",
+                        "mRender": function (data, type, full) {
+                            var array = [];
+                            var object = {};
+                            var missingCheckData = false;
+
+                            if (full.Status__c === 'Rebate Issued' && full.Rebate_Applications__r != null) {
+                                for (i = 0; i < full.Rebate_Applications__r.length; i++) {
+                                    var check = full.Rebate_Applications__r[i].Check__c;
+                                    if (check !== undefined) {
+                                        if(!object.hasOwnProperty(check)) {
+                                            var checkDate = full.Rebate_Applications__r[i].Check_Date__c;
+                                            if (checkDate != null) {
+                                                var date = new Date(checkDate);
+                                                // Months in js starts in 0, so... add 1 to show month to the user.
+                                                date = (date.getUTCMonth() + 1) + '/' + date.getUTCDate() + '/' +  date.getUTCFullYear();
+                                                array.push(check + ' (' + date + ')<br/>');
+                                                object[check] = 1;
+                                            } else {
+                                                missingCheckData = true;
+                                            }
+                                        }
+                                    } else {
+                                        missingCheckData = true;
+                                    }
+                                }
+                            }
+
+                            if (missingCheckData) {
+                                array.push('n/a');
+                            }
+
+                            return array.join('');
+                        }
+                    },
+                    { "mData": "Application_Submission_Date__c",
+                        "mRender": function (data, type, full) {
+                        var d = "";
+                        if (data !== undefined && data !== null) {
+                            var d = new Date(data);
+                            // Months in js starts in 0, so... add 1 to show month to the user.
+                            d = (d.getMonth() + 1) + '/' + d.getDate() + '/' +  d.getFullYear();
+                        }
+                        return d;
+                    }
+                  },
+                  { "mData": "CreatedBy",
+                    "mRender": function ( data, type, full ) {
+                        if (data) {
+                            var name = data.Name.split(" ");
+                            return name[1] + ", " + name[0];
+                        }
+                        return "";
+                     }
+                  },
+                  {
+                      "mData": "Field_QC_Status__c"
+                  }
+
+                ]
+            });
+
+            // Do nothing if there's a missing field from json data.
+            $.fn.dataTable.ext.errMode = 'none';
+
+            $("#applications thead").append("<tr id='searchFilters'><td><div><input type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input type='text' placeholder='Search'></div></td>"
+                    + "<td><select id='searchStatus'></select></td>"
+                    + "<td><div><input id='searchCheck' type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input id='searchInitialSubmission' type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input id='searchCreatedBy' type='text' placeholder='Search'></div></td>"
+                    + "<td><select id='searchFieldQCStatus'></select></td></tr>");
+
+            $("#applications thead tr td :input").keyup( function () {
+                oTable.fnFilter(this.value, $("#applications thead tr td :input").index(this));
+            });
+
+            $("#searchCreatedBy").change(function(){ oTable.fnFilter(this.value, 7); });
+
+            $("#searchStatus").html(createSelectOptions(acqcStatuses))
+                    .change(function() {
+                        $('.dateRange').trigger('apply.daterangepicker', $('.dateRange').data('daterangepicker'))
+                    })
+                    .val("{!$CurrentPage.parameters.filterby}").trigger("change");
+
+            $("#searchFieldQCStatus").html(createSelectOptions(acqcFieldQCStatuses))
+                    .change(function() {
+                        $('.dateRange').trigger('apply.daterangepicker', $('.dateRange').data('daterangepicker'))
+                    })
+                    .val("{!$CurrentPage.parameters.filterby}").trigger("change");
+
+            // Hide "Check No." and "Field QC Status" columns by default.
+            //showHideInput($('#searchCheck, #searchFieldQCStatus'), false);
+            //$('#applications').DataTable().columns([5,8]).visible(false);
+        });
+
+        // Custom filtering function which will filter data in Status or Field QC Status column.
+        $.fn.dataTableExt.afnFiltering.push(function( oSettings, aData, iDataIndex ) {
+            var val ="{!$CurrentPage.parameters.filterby}";
+            var statusFilter = '';
+            var fieldQCFilter = '';
+            var currentRecordStatus = aData[4];
+            var currentRecordFieldQCStatus = aData[8];
+
+            if (val == "null") {
+                return false;
+            }
+
+            statusFilter = $("#searchStatus").val();
+            fieldQCFilter = $("#searchFieldQCStatus").val();
+
+            if ($.trim(statusFilter).length === 0) {
+                return true;
+            }
+
+            if ($.trim(statusFilter) === $.trim(currentRecordStatus)) {
+                return true;
+            }
+
+            if ($.trim(fieldQCFilter).length === 0) {
+                return true;
+            }
+
+            if ($.trim(fieldQCFilter) === $.trim(currentRecordFieldQCStatus)) {
+                return true;
+            }
+
+            return false;
+        });
+
+        function createSelectOptions(options) {
+            var r = '<option value="">All</option>';
+
+            for (var i = 0; i < options.length; i++) {
+                r += '<option value="'+ options[i] + '">'+ options[i] + '</option>';
+            }
+
+            return r;
+        }
+
+        function handleResponse(table, result) {
+            table.fnClearTable();
+            table.fnSettings().oLanguage.sEmptyTable = result.success
+                    ? 'No data available in table'
+                    : result.errorMessage;
+            table.DataTable().rows.add(result.results).draw();
+        }
+
+        function processLoading() {
+            $('.dataTables_processing').toggle();
+        }
+    }(jQuery));
+</script>
+</head>
+<body>
+    <div class="container">
+        <c:BIGACQCHeader />
+        <div id="mainContent">
+            <div class="cushion">
+                <h1 class="page-header">Applications
+                    <a href="{!$Site.Prefix}/BIGACQCRebateApplicationForm" class="btn btn-primary right {!IF(isACQCSuspended,'disabled','')}" tabindex="{!IF(isACQCSuspended,'-1','')}"><i class="icon-plus icon-white" style="margin-top:3px;"></i> Apply for a New Customer Rebate</a>
+                </h1>
+                <apex:outputPanel rendered="{!$CurrentPage.parameters.msg=='1'}">
+                    <div id="error">Rebate Application not found.</div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!$CurrentPage.parameters.msg!='1'}">
+                    
+                    <div class="form-group range-filter">
+                        <label class="range-label">Created Date Range</label>
+                        <div class="daterangepicker_input">
+                            <input class="form-control active dateRange" type="text" name="dateRange" readonly="readonly"/>
+                            <i class="fa fa-calendar glyphicon glyphicon-calendar"></i>
+                        </div>
+                    </div>
+                    <!--  c:BIGPortalToogleApplicationList colNames="Site Name,Site Address,Unit,Status,Check No.,Submitted On,Created By,Field QC Status" colIndexes="1,2,3,4,5,6,7,8" hiddenColumns="5,8" hasAdvanceHU="false"/-->
+                    <table id="applications" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 75px;">App No.</th>
+                                <th style="min-width: 71px;">Site Name</th>
+                                <th style="min-width: 84px;">Site Address</th>
+                                <th style="min-width: 59px;">Unit</th>
+                                <th>Status</th>
+                                <th style="min-width: 75px;">Check No.</th>
+                                <th style="min-width: 94px;">Submitted On</th>
+                                <th style="min-width: 75px;">Created By</th>
+                                <th style="min-width: 100px;">Field QC Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <tfoot></tfoot>
+                    </table>
+                </apex:outputPanel>
+            </div>
+        </div>
+        <c:BIGPortalFooter />
+        <c:BIGPortalAHUSurvey />
+    </div>
+</body>
+</html>
+</apex:page>

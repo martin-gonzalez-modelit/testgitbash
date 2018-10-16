@@ -1,0 +1,2 @@
+<apex:page standardController="et4ae5__SendDefinition__c"
+    extensions="et4ae5.sendDefExtension" action="{!redirect}" />

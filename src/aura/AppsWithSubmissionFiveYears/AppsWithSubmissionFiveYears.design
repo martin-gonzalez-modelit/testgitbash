@@ -1,0 +1,3 @@
+<design:component>
+    <design:attribute name="charType" label="Type Of Chart" description="Chart type which you want to display"/>
+</design:component>

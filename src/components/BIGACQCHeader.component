@@ -1,0 +1,48 @@
+<apex:component controller="BIGPortalBaseController">
+    <style>
+        h1, h2, h3, h4, h5, h6 {
+            text-rendering:auto !important;
+        }
+    </style>
+
+    <header style="padding-bottom:20px">
+        <div id="header">
+            <a class="logo" href="{!$Site.Prefix}/BIGACQCDashboard">
+                <img src="{!URLFOR($Resource.acqccontractor, 'images/logo.jpg')}" />
+            </a>
+            <apex:outputPanel rendered="{!HasHUProgram}">
+                <div style="float: right;margin-top: 45px;padding: 8px;font-weight: bold;margin-right: 30px;">
+                    <a class="btn" href="BIGPortalProgram?p=HU" style="font-family: 'Open Sans' !important;color: #0d759a;font-size: 95%;padding:4px 10px;height:22px;"><img src="{!URLFOR($Resource.acqcicons,'iconarrow.png')}" />
+                        <span style="line-height:1.5">Switch to Home Upgrade</span>
+                    </a>
+                </div>
+            </apex:outputPanel>
+
+            <nav>
+                <ul class="nav-bar">
+                    <li class="{!IF(LOWER($CurrentPage.Name) =='bigacqcdashboard','active', '')}">
+                        <a href="BIGACQCDashboard">Dashboard</a>
+                    </li>
+                    <li class="{!IF(LOWER($CurrentPage.Name) =='acqcapplicationsearch','active', '')}">
+                        <a href="ACQCApplicationSearch">Search</a>
+                    </li>
+                    <li class="{!IF(OR(LOWER($CurrentPage.Name) =='bigacqcrebateapplications', LOWER($CurrentPage.Name) == 'bigacqcrebateapplicationform'),'active', '')}">
+                        <a href="BIGACQCRebateApplications">Applications</a>
+                    </li>
+                    <li class="{!IF(LOWER($CurrentPage.Name) =='bigportalhvachelp','active', '')}">
+                        <a href="BIGPortalHVACHelp">Help</a>
+                    </li>
+                    <li class="dropdown">
+                        <a id="usernameMenu" class="dropdown-toggle" data-toggle="dropdown" href="#" style="font-weight:normal;">
+                            <i class="icon-user"></i>&nbsp;You are logged in as {!$User.FirstName}&nbsp;{!$User.LastName}
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a id="logout" href="{!$Site.Prefix}/secur/logout.jsp">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+</apex:component>

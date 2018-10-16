@@ -1,0 +1,21 @@
+{!$Label.emailSend}: {!SendDefinition__c.Name}
+<br/>
+{!$Label.initiatdOn} {!SendDefinition__c.InitiatedDate__c}
+<br/>
+{!$Label.status}: {!SendDefinition__c.SendStatus__c} {!$Label.at_lc} {!SendDefinition__c.Status_Date_Time__c}
+<br/>
+<br/>
+{!$Label.subject}: {!SendDefinition__c.Subject__c}
+<br/>
+{!$Label.from}: {!SendDefinition__c.FromName__c}
+<br/>
+<br/>
+{!$Label.recpSourcs}:
+<br/>
+{!SendDefinition__c.AllSources__c}
+<br/>
+<br/>
+{!SendDefinition__c.Messages__c}
+<br/>
+<br/>
+{!SendDefinition__c.Link}

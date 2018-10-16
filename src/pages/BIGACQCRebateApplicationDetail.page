@@ -1,0 +1,54 @@
+<apex:page controller="BIGACQCRebateApplicationReviewController" showHeader="false" sidebar="false">
+<apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+<style>
+    body{
+        background-color:rgb(248, 248, 248);
+    }
+    
+    div.panel{
+        margin-top:-40px;
+    }
+    
+    .actionColumn{
+        display:none;
+    }
+    
+    .pbButton input{
+        display:none;
+    }
+    
+    div.fewerMore{
+        display:none;
+    }
+    
+</style>
+<script>
+    $(document).ready(function(){
+        $("a").attr("target","_blank");
+        appendTechnicianStatus();
+    });
+
+
+function appendTechnicianStatus(){
+    $(".detailList .labelCol").each(function(){
+        if($(this).html()=="Technician"){
+            $($(this).parent().find("td.dataCol").get(0)).append("&nbsp;<span id='technicianStatus'>({!TechnicianStatus})</span>");
+        }
+    });
+}
+
+</script>
+<body>
+<div class="panel">
+<apex:outputPanel rendered="{!$CurrentPage.parameters.id!=''}" layout="none">
+    <apex:detail relatedList="true" title="false"/>
+</apex:outputPanel>
+</div>
+</body>
+
+<style>
+#topButtonRow,#bottomButtonRow{
+    display:none;
+}
+</style>    
+</apex:page>

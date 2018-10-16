@@ -1,0 +1,10 @@
+<apex:page standardController="Application__c" showHeader="false" sidebar="false">
+ <script>
+    window.onload = function () {
+        window.opener.location.href = '{!URLFOR('/' & Application__c.Id)}';
+                                     
+        window.open('','_self','');
+        self.close();
+    }    
+ </script>
+</apex:page>

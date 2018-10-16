@@ -1,0 +1,263 @@
+<apex:page Controller="et4ae5.sendAutomationListControl" action="{!initialize}" tabstyle="ExactTargetPhoenix__tab">
+    <apex:stylesheet value="{!$Resource.et4ae5__ExactTargetStyles}" />
+    <c:ETHeader message="{!$Label.et4ae5__sndatmmgmt}" image="automation.png" />
+    <apex:pageMessages />
+    <apex:form id="theForm">
+        <apex:pageBlock mode="view" id="theTable">
+            <!--Optional Help Text.-->
+            <table width="100%">
+                <tr >
+                    <td >
+                        <apex:selectList multiselect="false" size="1" value="{!listView}" >
+                            <apex:selectOptions value="{!listViews}" />
+                            <apex:actionSupport event="onchange" action="{!listViewChange}" />
+                        </apex:selectList>
+                    </td >
+                </tr >
+                <tr>
+                    <td align="left">
+                        <apex:commandButton value="{!$Label.et4ae5__search}" action="{!openSearch}" />
+                        <i>
+                            {!nowDisplayingA} 
+                            <b>
+                                {!nowDisplayingB}
+                            </b>
+                        </i>
+                    </td>
+                    <td align="right">
+                        <apex:commandLink action="{!clickedOnLetter}" value="A">
+                            <apex:param name="CL" value="a" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="B">
+                            <apex:param name="CL" value="b" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="C">
+                            <apex:param name="CL" value="c" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="D">
+                            <apex:param name="CL" value="d" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="E">
+                            <apex:param name="CL" value="e" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="F">
+                            <apex:param name="CL" value="f" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="G">
+                            <apex:param name="CL" value="g" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="H">
+                            <apex:param name="CL" value="h" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="I">
+                            <apex:param name="CL" value="i" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="J">
+                            <apex:param name="CL" value="j" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="K">
+                            <apex:param name="CL" value="k" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="L">
+                            <apex:param name="CL" value="l" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="M">
+                            <apex:param name="CL" value="m" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="N">
+                            <apex:param name="CL" value="n" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="O">
+                            <apex:param name="CL" value="o" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="P">
+                            <apex:param name="CL" value="p" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="Q">
+                            <apex:param name="CL" value="q" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="R">
+                            <apex:param name="CL" value="r" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="S">
+                            <apex:param name="CL" value="s" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="T">
+                            <apex:param name="CL" value="t" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="U">
+                            <apex:param name="CL" value="u" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="V">
+                            <apex:param name="CL" value="v" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="W">
+                            <apex:param name="CL" value="w" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="X">
+                            <apex:param name="CL" value="x" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="Y">
+                            <apex:param name="CL" value="y" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="Z">
+                            <apex:param name="CL" value="z" />
+                        </apex:commandLink>
+                        <apex:outputtext value="   " />
+                        <apex:commandLink action="{!clickedOnLetter}" value="All">
+                            <apex:param name="CL" value="" />
+                        </apex:commandLink>
+                    </td>
+                </tr>
+            </table>
+            <apex:outputPanel id="searchBox" styleClass="popup" layout="block" rendered="{!showSearch}">
+                <apex:pageBlock >
+                    <apex:pageBlockSection >
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="{!$Label.et4ae5__srchcrit}" style="width:50px" />
+                            <apex:inputText value="{!searchCriteria}" style="width:250px" />
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockButtons location="both">
+                        <apex:commandbutton value="{!$Label.et4ae5__apply}" action="{!applySearch}" rerender="theForm" />
+                        <apex:commandbutton value="{!$Label.et4ae5__clear}" action="{!cancelSearch}" rerender="theForm" />
+                    </apex:pageBlockButtons>
+                </apex:pageBlock>
+            </apex:outputPanel>
+            <apex:outputPanel id="out">
+                <apex:actionstatus id="status" startText="{!$Label.et4ae5__loadingcal}">
+                    <apex:facet name="stop">
+                        <apex:outputPanel >
+                            <apex:pageBlockTable value="{!callList}" var="call">
+                                <b>
+                                    <apex:column style="text-align:center;width:1px;" >
+                                        <apex:facet name="header" >
+                                            <apex:commandLink action="{!clickedOnColumn}" value="{!$Label.et4ae5__active} {!IF(columnDisplay=='Active__c',IF(sortDisplay='ASC','▲','▼'),'')}">
+                                            	<apex:param name="CC" value="Active__c"/>
+                                           	</apex:commandLink> 
+                                        </apex:facet>
+                                        <apex:image value="{!IF(call.et4ae5__Active__c,'/img/checkbox_checked.gif','/img/checkbox_unchecked.gif')}" />
+                                    </apex:column>                                    
+                                    <apex:column >
+                                    <a href="/{!call.id}">{!call.Name}</a>
+                                        <apex:facet name="header">
+                                            <apex:commandLink action="{!clickedOnColumn}" value="{!$Label.et4ae5__atmname} {!IF(columnDisplay=='Name',IF(sortDisplay='ASC','▲','▼'),'')}">
+                                            	<apex:param name="CC" value="Name"/>
+                                           	</apex:commandLink>                                         
+                                        </apex:facet>
+                                    </apex:column>
+                                    <apex:column value="{!call.et4ae5__Object__c}">
+                                        <apex:facet name="header">
+                                            <apex:commandLink action="{!clickedOnColumn}" value="{!$Label.et4ae5__object} {!IF(columnDisplay=='Object__c',IF(sortDisplay='ASC','▲','▼'),'')}">
+                                            	<apex:param name="CC" value="Object__c"/>
+                                           	</apex:commandLink>                                         
+                                        </apex:facet>
+                                    </apex:column>
+                                    <apex:column value="{!call.et4ae5__Trigger_send_when__c}">
+                                        <apex:facet name="header">
+                                            <apex:commandLink action="{!clickedOnColumn}" value="{!$Label.et4ae5__action} {!IF(columnDisplay=='Trigger_send_when__c',IF(sortDisplay='ASC','▲','▼'),'')}">
+                                            	<apex:param name="CC" value="Trigger_send_when__c"/>
+                                           	</apex:commandLink>                                          
+                                        </apex:facet>
+                                    </apex:column>
+                                    <apex:column value="{!call.et4ae5__EmailName__c}">
+                                        <apex:facet name="header">
+                                            <apex:commandLink action="{!clickedOnColumn}" value="{!$Label.et4ae5__emailname} {!IF(columnDisplay=='EmailName__c',IF(sortDisplay='ASC','▲','▼'),'')}">
+                                            	<apex:param name="CC" value="EmailName__c"/>
+                                           	</apex:commandLink>                                            
+                                        </apex:facet>
+                                    </apex:column>
+                                    <apex:column value="{!call.et4ae5__Contact_Lead_FIeld__c}">
+                                        <apex:facet name="header">
+                                            <apex:commandLink action="{!clickedOnColumn}" value="{!$Label.et4ae5__subsfield} {!IF(columnDisplay=='Contact_Lead_FIeld__c',IF(sortDisplay='ASC','▲','▼'),'')}">
+                                            	<apex:param name="CC" value="Contact_Lead_FIeld__c"/>
+                                           	</apex:commandLink>                                            
+                                        </apex:facet>
+                                    </apex:column>
+                                     <apex:column value="{!call.et4ae5__NumberSent__c}">
+                                        <apex:facet name="header">
+                                            <apex:commandLink action="{!clickedOnColumn}" value="{!$Label.et4ae5__nmbrsent} {!IF(columnDisplay=='NumberSent__c',IF(sortDisplay='ASC','▲','▼'),'')}">
+                                            	<apex:param name="CC" value="NumberSent__c"/>
+                                           	</apex:commandLink>                                            
+                                        </apex:facet>
+                                    </apex:column>                                   
+                                    <apex:column value="{!call.createdDate}">
+	                                    <apex:facet name="header">
+	                                         <apex:commandlink action="{!clickedOnColumn}" value="{!$Label.et4ae5__created} {!IF(columnDisplay=='createdDate',IF(sortDisplay='ASC','▲','▼'),'')}">
+	                                        	<apex:param name="CC" value="createdDate"/>
+	                                        </apex:commandlink>
+	                                    </apex:facet>
+                                	</apex:column>                       
+                                </b>
+                            </apex:pageBlockTable>
+                            <apex:actionFunction action="{!makePageSizeChange}" name="makeChanger" rerender="theTable" />
+                            <table border="0">
+                                <tr>
+                                    <td>
+                                        <apex:commandbutton value="<<" action="{!pageFt}" rerender="theTable" />
+                                    </td>
+                                    <td>
+                                        <apex:commandbutton value="<" action="{!pageUp}" rerender="theTable" disabled="{!doesntHavePrevious}" />
+                                    </td>
+                                    <td style="vertical-align:middle" >
+                                        {!$Label.pageOfPg} 
+                                        <img src="/s.gif" />
+                                        <apex:outputText value="{!pager}" style="width:30px" /> 
+                                        {!$Label.et4ae5__pageofof} 
+                                        {!IF(lastPage=0,1,lastPage)}
+                                    </td>
+                                    <td>
+                                        <apex:commandbutton value=">" action="{!pageDn}" rerender="theTable" disabled="{!doesntHaveNext}" />
+                                    </td>
+                                    <td>
+                                        <apex:commandbutton value=">>" action="{!pageLt}" rerender="theTable" />
+                                    </td>
+                                    <td />
+                                    <td style="vertical-align:middle" >
+                                        {!$label.pageSize}
+                                    </td>
+                                    <td style="vertical-align:middle" >
+                                        <apex:selectlist onchange="makeChanger()" value="{!pageSize}" multiselect="false" size="1">
+                                            <apex:selectoption itemvalue="20" />
+                                            <apex:selectoption itemvalue="50" />
+                                            <apex:selectoption itemvalue="100" />
+                                            <apex:selectoption itemvalue="200" />
+                                        </apex:selectList>
+                                    </td>
+                                </tr>
+                            </table>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:actionstatus>
+            </apex:outputPanel>
+            <apex:pageBlockButtons >
+                <apex:commandButton value="{!$Label.et4ae5__new}" action="{!newAutomation}" />
+            </apex:pageBlockButtons>
+        </apex:pageblock>
+    </apex:form>
+</apex:page>

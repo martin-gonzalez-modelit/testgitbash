@@ -1,0 +1,40 @@
+<apex:page >
+    <flow:interview name="Add_Required_Correction" finishLocation="/{!$CurrentPage.parameters.vApplicationID}">
+    </flow:interview>
+    <style>
+        .labelCol font {
+            font-size: 100% !important;
+            color: #4a4a56;
+        }
+        .labelCol font i {
+            font-weight: normal;
+        }
+    </style>
+    <script>
+        // Remove permanently focus from the first input field.
+        function setFocusOnLoad() {}
+        // Change label button from "Next" to "Finish" on last screen.
+        if (document.getElementById("j_id0:j_id1:i:f:pb:d:Status_Comments_HU.input") == null
+                && document.getElementById("j_id0:j_id1:i:f:pb:d:Status_Comments.input") == null) {
+            document.getElementById("j_id0:j_id1:i:f:pb:pbb:next").value = "Finish";
+            document.getElementById("j_id0:j_id1:i:f:pb:pbb:bottom:next").value = "Finish";
+        }
+
+        // Prevent creating multiple Corrections when pressing the space bar over the Finish buttons.
+        var els = document.querySelectorAll(".FlowNextBtn");
+
+        for (var i = 0; i < els.length; i++) {
+            els[i].addEventListener("keydown", function(e) {
+                var el = this;
+
+                if (e.keyCode === 32) {
+                    if (el.className.indexOf("pressed") === -1) {
+                        el.className += " pressed";
+                    } else {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+    </script>
+</apex:page>

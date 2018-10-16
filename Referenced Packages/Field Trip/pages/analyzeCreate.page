@@ -1,0 +1,214 @@
+<apex:page standardController="Field_Trip__Object_Analysis__c" extensions="Field_Trip.analyzeCreateExtension" >
+
+    <apex:sectionHeader title="Field Trip Edit" subtitle="{!subtitle}"/>
+    <apex:messages style="color:red"/>
+    <apex:includeScript value="{!URLFOR($Resource.Field_Trip__FieldTripGear, 'jQuery_1_7_1.js')}" />
+    
+    <style>
+        .secret{
+            visibility: hidden;
+        }
+    </style>
+
+    <script type='text/javascript'>
+    
+        var countDown = 2;
+        var started = false;
+        
+        function resetTimer(){
+        
+            countDown=2;
+            
+            if(started==false){
+                started=true;
+                runCountDown();
+            }
+        }
+        
+        function runCountDown(){
+        
+            countDown--;
+            
+            if(countDown<=0){
+                checkForErrors();
+                started=false;
+            }
+            else{
+                window.setTimeout(runCountDown,1000);
+            }
+        }
+        
+        function addToOnload(fn) {
+            var old = window.onload;
+            window.onload = function() {
+                old();
+                fn();
+            }
+        }
+        
+        function loadListener(){
+            
+            $("#mainObjectSelect").on('input', function () {
+                var val = this.value;
+                changeObject(this.value);
+            });
+        }
+        
+        addToOnload(loadListener);
+/*
+        function moveMoreObjects() {
+            var $mainObjectSelect = $("select[id*='mainObjectSelect']").first();
+            var $moreObjectSelect = $("select[id*='moreObjectSelect']").first();
+            $moreObjectSelect.find('option').clone().appendTo($mainObjectSelect);
+        }
+
+        addToOnload(moveMoreObjects);
+*/        
+        function updateObjectList(qString,event){
+            
+            if(event.keyCode!=38 && event.keyCode!=40){
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.analyzeCreateExtension.searchObjects}',
+                qString,
+
+                function(result, event){
+                    var thing = document.getElementById("objResults");
+                    while (thing.firstChild) {
+                        thing.removeChild(thing.firstChild);
+                    }
+                    for(var x=0;x<result.length;x++){
+                        var option = document.createElement("option");
+                        option.text=result[x];
+                        thing.appendChild(option);
+                    }
+                },
+                {escape: false}
+            );
+            
+            }
+        }
+
+    </script>
+    
+    <apex:form >
+    
+        <apex:actionFunction name="checkForErrors" reRender="errorPanel"/>
+        <apex:actionFunction name="changeObject" reRender="queryRoot,errorPanel0,errorPanel">
+            <apex:param name="firstParam" assignTo="{!theRecord.Object_Name__c}" value="" />
+        </apex:actionFunction>
+
+    
+        <apex:pageBlock >
+            <br/>
+            <apex:outputText >
+                <b>Give your Field Trip a name</b> (e.g. 'All Accounts','Closed Cases','Opps created this year',etc)
+            </apex:outputText>
+            <br/>
+            <ul>
+                <apex:inputText value="{!theRecord.Name}" style="border-left:3px solid red; border-top:1px solid gray; width:250px"/>
+            </ul>
+            <br/>
+            <apex:outputText >
+                <b>Enter the API Name of the Object you want to analyze</b>
+            </apex:outputText>
+            <br/>
+            <ul>
+<!--            
+            <apex:actionRegion renderRegionOnly="false" immediate="true">
+                <apex:selectList id="mainObjectSelect" value="{!theRecord.Object_Name__c}" multiselect="false" size="1" style="border-left:3px solid red; border-top:1px solid gray">
+                    <apex:selectOptions value="{!objectNames}"/>
+                    <apex:actionSupport event="onchange" reRender="queryRoot,errorPanel"/>
+                </apex:selectList>
+            </apex:actionRegion>
+-->
+ 
+            <input id="mainObjectSelect" list="objResults" value="{!theRecord.Object_Name__c}" onkeyup="updateObjectList(this.value,event);" style="border-left:3px solid red; border-top:1px solid gray"/>
+            <datalist id="objResults"/>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <apex:outputPanel id="errorPanel0" style="color:red">
+                <apex:outputText rendered="{!objectStringHasError}">
+                    Please enter a valid Object API Name
+                </apex:outputText>
+            </apex:outputPanel>
+
+            </ul>
+            <br/>
+            <apex:outputText >
+            <b>You can analyze only a subset of your records by adding a SOQL filter below</b>
+            <apex:outputPanel id="tellMore">
+                &nbsp;&nbsp;<apex:commandLink action="{!moreInfoFlip}" value="tell me more..." reRender="moreInfo,tellMore" rendered="{!NOT(moreInfo)}"/>
+            </apex:outputPanel>
+            </apex:outputText>
+            <br/>
+            <b>To analyze all records, leave this blank</b>
+            <br/>
+            <ul>
+            
+                <apex:outputPanel id="queryRoot">
+                    SELECT (all fields) FROM {!theRecord.Object_Name__c} WHERE&nbsp;
+                </apex:outputPanel>
+                <apex:actionRegion renderRegionOnly="false" immediate="true">
+                    <apex:inputText maxlength="1000" size="70" value="{!theRecord.Field_Trip__Filter__c}" onkeydown="resetTimer()"/>
+                </apex:actionRegion>
+                <br/>
+                <apex:outputPanel id="errorPanel" style="color:red">
+                    <apex:outputText rendered="{!queryStringHasError}">
+                        Warning: Your SOQL filter does not appear to be valid, continuing may result in a failed analysis.
+                    </apex:outputText>
+                </apex:outputPanel>
+                <br/>
+                <apex:outputPanel id="moreInfo">
+                <apex:outputPanel style="color:blue" rendered="{!moreInfo}">
+                    <div style="padding:20px 0 4px 0; font-weight:bold">
+                        What do you mean by subset?
+                    </div>
+                    <div style="padding:0 0 13px 20px; font-size:9pt">
+                        Leaving this box empty will result in Field Trip including all the records for the given object in the analysis. So the end result will tell you how many times each field is populated in your entire database. 
+                        This option is here in case you wish to limit the analysis in order to get results about only records that match certain criteria. For example, you may want to know which fields are being used and which are not for a specific 
+                        record type, or maybe only for records created within a certain date range.
+                    </div>
+                    <div style="padding:0 0 4px 0; font-weight:bold">
+                        Why not user-friendly filters like I see in salesforce reporting, workflow, etc.?
+                    </div>
+                    <div style="padding:0 0 13px 20px; font-size:9pt">
+                        Excellent question... we're working on it! It's a difficult task to replicate the user-friendly methods 
+                        that salesforce provides to capture filter definitions, and rather than make you wait around for us to pull it off 
+                        we wanted to give you at least <i>some</i> way to limit the records being analyzed, so we allow for SOQL filtering. 
+                    </div>
+                    <div style="padding:0 0 4px 0; font-weight:bold">
+                        What is SOQL?
+                    </div>
+                    <div style="padding:0 0 13px 20px; font-size:9pt">
+                        "SOQL" is something that developers use when they want to request data from the salesforce servers either through the API (such as integrations, or third party apps) or through Apex code. 
+                        If you are not a developer or someone who is comfortable with SOQL you should leave this blank.
+                    </div>
+                    <div style="padding:0 0 4px 0; font-weight:bold">
+                        How can I learn more about SOQL?
+                    </div>
+                    <div style="padding:0 0 13px 20px; font-size:9pt">
+                        You can read all about SOQL and get some good examples of queries by reading the <a href="http://www.qandor.com/soqlInfoRedirect" target="_blank">SOQL documentation</a>.
+                    </div>
+                    <apex:commandLink action="{!moreInfoFlip}" value="hide this info" reRender="moreInfo,tellMore"/>
+                </apex:outputPanel>
+                </apex:outputPanel>
+            </ul>
+            <br/>
+            <br/>
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!goSave}" value="Save"/>
+                <apex:commandButton action="{!goSaveAndAnalyze}" value="Save and Analyze"/>
+                <apex:commandButton action="{!cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+            
+        </apex:pageBlock>
+<!--        
+        <apex:outputPanel >
+           <apex:selectList id="moreObjectSelect" styleClass="secret" size="1">
+               <apex:selectOptions value="{!moreOptions}"/>
+           </apex:selectList>
+        </apex:outputPanel>
+-->
+    </apex:form>
+    
+</apex:page>

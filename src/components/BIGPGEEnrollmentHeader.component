@@ -1,0 +1,21 @@
+<apex:component layout="none">
+<header class="header">
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function(event) {
+            var hashElement = window.location.hash.substring(3).toLowerCase();
+            var pathName = window.location.pathname.toLowerCase();
+
+            if (hashElement == 'help' || pathName.contains('help')) {
+                document.getElementById('help-lnk').style.display = "none";
+            }
+        });
+    </script>
+    <apex:variable var="page" value="achorElement" />
+    <div class="logo-container">
+        <img src="{!URLFOR($Resource.PGEEnrollmentResources, '/images/logo-header.png')}" alt="logo" />
+    </div>
+    <nav class="main-nav">
+        <a href="help" target="_blank" id="help-lnk">Help</a>
+    </nav>
+</header>
+</apex:component>

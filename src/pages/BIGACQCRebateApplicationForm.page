@@ -1,0 +1,1629 @@
+<apex:page showheader="false" sidebar="false" cache="false" standardStylesheets="false" doctype="html-5.0"
+    applyHtmlTag="false" controller="BIGPortalHVACCustRebateApplicController" action="{!checkMessages}">
+<html>
+<head>
+    <title>PG&amp;E Portal - Customer Rebate Application</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/validatorStyle.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/nprogress/nprogress.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-ui/jquery-ui.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-validate/jquery.validate.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-validate/additional-methods.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-maskedinput/jquery.maskedinput.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/nprogress/nprogress.js')}"/>
+
+    <apex:variable var="applicationExists" value="{!application.Id!=null}"/>
+<script>
+    NProgress.configure({ showSpinner: false });
+    var menu = "Applications";
+    var refrigerantsToDisable;
+    var refrigerantsToUncheck;
+    var FILE_OPTIONS = {
+        MAX_FILE_SIZE: 5242880 //bytes
+    }
+    var validateDefault = {
+        onsubmit: true,
+        normalizer: function(value) {
+            return $.trim(value);
+        },
+        rules: {
+            'inputName': {
+                required: true
+            },
+            'inputCustomerName': {
+                required: true
+            },
+            'inputUnit': {
+                required: true
+            },
+            'j_id0:inputAddress': {
+                maxlength: 255,
+                required: true
+            },
+            'j_id0:inputCity': {
+                required: true
+            },
+            'j_id0:inputZip': {
+                minlength: 5,
+                digits: true
+            },
+            'inputPhone': {
+                phoneUS: true
+            },
+            'j_id0:inputEmail': {
+                strictEmail: true
+            },
+            'inputSiteZipCodeSearch': {
+                minlength: 5,
+                digits: true
+            },
+            'inputStickerNumber': {
+                minlength: 7,
+                maxlength: 7,
+                digits: true
+            },
+            'j_id0:inputSaid': {
+                minlength:10,
+                maxlength:10,
+                digits: true,
+                min: 1
+            }
+        },
+        messages: {
+            'j_id0:inputSaid': "This must be a valid 10 digit number",
+            'j_id0:inputAddress': { maxlength: "This cannot exceed 255 characters" },
+            'inputStickerNumber': "This must be a valid 7 digit number",
+            'inputSiteZipCodeSearch': "This must be a valid 5 digit number"
+        },
+        highlight: function(element) {
+            $(element).closest('.control-group').removeClass('success').addClass('error');
+        },
+        success: function(element) {
+            element.closest('.control-group').removeClass('error');
+        },
+        errorPlacement: function(error, element) {
+            if (element.hasClass("one_required")) {
+                error.insertAfter(element.closest("table"));
+            } else if (element.hasClass("search-query")) {
+                element.closest("div").after(error);
+                error.wrap("<div></div>");
+            } else {
+                error.insertAfter(element);
+            }
+        },
+        submitHandler: function() {
+            showProcessing();
+            document.getElementById('j_id0:rebate_form').submit();
+        }
+    }
+
+    $.validator.addMethod('strictEmail', function(value, element) {
+        var result = /^([^<>()\[\]\.,;:ñ¬º·¿´\s@"]([^<>()\[\],;:ñ¬º·¿´\s@"]+([^<>()\[\],;:ñº·¿´\s@"]+)*)|(".+"))@(?!-)[a-zA-Z0-9-]*?[a-zA-Z0-9]\.[a-zA-Z0-9]{2,}$/;
+        return this.optional(element) || result.test(value);
+    }, "Please enter a valid email address.");
+
+    $.validator.addMethod('isDateValid', function(value, element) {
+        return this.optional(element)
+                || (isDateWithinRange(value, element) && !isDateIntoBlockedRange(value, element));
+    }, "This date is not eligible.");
+
+    function setRefrigerantSystemServices(unitId, rebates) {
+        var appStatus = '{!application.Status__c}';
+        // Get the refrigerant services only if there's a selected unit and the application is editable.
+        if (unitId && (appStatus === '' || appStatus === 'Correction Required' || appStatus === 'Created')) {
+            // Show progress bar
+            NProgress.start();
+            BIGPortalHVACCustRebateApplicController.getNonApplicableRefrigerantSystemServices(
+                unitId,
+                rebates,
+                function(result, event) {
+                    if (event.status) {
+                        refrigerantsToDisable = [];
+                        refrigerantsToUncheck = [];
+
+                        // If result has no elements it means that there aren't refrigerant services applicable.
+                        if (result.length > 0) {
+                            setRefrigerantsToDisableAndUncheck(result);
+                            // Whenever the unit is changed, enable the corresponding refrigerant system service,
+                            // if there's any.
+                            var els = getRefrigerantsToEnable(refrigerantsToDisable);
+
+                            if (els.length > 0) {
+                                var $refrigerantsToEnable = $(els.join());
+                                $refrigerantsToEnable
+                                        .prop("disabled", false)
+                                        .closest("tr")
+                                        .removeClass("disableRefrigerantSystem");
+                            }
+                        } else {
+                            setRefrigerantsToDisableAndUncheck($("input[xxx*='Refrigerant']"));
+                        }
+                        // Disable only the needed refrigerant services.
+                        if (refrigerantsToDisable.length > 0) {
+                            var $refrigerantsToDisable = $(refrigerantsToDisable.join());
+                            var $closest = $refrigerantsToDisable.closest("tr");
+                            $refrigerantsToDisable.prop("disabled", true);
+                            $closest.addClass("disableRefrigerantSystem").find(".installationDateDiv").hide();
+                            $closest.find(".installationDate").val("");
+                        }
+                        // Uncheck only the needed refrigerant services and build a message to indicate this action
+                        // to the user.
+                        var $infoNode = $("#refrigerantInfoMsg");
+
+                        if (refrigerantsToUncheck.length > 0) {
+                            var infoMsgTemplate = $.validator.format("Refrigerant System Service: {0} was automatically deselected because it is not applicable for the selected unit.");
+                            var $refrigerantsToUncheck = $(refrigerantsToUncheck.join());
+                            var descriptions = [];
+                            // Deselect refrigerants.
+                            $refrigerantsToUncheck.prop("checked", false);
+
+                            // Get descriptions of the selected refrigerants.
+                            $.each($refrigerantsToUncheck, function(index, element) {
+                                descriptions.push($(element).attr("xxx").replace("Refrigerant System Service:", ""));
+                            });
+
+                            if (descriptions.length > 1) {
+                                infoMsgTemplate = $.validator.format("Refrigerant System Services: {0} were automatically deselected because they are not applicable for the selected unit.");
+                            }
+
+                            $infoNode
+                                    .addClass("message infoM3 alert alert-info")
+                                    .text(infoMsgTemplate(descriptions.join(", ")));
+                            $("html, body").animate({scrollTop: "450px"}, 400);
+                        } else {
+                            // Hide info message if you changed the unit and nothing was unchecked.
+                            $infoNode.removeClass().text("");
+                        }
+                        setComprehensiveKicker(unitId, $("#fdsi").val());
+                    }
+                    // Hide progress bar
+                    NProgress.done();
+                },
+                {escape: false}
+            );
+        }
+    }
+
+    function setComprehensiveKicker(unitId, fdsi) {
+        var appStatus = '{!application.Status__c}';
+        // Get the refrigerant services only if there's a selected unit and the application is editable.
+        if (unitId && (appStatus === '' || appStatus === 'Correction Required' || appStatus === 'Created')) {
+            var rebateTypeIds = getSelectedRebatesForComprehensiveKicker();
+            // Show progress bar
+            NProgress.start();
+            BIGPortalHVACCustRebateApplicController.isComprehensiveKickerApplicable(
+                unitId,
+                fdsi,
+                rebateTypeIds,
+                function(result, event) {
+                    if (event.status) {
+                        // If result is false, kicker is not applicable
+                        var $kickerInput = $("input[xxx*='Comprehensive Kicker']");
+                        var $kickerRow =  $kickerInput.closest("tr");
+                        var $kickerMsgDiv = $("#comprehensiveKickerInfoMsg");
+                        var kickerMsg = "Comprehensive kicker was automatically deselected because it is not applicable for the selected unit."
+
+                        if (!result) {
+                            // Disable kicker.
+                            $kickerInput.prop("disabled", true);
+                            $kickerRow.addClass("disableComprehensiveKicker");
+
+                            if ($kickerInput.is(":checked")) {
+                                // If kicker is checked, uncheck and show error message.
+                                $kickerInput.prop("checked", false);
+                                $kickerMsgDiv.addClass("message infoM3 alert alert-info").text(kickerMsg);
+                                $("html, body").animate({scrollTop: "450px"}, 400);
+                            }
+                        } else {
+                            $kickerMsgDiv.removeClass().text("");
+                            $kickerInput.prop("disabled", false);
+                            $kickerRow.removeClass("disableComprehensiveKicker");
+                        }
+                    }
+                    // Hide progress bar
+                    NProgress.done();
+                },
+                {escape: false}
+            );
+        }
+    }
+
+    function setRefrigerantsToDisableAndUncheck(refrigerants) {
+        $.each(refrigerants, function(index, element) {
+            // Determine whether the element is a node or list of strings.
+            var selector = (element instanceof Element) ? "#" + $(element).attr("id") : "#rebateType" + element;
+            refrigerantsToDisable.push(selector);
+
+            // Determine which refrigerant services should be unchecked.
+            if ($(selector).is(":checked")) {
+                refrigerantsToUncheck.push(selector);
+            }
+        });
+    }
+
+    function getRefrigerantsToEnable(refrigerantsToDisable) {
+        var result = [];
+
+        $.each($("input[xxx*='Refrigerant']"), function(index, element) {
+            // Append string to generate selector.
+            var selector = "#" + $(element).attr("id");
+
+            // If it's not in the refrigerantsToDisable list, then it should be enabled.
+            if ($(element).is(":disabled") && refrigerantsToDisable.indexOf(selector) == -1) {
+                result.push(selector);
+            }
+        });
+        return result;
+    }
+
+ $(document).ready(function() {
+    maskInput();
+    validateRebateFormFields();
+    $(".help-icon").popover();
+    // Set style to alert messages
+    customMsg();
+
+    // Loop through the actives rebate types and set the datepicker plugin min and max dates.
+   <apex:repeat value="{!RebateTypes}" var="rt">
+       var minDate = "";
+       var maxDate = "";
+       if ('{!rt.Name}' in rebateTypesDates) {
+           minDate = rebateTypesDates['{!rt.Name}'].startDate != ""
+                     ? localToUTC(rebateTypesDates['{!rt.Name}'].startDate)
+                     : "";
+
+           if (rebateTypesDates['{!rt.Name}'].endDate != "") {
+               var newEndDate = localToUTC(rebateTypesDates['{!rt.Name}'].endDate);
+               newEndDate.setDate(newEndDate.getDate() - 1);
+               maxDate = newEndDate;
+           }
+       }
+
+       // Limit futures dates greater than today.
+       maxDate = maxDate == "" || maxDate > new Date() ? new Date() : maxDate;
+
+       var dateSettings = {
+           minDate: minDate,
+           maxDate: maxDate,
+           onSelect: function(dateText) {
+               $("#installationDate" + '{!rt.Id}').next().remove();
+               $("#installationDate" + '{!rt.Id}').parent().removeClass('error');
+               $el = $(this);
+               checkInstallationDate($el.data("rebatetype"), $el.data("rebatetypeid"));
+           }
+       };
+
+       // if disableDatesMap has gaps (dates to exclude) for this record type name, build the datepicker with beforeShowDay
+       if (disableDatesMap.hasOwnProperty('{!rt.Name}')) {
+           dateSettings = $.extend(dateSettings, {
+               beforeShowDay: function(date) {
+                   var formatDate = $.datepicker.formatDate('mm-dd-yy', date);
+                   return [disableDatesMap['{!rt.Name}'].indexOf(formatDate) == -1];
+               }
+           });
+       }
+       $('#installationDate{!rt.Id}').datepicker(dateSettings);
+
+   </apex:repeat>
+
+    $('#rebate .rbTypes input[type=checkbox]').on('click', function() {
+        calculateTotalIncentive();
+    })
+
+    $('#cancelButton').on('click', function() {
+        disableButtons();
+        window.location.href='BIGACQCRebateApplications';
+    });
+
+    $('#inputSiteZipCodeSearch').on('keyup', function(e) {
+        $el = $(this);
+        $searchBtn = $('#searchSiteZipCode');
+
+        if ($el.val().trim() !== '' && $el.valid()) {
+            $searchBtn.removeClass('disabled');
+        } else {
+            $searchBtn.addClass('disabled');
+        }
+    });
+
+    $('#searchSiteZipCode').on('click', function(e) {
+        console.log(e);
+        e.preventDefault();
+        var $el = $('#inputSiteZipCodeSearch');
+
+        if ($el.val().trim() !== '' && $el.valid()) {
+            window.open('BIGPortalHVACSearchCust?zipcode=' + $el.val(), 'searchSite', 'width=850,height=500,titlebar=no,scrollbars=yes').focus();
+        }
+    });
+
+    function customMsg() {
+      // Add styling to messages
+      $('.message').addClass('alert');
+      $('.confirmM3').addClass('alert-success');
+      $('.infoM3').addClass('alert-info');
+      $('.errorM3').addClass('alert-error');
+      // Remove titles
+      $('.confirmM3 .messageCell h4').remove();
+      $('.infoM3 .messageCell h4').remove();
+      $('.errorM3 .messageCell h4').remove();
+    }
+
+    // Send all rebate types to salesforce, let the backend handles the logic.
+    var rebatesByName = new Object();
+
+    $("input[xxx]").each(function(index, element) {
+        rebatesByName[$(element).attr("xxx")] = $(element).attr("value");
+    });
+
+    setRefrigerantSystemServices($("#unitId").val(), rebatesByName);
+
+    $("input[xxx]").each(function(index, element) {
+        if ($(element).attr("xxx") !== "Comprehensive Kicker") {
+            $(element).on('click', function(e) {
+                setComprehensiveKicker($("#unitId").val(), $("#fdsi").val());
+            });
+        }
+    });
+
+ });
+ // #### END OF DOCUMENT READY #### //
+
+function getSelectedRebatesForComprehensiveKicker() {
+    var selectedRebates = [];
+    var $el;
+
+    $("input[xxx]").each(function(index, element) {
+        $el = $(element);
+        if ($el.is(":checked") && $el.attr("xxx") !== "Comprehensive Kicker") {
+            selectedRebates.push($el.attr("value"));
+        }
+    });
+    return selectedRebates;
+}
+
+ function localToUTC(dateString) {
+    var dateToConvert = new Date(dateString);
+    return new Date(dateToConvert.valueOf() + dateToConvert.getTimezoneOffset() * 60000);
+ }
+
+ function showInstallationDate(checked, typeId, name){
+    if (checked) {
+        $("#installationDateDiv"+typeId).fadeIn("slow");
+        if (name == 'Enhanced Time Delay Relay') {
+            $("#equipmentTypeDelay").fadeIn("slow");
+        } else if (name == 'Replacement Blower Motor') {
+            $("#equipmentTypeMotor").fadeIn("slow");
+        }
+    } else {
+        $("#installationDateDiv"+typeId).fadeOut("slow");
+        if (name == 'Enhanced Time Delay Relay') {
+            $("#equipmentTypeDelay").fadeOut("slow");
+        } else if (name == 'Replacement Blower Motor') {
+            $("#equipmentTypeMotor").fadeOut("slow");
+        }
+    }
+
+    $("#installationDate" + typeId).removeClass("required");
+    $("#installationDate" + typeId).next().remove();
+
+    $("#equipmentTypeDelay").removeClass("required");
+    $("#equipmentTypeDelay").next().remove();
+
+    $("#equipmentTypeMotor").removeClass("required");
+    $("#equipmentTypeMotor").next().remove();
+ }
+
+ function showSerialNumber(checked){
+    if(checked){
+        $("#thermostatSerial").fadeIn("slow");
+    }else{
+        $('#thermostatSerialNumber').val(null);
+        $("#thermostatSerial").fadeOut("slow");
+    }
+ }
+
+//Validate Form Fields
+function validateRebateFormFields() {
+    $.validator.addMethod("one_required", function() {
+        return $('.rebate_form').find(".one_required:checked").length > 0;
+    }, 'Please check at least one measure.');
+
+    $.validator.addMethod("technician_required", function() {
+        return $('#technician').val()!="Please select one...";
+    }, 'This field is required.');
+
+    $.validator.addMethod("makeModelDelay_required", function() {
+        return $('#delayOptions').val() != "Select a Make/Model";
+    }, 'This field is required.');
+
+    $.validator.addMethod("makeModelMotor_required", function() {
+        return $('#motorOptions').val() != "Select a Make/Model";
+    }, 'This field is required.');
+
+    $.validator.addMethod('filenameLength', function(value, element) {
+        var result = value.length > 80;
+        return this.optional(element) || !result;
+    }, "Filename should not be more than 80 characters.");
+
+    $.validator.addMethod("checkSerialNumber", function(value, element) {
+        var counter = 0;
+        var thisSerial = $('#thermostatSerialNumber').val();
+        if(thisSerial != ''){
+            var option1 = $("input[xxx='One-year QM Service Agreement']:checked").length;
+            var option2 = $("input[xxx='Full ACCA Standard 4 HVAC System Assessment']:checked").length;
+            var option3 = $("input[xxx='Refrigerant System Service']:checked").length;
+            var option4 = $("input[xxx='Replacement Blower Motor']:checked").length;
+
+            if(option1==1) counter++;
+            if(option2==1) counter++;
+            if(option3==1 || option4==1) counter++;
+
+            if(counter<3){
+                return false;
+            } else return true;
+        } else return true;
+    }, "The following should be checked:<br/>1) ACCA Standard 4 HVAC System Assessment<br/>2) Either Replacement Blower Motor and/or Refrigerant Charge Adjustment<br/>3) 1-Year QM Service Agreement");
+
+    $.validator.addMethod("required_if_check", function(value, element) {
+        var freeThermostat = $("input=[id='thermostat']:checked").length;
+        var thisSerial = $('#thermostatSerialNumber').val();
+        if(freeThermostat == 1 && thisSerial == ''){
+            return false;
+        } else return true;
+    }, "Serial Number is required if Free Thermostat is checked");
+
+    $.validator.addMethod("requiredIfChecked", function() {
+        var passed = 'yes';
+
+        $(".rebateId").each(function(){
+            if( this.checked) {
+                if ($(this).attr("xxx") == 'One-year QM Service Agreement') {
+                    if ($('.qmAddendum').val().length === 0 && '{!ApplicationFiles['QM Addendum'].Id}' === '') {
+                        passed = 0;
+                    }
+                }
+            }
+        });
+
+        if (passed == 'yes') {
+            return true;
+        } else {
+            return false;
+        }
+    }, 'This field is required.');
+
+        $.validator.addMethod("valid_date", function(value, elem) {
+            if(value=="") return true;
+            var validformat=/^\d{2}\/\d{2}\/\d{4}$/ //Basic check for format validity
+            var returnval=false
+            if (!validformat.test(value)){
+                return false;
+            }else{ //Detailed check for valid date ranges
+                var monthfield=value.split("/")[0];
+                var dayfield=value.split("/")[1];
+                var yearfield=value.split("/")[2];
+                var dayobj = new Date(yearfield, monthfield-1, dayfield)
+                if ((dayobj.getMonth()+1!=monthfield)||(dayobj.getDate()!=dayfield)||(dayobj.getFullYear()!=yearfield)){
+                    return false;
+                }else
+                    returnval=true;
+            }
+            return returnval;
+        }, 'Invalid date.');
+
+    $('.rebate_form').validate(validateDefault);
+}
+
+function prepareSubmitValidation(){
+    $(".rebateId").addClass("one_required");
+    $(".installationDate").addClass("required");
+
+    var settings = $.extend(true,{}, validateDefault, {
+        rules: {
+            'j_id0:inputState': {
+                required: true
+            },
+            'j_id0:inputZip': {
+                required: true
+            },
+            'inputPhone': {
+                required: true
+            },
+            'inputStickerNumber': {
+                required: true
+            },
+            'j_id0:inputSaid': {
+                required: true
+            },
+            'technician': {
+                technician_required: true
+            },
+            'j_id0:rebateForm:inputFile:file': {
+                <apex:outputPanel layout="none" rendered="{!applicationExists == false || ApplicationFiles['Rebate Form'].Id == ''}">required: true,</apex:outputPanel>
+                filenameLength: true,
+                filesize: FILE_OPTIONS.MAX_FILE_SIZE,
+                extension: "pdf,zip,doc,docx,xls,xlsx,txt,jpeg,jpg,png,tif,tiff"
+            },
+            'j_id0:costEstimate:inputFile:file': {
+                <apex:outputPanel layout="none" rendered="{!applicationExists == false || ApplicationFiles['Cost Estimate'].Id == ''}">required: true,</apex:outputPanel>
+                filenameLength: true,
+                filesize: FILE_OPTIONS.MAX_FILE_SIZE,
+                extension: "pdf,zip,doc,docx,xls,xlsx,txt,jpeg,jpg,png,tif,tiff"
+            },
+            'j_id0:qmAddendum:inputFile:file': {
+                filenameLength: true,
+                requiredIfChecked: true,
+                filesize: FILE_OPTIONS.MAX_FILE_SIZE,
+                extension: "pdf,zip,doc,docx,xls,xlsx,txt,jpeg,jpg,png,tif,tiff"
+            },
+            'j_id0:supplementalDoc:inputFile:file': {
+                filenameLength: true,
+                filesize: FILE_OPTIONS.MAX_FILE_SIZE,
+                extension: "pdf,zip,doc,docx,xls,xlsx,txt,jpeg,jpg,png,tif,tiff"
+            },
+            'thermostatSerialNumber': {
+                required_if_check: true,
+                checkSerialNumber: true
+            },
+            'inputPayee': {
+                required: true
+            },
+            'delayOptions': {
+                makeModelDelay_required: true
+            },
+            'motorOptions': {
+                makeModelMotor_required: true
+            }
+        }
+    });
+
+    $('.rebate_form').data('validator', null).validate(settings);
+}
+
+function prepareSaveValidation() {
+    $(".rebateId").removeClass("one_required");
+    $(".installationDate").removeClass("required");
+    $(".control-group").removeClass("error");
+
+    var settings = $.extend(true,{}, validateDefault, {
+        rules: {
+            'j_id0:inputZip': {
+                required: true
+            },
+            'inputPayee': {
+                required: true
+            },
+            'j_id0:rebateForm:inputFile:file': {
+                filenameLength: true,
+                filesize: FILE_OPTIONS.MAX_FILE_SIZE,
+                extension: "pdf,zip,doc,docx,xls,xlsx,txt,jpeg,jpg,png,tif,tiff"
+            },
+            'j_id0:costEstimate:inputFile:file': {
+                filenameLength: true,
+                filesize: FILE_OPTIONS.MAX_FILE_SIZE,
+                extension: "pdf,zip,doc,docx,xls,xlsx,txt,jpeg,jpg,png,tif,tiff"
+            },
+            'j_id0:qmAddendum:inputFile:file': {
+                filenameLength: true,
+                filesize: FILE_OPTIONS.MAX_FILE_SIZE,
+                extension: "pdf,zip,doc,docx,xls,xlsx,txt,jpeg,jpg,png,tif,tiff"
+            },
+            'j_id0:supplementalDoc:inputFile:file': {
+                filenameLength: true,
+                filesize: FILE_OPTIONS.MAX_FILE_SIZE,
+                extension: "pdf,zip,doc,docx,xls,xlsx,txt,jpeg,jpg,png,tif,tiff"
+            }
+        }
+    });
+
+    $('.rebate_form').data('validator', null).validate(settings);
+}
+
+function callValidation(){
+    $(".rebate_form").valid();
+}
+function maskInput(){
+    $("#inputPhone").mask("(999) 999-9999", { autoclear: false });
+}
+function doValidation(){
+    var marker = $('#unitId').val();
+    if(marker!='')
+        callValidation();
+}
+
+function searchSite(){
+    //window.open('BIGPortalHVACSearchCust', 'searchSite', 'width=850,height=500,titlebar=no,scrollbars=yes').focus();
+}
+function populateRebateIdsString(){
+    var rebateIdsString = "";
+    $(".rebateId").each(function(){
+        if(this.checked){
+            if(rebateIdsString!="")
+                rebateIdsString+=","
+            rebateIdsString+=this.value;
+            }
+    });
+
+    document.getElementById('rebateIdsString').value=rebateIdsString;
+   return true;
+}
+function validateFileField(num){
+    if(num=='1'){
+        var rebateForm = $("label[for='j_id0:rebateForm:inputFile:file']").css('display');
+        if(rebateForm == 'block'){
+            $("label[for='j_id0:rebateForm:inputFile:file']").css('display','none');
+            callValidation();
+        }
+    }
+
+    if(num=='2'){
+        var costEstimate = $("label[for='j_id0:costEstimate:inputFile:file']").css('display');
+        if(costEstimate == 'block'){
+            $("label[for='j_id0:costEstimate:inputFile:file']").css('display','none');
+            callValidation();
+        }
+    }
+
+    if(num=='3'){
+        var qmAddendum = $("label[for='j_id0:qmAddendum:inputFile:file']").css('display');
+        if(qmAddendum == 'block'){
+            $("label[for='j_id0:qmAddendum:inputFile:file']").css('display','none');
+            callValidation();
+        }
+    }
+
+}
+function showProcessing(){
+    $("#formLoading").css('display','block');
+    disableButtons();
+}
+function validateAfterCheck(){
+
+    $(".rebateId").each(function(){
+
+            if($(this).attr("xxx")=='One-year QM Service Agreement'){
+                callValidation();
+            }
+
+    });
+}
+
+function disableButtons() {
+    $('[class*=btn]').addClass('disabled');
+}
+
+function hideConversation(){
+    $("#conversation").hide("slow");
+    $("#hideConversation").hide();
+    $("#showConversation").show();
+}
+
+function showConversation(){
+    $(".conversation-note").show();
+    $("#showConversation").hide();
+}
+
+//Rebate Types
+var rebateTypes = [];
+var rebateTypesDates = rebateTypesDates || [];
+// Stores all the rebate types with the same name under one key. {name1:[rt1, rt2], name2:[rt1, rt2], ....}
+var rebateTypesMap = new Object();
+
+<apex:repeat value="{!ElegibleRebateTypes}" var="rtId">
+    <apex:variable var="rt" value="{!rtId}" />
+    var rebateType = new Object();
+    rebateType["startDate"] = '{!rt.Start_Install_Date__c}';
+    rebateType["endDate"] = '{!rt.End_Install_Date__c}';
+    rebateType["name"] = '{!rt.Name}';
+    rebateType["id"] = '{!rtId}';
+    rebateType["amount"] = '{!rt.Rebate_Amount__c}';
+    rebateType["active"] = '{!rt.Active__c}';
+    rebateTypes.push(rebateType);
+
+    if ('{!rt.Start_Install_Date__c}' != '' || '{!rt.End_Install_Date__c}' != '') {
+        if (!rebateTypesMap.hasOwnProperty('{!rt.Name}')) {
+            rebateTypesMap['{!rt.Name}'] = new Array();
+        }
+        rebateTypesMap['{!rt.Name}'].push(rebateType);
+    }
+
+    // Check if the array already contains the dates for an specific rebate type otherwise create the object data
+    // and store the dates.
+    // Takes all the dates from every rebate type no matter whether it's active or not and determines
+    // what the min and max dates should be.
+    if ('{!rt.Name}' in rebateTypesDates) {
+        var rebateStartDate = rebateType["startDate"] != "" ? Number(new Date(rebateType["startDate"])) : "";
+        var rebateEndDate = rebateType["endDate"] != "" ? Number(new Date(rebateType["endDate"])) : "";
+        var existingStartDate = rebateTypesDates['{!rt.Name}'].startDate != "" ? Number(new Date(rebateTypesDates['{!rt.Name}'].startDate)) : "";
+        var existingEndDate = rebateTypesDates['{!rt.Name}'].endDate != "" ? Number(new Date(rebateTypesDates['{!rt.Name}'].endDate)) : "";
+
+        if ((rebateStartDate == "" && existingStartDate == "")
+                ||(rebateStartDate == "" && rebateEndDate <= existingStartDate)
+                || (rebateStartDate != "" && existingStartDate != "" && rebateStartDate < existingStartDate)
+                || (rebateStartDate != "" && existingStartDate == "" && rebateStartDate < existingEndDate)) {
+            rebateTypesDates['{!rt.Name}'].startDate = rebateType["startDate"];
+            existingStartDate = rebateType["startDate"] != "" ? Number(new Date(rebateTypesDates['{!rt.Name}'].startDate)) : "";
+        }
+
+        if ((rebateEndDate == "" && existingEndDate == "")
+                || (rebateEndDate == "" && rebateStartDate >= existingStartDate)
+                || (rebateEndDate != "" && existingEndDate != "" && rebateEndDate > existingEndDate)
+                || (rebateEndDate != "" && existingEndDate == "" && rebateEndDate < existingStartDate)) {
+            rebateTypesDates['{!rt.Name}'].endDate = rebateType["endDate"];
+        }
+    } else {
+        rebateTypesDates['{!rt.Name}'] = new Object({
+                startDate: rebateType["startDate"],
+                endDate: rebateType["endDate"]
+        });
+    }
+</apex:repeat>
+
+// ---------------This block of code calculates the date ranges to be blocked. ------------------------
+// ---------------It helps the user to choose easily the rebate type dates on datepickers--------------
+var disableDatesMap = new Object();
+var rt;
+
+// In order to sort the rebate types, those that don't have endDate, will have today as endDate
+for (rt in rebateTypesMap) {
+    // loop through the array that contains each key
+    for (var i = 0; i < rebateTypesMap[rt].length; i++) {
+        if (rebateTypesMap[rt][i].startDate != "" && rebateTypesMap[rt][i].endDate == "") {
+            rebateTypesMap[rt][i].endDate = new Date();
+        }
+    }
+}
+
+for (rt in rebateTypesMap) {
+    if (rebateTypesMap[rt].length > 1) {
+
+        // Order rebate types by endDate ascending
+        rebateTypesMap[rt].sort(function(a, b) {
+            // Turn your strings into dates, and then subtract them
+            // to get a value that is either negative, positive, or zero.
+            return new Date(a.endDate) - new Date(b.endDate);
+        });
+
+        // Loop through the array that contains each key
+        for (var i = 1; i < rebateTypesMap[rt].length; i++) {
+            // The records are sorted upwardly by endDate. So... I have to loop starting from index 1 to find gaps.
+            // If there is one record per rebate type name there is no need to loop through.
+            if (rebateTypesMap[rt][i].startDate != ""
+                    && rebateTypesMap[rt][i].startDate != rebateTypesMap[rt][i-1].endDate) {
+                generateDatesToBlock(rt, rebateTypesMap[rt][i - 1].endDate, rebateTypesMap[rt][i].startDate);
+            }
+        }
+
+    }
+}
+
+/**
+ * Build an array with dates contained into a period of time (2 dates). Generate dates starting from endDate.
+ *
+ * @name the rebate type name
+ * @endDate beginning date
+ * @startDate finish date
+ */
+function generateDatesToBlock(name, endDate, startDate) {
+    // If the map doesn't contain the key... add it.
+    if (!disableDatesMap.hasOwnProperty(name)) {
+        disableDatesMap[name] = [];
+    }
+    endDate = localToUTC(endDate);
+    startDate = localToUTC(startDate);
+
+    // Generates dates to block.
+    while (endDate < startDate) {
+        var stringDate = convertDateToString(endDate);
+        disableDatesMap[name].push(stringDate);
+        endDate.setDate(endDate.getDate() + 1);
+    }
+}
+
+function isDateIntoBlockedRange(value, element) {
+    var rebateName = $(element).attr('data-rebatetype');
+    var stringDate = "";
+    if (value) {
+        var installationDate = localToUTC(value);
+        stringDate = convertDateToString(installationDate);
+    }
+    return (disableDatesMap[rebateName] && $.inArray(stringDate, disableDatesMap[rebateName]) != -1);
+}
+
+function isDateWithinRange(value, element) {
+    // Get the start and end date from the current input element.
+    var $el = $(element);
+    var minDate = $el.datepicker('option', 'minDate');
+    var maxDate = $el.datepicker('option', 'maxDate');
+    var installationDate = value;
+    // Format dates to UTC.
+    installationDate = installationDate ? localToUTC(installationDate) : '';
+    maxDate = maxDate ? localToUTC(maxDate) : '';
+    minDate = minDate ? localToUTC(minDate) : '';
+    // minDate can be null for cases where a set of rebate type records doesn't have a Start Install Date.
+    // maxDate shouldn't be null since it defaults to today's date.
+    if (minDate == '') {
+        return (installationDate && installationDate <= maxDate);
+    } else {
+        return (installationDate && installationDate >= minDate && installationDate <= maxDate);
+    }
+}
+
+function convertDateToString(value) {
+    var d = new Date(value.toString());
+    // Months in js goes from 0 to 11, but the datepicker works from 1-12. Sum 1 to the month.
+    var month = ((d.getMonth() + 1) < 10) ? '0' + (d.getMonth() + 1) : (d.getMonth() + 1);
+    // Datepicker works with mm/dd/yyyy, so this is valid 03/20/2016 but this is not valid 3/20/2016
+    var day = (d.getDate() < 10) ? '0' + d.getDate() : d.getDate();
+    var stringDate = month + '-' + day + '-' + (d.getFullYear());
+    return stringDate;
+}
+//---------------------------------------------------- End Block ------------------------
+
+function checkInstallationDate(name, id) {
+    var thisId = id;
+    var thisName = name;
+    var thisInstallDate = Number(new Date($('#installationDate'+thisId).val()));
+
+    var arrayLength = rebateTypes.length;
+    for (var i = 0; i < arrayLength; i++) {
+        var thisObj = rebateTypes[i];
+        var rebateName = thisObj.name;
+        var rebateStartDate = null;
+        var rebateEndDate = null;
+
+        if (thisObj.startDate != '') {
+            rebateStartDate = Number(new Date(thisObj.startDate));
+        }
+
+        if (thisObj.endDate != '') {
+            rebateEndDate = Number(new Date(thisObj.endDate));
+        }
+
+        var rebateAmount = Math.floor(thisObj.amount);
+
+        if (thisName==rebateName) {
+            if ((thisInstallDate > rebateStartDate || rebateStartDate == null) && (thisInstallDate < rebateEndDate || rebateEndDate == null)) {
+                $('#rebateAmount'+thisId).empty();
+                $('#rebateAmount'+thisId).append('$'+rebateAmount);
+                $('#rebateNote'+thisId).empty();
+
+                var dateFormat = $.datepicker.formatDate('mm/dd/yy', localToUTC(thisObj.endDate));
+
+                if (thisObj.active=='false') {
+                    var msg='Rebate Amount is $'+rebateAmount+' because the date is before '+dateFormat;
+                    $('#rebateNote'+thisId).append(msg);
+                    $('#rebateNote'+thisId).show();
+                    // Updates checkbox/date value within the inactive rebateType Id
+                    // since it just display the active ones.
+                    $('#rebateType'+thisId).val(thisObj.id);
+                    $('#installationDate'+thisId).prop('name', 'installationDate' + thisObj.id);
+                } else {
+                    $('#rebateNote'+thisId).hide();
+                    // Make sure that updates checkbox/date value within the active
+                    // rebateType Id.
+                    $('#rebateType'+thisId).val(thisId);
+                    $('#installationDate'+thisId).prop('name', 'installationDate' + thisId);
+                }
+            }
+        }
+    }
+    calculateTotalIncentive();
+}
+
+function calculateTotalIncentive() {
+    var total = new Number(0.00);
+
+    $('#rebate .rbTypes input[type=checkbox]:checked').each(function() {
+        var $tr = $(this).parent().parent().parent();
+        var rebateAmount = $tr.find('.rbTypeValue').text();
+
+        if (rebateAmount && rebateAmount != '') {
+            rebateAmount = $.trim(rebateAmount);
+            total = total + parseInt(rebateAmount.substr(1, rebateAmount.length - 1));
+        }
+
+    });
+
+    $('.incentiveTotal h2:last-child').html('$' + total);
+}
+
+</script>
+<style>
+.btn-primary{
+    background-color: rgb(66, 139, 202);
+    background-image:none;
+}
+input.btn[type="submit"]:hover{
+    background-color: #04C!important;
+}
+
+.filename {
+    font-size: 12px;
+    color: #666;
+    padding-left:5px;
+    padding-top:4px;
+}
+#msg {
+    padding: 20px 0;
+    color: #08c;
+}
+#error {
+    padding: 20px 0;
+    color: red;
+}
+.fileLabel {
+    width: 355px;
+    text-align: right;
+    float: left;
+    margin: 0;
+}
+.fileField {
+    width: 250px;
+    float: left;
+    text-align: left;
+    padding-left: 10px;
+    margin: 0;
+}
+.fileMsg {
+    width: 250px;
+    text-align: left;
+    float: left;
+    color: #666;
+}
+.fileMsg2 {
+    width: 100%;
+    text-align: right;
+    float: left;
+    color: #666;
+    font-size: 90%;
+}
+
+.checkboxContainer {
+    width: 20px;
+    text-align: left;
+    float: left;
+    padding-top: 2px;
+}
+
+.checkboxContainer label.error {
+    width: 200px;
+}
+
+.checkboxLabel {
+    width: 80px;
+    text-align: left;
+    float: left;
+    padding-top: 5px;
+}
+
+#programDocumentsTable{
+    width: 100%;
+}
+
+#programDocumentsTable tr td{
+    padding-bottom: 10px;
+}
+
+#programDocumentsTable tr td.label-column{
+    text-align: right !important;
+}
+
+label.error {
+    padding: 0 0 !important;
+}
+
+input, textarea, .uneditable-input {
+    width: 180px;
+}
+
+#notes{
+    width:98%;
+    height:100px;
+    margin-bottom:20px;
+}
+
+div.control-label-div{
+    float:left;
+    width:190px;
+}
+
+.form-horizontal .control-label {
+    width: 180px;
+}
+
+div.controls{
+    width:inherit;
+    float:left;
+    margin-left:0 !important;
+}
+
+div.searchDiv {
+    float:left;
+    margin-left: 10px !important;
+}
+
+.dropdown .caret {
+    margin-top: 17px;
+}
+
+.popover-content{
+    font-size:80%;
+}
+
+
+textarea{ resize:none }
+
+span.note{
+    font-size: 75%;
+    color: #676767;
+}
+
+div.searchButton{
+    cursor:pointer;
+    border-radius:5px;
+    padding:5px;
+    border:solid 1px #BBBBBB;
+    width:230px;
+    font-weight:bold;
+    background: #EEEEEE;
+}
+
+#conversation{
+    border: solid 1px #9fc7f5;
+    padding: 20px;
+    background-color: #dfecf2;
+    margin-top: 20px;
+    border-radius:8px;
+    -moz-border-radius:8px;
+    font-size: 90%;
+}
+
+#conversation h2{
+    float:left;
+    width:170px;
+}
+
+#showConversation{
+    display:none;
+    margin-top:20px;
+}
+
+.subtitles-comments{
+    font-size: 13px;
+    cursor: default;
+    font-style: italic;
+    margin-bottom: 0;
+}
+
+div.incentiveTotal {
+    width: 860px;
+    height: 60px;
+    padding: 10px 8px 0 8px;
+    border-top:1px solid #6c6c6c;
+}
+
+div.incentiveTotal h2:first-child {
+    float: left;
+    line-height: 0;
+}
+
+div.incentiveTotal h2:last-child {
+    float: right;
+    padding-right: 80px;
+    line-height: 0;
+}
+
+.disableRefrigerantSystem, .disableComprehensiveKicker {
+    opacity: 0.65;
+}
+</style>
+</head>
+<body>
+
+    <div class="container">
+        <c:BIGACQCHeader />
+        <apex:outputPanel rendered="{!$CurrentPage.parameters.msg=='err'}">
+            <div id="error">
+                The following attachment(s) cannot be more than 5MB:
+                <ul>
+                <apex:outputPanel rendered="{!$CurrentPage.parameters.f1=='1'}"><li>Customer Rebate Application Form</li></apex:outputPanel>
+                <apex:outputPanel rendered="{!$CurrentPage.parameters.f2=='1'}"><li>Cost Estimate(s) Application Form</li></apex:outputPanel>
+                <apex:outputPanel rendered="{!$CurrentPage.parameters.f3=='1'}"><li>QM Service Agreement Addendum</li></apex:outputPanel>
+                <apex:outputPanel rendered="{!$CurrentPage.parameters.f4=='1'}"><li>Supplemental Document</li></apex:outputPanel>
+                </ul>
+            </div>
+        </apex:outputPanel>
+
+        <div id="mainContent">
+            <div class="cushion">
+    <apex:form prependId="false" id="rebate_form" styleClass="form-horizontal rebate_form" enctype="multipart/form-data">
+        <input type="hidden" name="appId" value="{!$CurrentPage.parameters.appId}" />
+        <input type="hidden" name="inputName" id="inputName" value="{!application.Building_Name__c}" />
+        <h1 class="page-header">Customer Rebate Application</h1>
+        <div id="refrigerantInfoMsg"></div>
+        <div id="comprehensiveKickerInfoMsg"></div>
+        <apex:pageMessages escape="false"/>
+        <c:BIGPortalApplicationHeader application="{!application}" />
+        <input type="hidden" name="unitId" id="unitId" value="{!application.Unit__c}" />
+        <input type="hidden" name="rebateIdsString" id="rebateIdsString" />
+        <input type="hidden" name="fdsi" id="fdsi" value="{!application.Unit__r.FDSI_ID__c}"/>
+
+        <br/>
+
+        <p>Customers participating in the Pacific Gas and Electric Co. (PG&amp;E) Residential AC Quality Care (ACQC) Program are eligible for cash rebates up to ${!MaximumRebate} for qualifying HVAC quality maintenance measures for each system in a single family or duplex home.</p>
+        <p>To apply for these rebates, Participating Contractors need to complete the form below and attach, in the Program Documents section below, a scanned copy of the Customer Rebate Application Form that has been completed and signed by the PG&amp;E customer. For residences with multiple systems, a separate Customer Rebate Application Form must be submitted for each system qualifying for the program.</p>
+
+        <h2 class="sub-header">1. SELECT ASSESSMENT</h2>
+        <p>Select the SA Mobile site job you would like to submit a rebate application.  Selecting an assessment will auto populate many of the fields below. You will be able to edit the fields. </p>
+        <div class="row clearfix form-horizontal">
+            <div class="control-group">
+                <div class="control-label-div">
+                    <label class="control-label">Site Zip Code <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="Search by the Zip Code and then select the SA Mobile Assessment from the table. If you cannot find the right SA Mobile site, please contact us at <a href='mailto:acqualitycare@builditgreen.org'>acqualitycare@builditgreen.org</a>"><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></label>
+                </div>
+                <div class="controls form-search">
+                    <div class="input-append">
+                        <input type="text" name="inputSiteZipCodeSearch" id="inputSiteZipCodeSearch" class="span3 search-query" maxlength="5" value=""/>
+                        <button id="searchSiteZipCode" type="button" class="btn btn-primary disabled">Search&nbsp;<i class="icon-search icon-white"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <h2 class="sub-header"><span class="numbering">2. </span>COMPLETE UNIT INFORMATION</h2>
+        <div class="row clearfix">
+            <div class="span6 no-margin">
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">Technician * <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="Please select the technician that performs the asssessment (application will be returned if the technician is not correct). If you cannot find the right technician, please contact us at <a href='mailto:acqualitycare@builditgreen.org'>acqualitycare@builditgreen.org</a>"><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></label>
+                    </div>
+                    <div class="controls">
+                        <select name="technician" id="technician">
+                            <option value="">Please select one...</option>
+                        <apex:repeat value="{!Technicians}" var="technician">
+                            <apex:outputPanel rendered="{!technician.Id==application.Technician__c}">
+                            <option value="{!technician.Id}" selected="true">{!technician.Name}</option>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!technician.Id!=application.Technician__c}">
+                            <option value="{!technician.Id}">{!technician.Name}</option>
+                            </apex:outputPanel>
+                        </apex:repeat>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="span6 no-margin">
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">Unit *</label>
+                    </div>
+                    <div class="controls">
+                        <input type="text" name="inputUnit" id="inputUnit" value="{!IF($CurrentPage.parameters.inputUnit!='', $CurrentPage.parameters.inputUnit, application.Unit__r.Name)}" readonly="readonly" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">PG&amp;E Sticker Number * <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="The number on the program sticker affixed by the technician to the Customer's HVAC condenser unit and the completed Customer Rebate Application Form."><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></label>
+                    </div>
+                    <div class="controls">
+                        <input type="text" name="inputStickerNumber" id="inputStickerNumber" value="{!application.PG_E_Sticker_Number__c}" maxlength="7" onblur="doValidation()"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="sub-header"><span class="numbering">3. </span>COMPLETE CUSTOMER INFORMATION</h2>
+        <div class="row clearfix">
+            <div class="span6 no-margin">
+                <div class="control-group">
+                        <div class="control-label-div">
+                    <label class="control-label">Customer Name *</label>
+                    </div>
+                    <div class="controls">
+                        <input type="text" name="inputCustomerName" id="inputCustomerName" value="{!application.Building_Name__c}" readonly="readonly" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">Address *</label>
+                    </div>
+                    <div class="controls">
+                        <apex:inputField id="inputAddress" value="{!application.Building_Street_Address__c}" onblur="doValidation()" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">City *</label>
+                    </div>
+                    <div class="controls">
+                        <apex:inputField id="inputCity" value="{!application.Building_City__c}" onblur="doValidation()"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">State *</label>
+                    </div>
+                    <div class="controls">
+                        <input type="text" name="inputState" id="inputState" value="{!application.Building_State__c}" readonly="readonly" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">Zip *</label>
+                    </div>
+                    <div class="controls">
+                        <apex:inputField id="inputZip" value="{!application.Building_ZIP_Code__c}" onblur="doValidation()"/>
+                    </div>
+                </div>
+            </div>
+            <div class="span6 no-margin">
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">Phone Number *</label>
+                    </div>
+                    <div class="controls">
+                        <input type="text" name="inputPhone" id="inputPhone" value="{!application.Customer_Phone__c}" placeholder="(xxx) xxx-xxxx" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">Customer Email</label>
+                    </div>
+                    <div class="controls">
+                        <apex:inputField id="inputEmail" value="{!application.Customer_Email__c}" onblur="doValidation()"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">PG&amp;E Electric SAID * <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="The PG&amp;E Service Account Identification Number (SAID) found on the customer's PG&amp;E electric service account. (note: this cannot be the customer's gas SAID number)"><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></label>
+                    </div>
+                    <div class="controls">
+                        <apex:inputField id="inputSaid" value="{!application.Electric_Account_Number__c}" html-maxlength="10" onblur="doValidation()"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-div">
+                    <label class="control-label">Rebate Payee * <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="Please select the rebate recipient. If Contractor is selected, Payment Release Authorization needs to be completed in the Customer Rebate Application Form."><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></label>
+                    </div>
+                    <div class="controls">
+                        <div class="checkboxContainer">
+                            <apex:outputPanel layout="none" rendered="{!(application.Id == null && application.Payable_to_Contractor__c == false) || (application.Id != null && application.Payable_to_Contractor__c == true)}">
+                                <input type="radio" id="inputPayee" name="inputPayee" value="off" />
+                            </apex:outputPanel>
+                            <apex:outputPanel layout="none" rendered="{!application.Id != null && application.Payable_to_Contractor__c == false}">
+                                <input type="radio" id="inputPayee" name="inputPayee" value="off" checked="true"/>
+                            </apex:outputPanel>
+                            <!-- we don't need the last combination true && true because Payable_To_Contractor is false by default -->
+                        </div>
+                        <div class="checkboxLabel">Customer</div>
+                        <div class="checkboxContainer">
+                            <apex:outputPanel layout="none" rendered="{!application.Id != null && application.Payable_to_Contractor__c == true}">
+                                <input type="radio" id="inputPayee" name="inputPayee" value="on" checked="true"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel layout="none" rendered="{!(application.Id == null || application.Id != null) && application.Payable_to_Contractor__c == false}">
+                                <input type="radio" id="inputPayee" name="inputPayee" value="on"/>
+                            </apex:outputPanel>
+                        </div>
+                        <div class="checkboxLabel">Contractor</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="sub-header"><span class="numbering">4. </span>SELECT MEASURES INSTALLED</h2>
+        <p>Select the maintenance measure(s) for the customer's unit that apply to this incentive application.</p>
+        <table id="rebate" class="table table-striped">
+            <thead>
+                <tr>
+                    <th width="10%"></th>
+                    <th width="75%">HVAC Quality Maintenance Measure</th>
+                    <th width="15%">Rebate Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- START - MEASURES LIST: EDIT MODE -->
+                <apex:outputPanel layout="none" rendered="{!application.Status__c == null || application.Status__c == 'Created' || application.Status__c == 'Correction Required'}">
+                    <apex:repeat value="{!ActiveNonRetiredRebateTypes}" var="type">
+                        <tr class="rbTypes">
+                            <td align="center" style="text-align:center">
+                                <apex:outputPanel rendered="{!RebateTypesUser[type.Name]==1}">
+                                    <input type="checkbox" class="rebateId" name="rebateType" id="rebateType{!type.Id}" value="{!type.Id}" xxx="{!type.Name}" checked="true" onclick="showInstallationDate(this.checked, '{!type.Id}', '{!type.Name}')" onchange="validateAfterCheck()" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!RebateTypesUser[type.Name]==0}">
+                                    <input type="checkbox" class="rebateId" name="rebateType" id="rebateType{!type.Id}" value="{!type.Id}" xxx="{!type.Name}" onclick="showInstallationDate(this.checked,'{!type.Id}', '{!type.Name}')" onchange="validateAfterCheck()" />
+                                </apex:outputPanel>
+                            </td>
+                            <td>
+                                {!type.Name}<br/>
+                                <apex:outputPanel rendered="{!type.Description__c != null}" styleClass="rebateDescription">
+                                    {!type.Description__c}<br/>
+                                </apex:outputPanel>
+                                <span class="note">({!type.Prerequisite__c})</span>
+                                <apex:outputPanel rendered="{!type.Installation_Date_Required__c==true}">
+                                    <div class="installationDateDiv control-group" id="installationDateDiv{!type.Id}">
+                                    {!type.Date_Label__c}:
+                                    <input type="text" class="installationDate valid_date" data-msg-required="{!type.Date_Label__c} is required." name="installationDate{!type.Id}" id="installationDate{!type.Id}" value="{!InstallationDates[type.Name]}" label="{!type.Date_Label__c}" data-rebateType="{!type.Name}" data-rebateTypeId="{!type.Id}" data-rule-isDateValid="true" readonly="true"/>
+                                    </div>
+                                    <apex:outputPanel rendered="{!RebateTypesUser[type.Name]==1}">
+                                        <script>$(document).ready(function(){$("#installationDateDiv{!type.Id}").show();checkInstallationDate('{!type.Name}','{!type.id}');});</script>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!type.Name == 'Enhanced Time Delay Relay'}">
+                                    <div class="installationDateDiv control-group dependentPicklistDiv" id="equipmentTypeDelay">
+                                        <div>Make/Model: <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="Please select the program approved fan delay relay that was installed."><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a>
+                                            <select name="delayOptions" id="delayOptions" class ="dependentPicklist">
+                                                <option value="">Select a Make/Model</option>
+                                                <apex:repeat value="{!delayDependentOptions}" var="delayDependentOption">
+                                                    <apex:outputPanel rendered="{!delayDependentOption == delaySelectedOption}">
+                                                        <option value="{!delayDependentOption}" selected="true">
+                                                            <apex:outputText value="{!delayDependentOption}"/>
+                                                        </option>
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!delayDependentOption != delaySelectedOption}">
+                                                        <option value="{!delayDependentOption}">
+                                                            <apex:outputText value="{!delayDependentOption}"/>
+                                                        </option>
+                                                    </apex:outputPanel>
+                                                </apex:repeat>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <apex:outputPanel rendered="{!RebateTypesUser[type.Name]==1}">
+                                        <script>$(document).ready(function(){$("#equipmentTypeDelay").show();});</script>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!type.Name == 'Replacement Blower Motor'}">
+                                    <div class="installationDateDiv control-group dependentPicklistDiv" id="equipmentTypeMotor">
+                                        <div>Make/Model: <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="Please select the program approved blower motor that was installed."><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a>
+                                            <select name="motorOptions" id="motorOptions" class ="dependentPicklist">
+                                                <option value="">Select a Make/Model</option>
+                                                <apex:repeat value="{!motorDependentOptions}" var="motorDependentOption">
+                                                    <apex:outputPanel rendered="{!motorDependentOption == motorSelectedOption}">
+                                                        <option value="{!motorDependentOption}" selected="true">
+                                                            <apex:outputText value="{!motorDependentOption}"/>
+                                                        </option>
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!motorDependentOption != motorSelectedOption}">
+                                                        <option value="{!motorDependentOption}">
+                                                            <apex:outputText value="{!motorDependentOption}"/>
+                                                        </option>
+                                                    </apex:outputPanel>
+                                                </apex:repeat>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <apex:outputPanel rendered="{!RebateTypesUser[type.Name]==1}">
+                                        <script>$(document).ready(function(){$("#equipmentTypeMotor").show();});</script>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!type.Name=='Bonus Kicker'}">
+                                    <input type="hidden" class="installationDate required valid_date"
+                                            data-msg-required="{!type.Date_Label__c} is required."
+                                            name="installationDate{!type.Id}" id="installationDate{!type.Id}"
+                                            value="{!InstallationDates[type.Name]}" label="{!type.Date_Label__c}" />
+                                </apex:outputPanel>
+                            </td>
+                            <td>
+                                <div id="rebateAmount{!type.Id}" class="rbTypeValue">
+                                    <apex:outputText value="{0, Number, $#,###}"><apex:param value="{!type.Rebate_Amount__c}" /></apex:outputText>
+                                </div>
+                                <span id="rebateNote{!type.Id}" class="note"></span>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </apex:outputPanel>
+                <!-- END - MEASURES LIST: EDIT MODE -->
+                <!-- START - MEASURES LIST: VIEW MODE -->
+                <apex:outputPanel layout="none" rendered="{!application.Status__c == 'Submitted' || application.Status__c == 'Resubmitted' || application.Status__c == 'Canceled' || application.Status__c == 'Rejected' || application.Status__c == 'Approved' || application.Status__c == 'Rebate Issued'}">
+                    <apex:repeat value="{!measures}" var="measure">
+                        <tr>
+                            <td align="center" style="text-align:center">
+                                <input type="checkbox" checked="true"/>
+                            </td>
+                            <td>
+                                {!measure.Name}<br/>
+                                <apex:outputPanel rendered="{!measure.Rebate_Type__r.Description__c != null}" styleClass="rebateDescription">
+                                    {!measure.Rebate_Type__r.Description__c}<br/>
+                                </apex:outputPanel>
+                                <div class="viewModeDiv installDate">
+                                    <label>{!measure.Rebate_Type__r.Date_Label__c}</label>
+                                    <input type="text" value="{!InstallationDates[measure.Rebate_Type__r.Name]}" readonly="true"/>
+                                </div>
+                                <apex:outputPanel layout="none" rendered="{!measure.Make_Model__c != null}">
+                                   <div class="viewModeDiv">
+                                        <label>Make/Model</label>
+                                        <input type="text" value="{!measure.Make_Model__c}" readonly="true"/>
+                                    </div>
+                                </apex:outputPanel>
+                            </td>
+                            <td>
+                                <div>
+                                    <apex:outputText value="{0, Number, $#,###}">
+                                        <apex:param value="{!measure.Incentive_Amount__c}" />
+                                    </apex:outputText>
+                                </div>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </apex:outputPanel>
+                <!-- END - MEASURES LIST: VIEW MODE -->
+            </tbody>
+        </table>
+
+        <div class="incentiveTotal">
+            <h2>Estimated Incentive Total:</h2>
+            <h2>
+                <apex:outputText value="{0, number, '$' 0}">
+                    <apex:param value="{!ACQCIncentiveTotal}" />
+                </apex:outputText>
+            </h2>
+        </div>
+
+        <h2 class="sub-header"><span class="numbering">5. </span>UPLOAD PROGRAM DOCUMENTS</h2>
+        <p>Add documents (maximum file size is 5MB)</p>
+
+        <div class="form-inline clearfix">
+            <table id="programDocumentsTable">
+                <tr>
+                    <td class="label-column" width="50%">
+                        <label class="control-label2" >Customer Rebate Application Form (Signed and Dated) * <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="A scanned copy of <strong>page 3</strong> of the Customer Rebate Application, completed and signed by the customer, including the customer's electric SAID and the affixed smaller PG&amp;E sticker matching the larger sticker on the customer's unit."> <img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></label>
+                    </td>
+                    <td>
+                        <div class="input-append input-append2" style="margin-left:10px;">
+                            <apex:outputPanel layout="none" rendered="{!application.Status__c == null || application.Status__c == 'Created' || application.Status__c == 'Correction Required'}">
+                                <apex:inputFile value="{!attachment1.body}" filename="{!attachment1.name}" filesize="{!att1size}" contentType="{!attachment1.contentType}" id="rebateForm" styleClass="rebateForm" style="font-size:12px;height:25px;line-height:15px;" onchange="validateFileField('1')" />
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!ApplicationFiles['Rebate Form'].Id != null}">
+                                <br/>
+                                <img src="{!URLFOR($Resource.bigacqc, '/img/file_icon.png')}"/>
+                                <div class="filename-container">
+                                    <apex:outputLink rendered="{!NOT(ApplicationFiles['Rebate Form'].S3_Uploaded__c) && ApplicationFiles['Rebate Form'].Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, ApplicationFiles['Rebate Form'].Attachments[0].Id)}" target="_blank">{!ApplicationFiles['Rebate Form'].File_Name__c}</apex:outputLink>
+                                    <apex:outputPanel styleClass="filename" rendered="{!ApplicationFiles['Rebate Form'].S3_Uploaded__c}">{!ApplicationFiles['Rebate Form'].File_Name__c}</apex:outputPanel>
+                                </div>
+                                <div class="fileError1"></div>
+                            </apex:outputPanel>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label-column">
+                        <label class="control-label2" >Cost Estimate(s) / Invoice * <a data-toggle="tooltip" class="help-icon" data-html="true" data-placement="right" data-trigger="hover" data-content="The Contract/Estimate/Invoice provided to the homeowner which lists work performed for each measure being requested by the customer and the cost for the work. With the exception of the Assessment, the itemized cost estimate for each measure <strong>MUST</strong> be greater than requested rebate."> <img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a><br/>
+                        </label>
+                    </td>
+                    <td>
+                        <div class="input-append input-append2" style="margin-left:10px;">
+                            <apex:outputPanel layout="none" rendered="{!application.Status__c == null || application.Status__c == 'Created' || application.Status__c == 'Correction Required'}">
+                                <apex:inputFile value="{!attachment2.body}" filename="{!attachment2.name}" filesize="{!att2size}" contentType="{!attachment2.contentType}" id="costEstimate" styleClass="costEstimate" style="font-size:12px;height:25px;line-height:15px;" onchange="validateFileField('2')" />
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!ApplicationFiles['Cost Estimate'].Id != null}">
+                                <br/>
+                                <img src="{!URLFOR($Resource.bigacqc, '/img/file_icon.png')}"/>
+                                <div class="filename-container">
+                                    <apex:outputLink rendered="{!NOT(ApplicationFiles['Cost Estimate'].S3_Uploaded__c) && ApplicationFiles['Cost Estimate'].Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, ApplicationFiles['Cost Estimate'].Attachments[0].Id)}" target="_blank">{!ApplicationFiles['Cost Estimate'].File_Name__c}</apex:outputLink>
+                                    <apex:outputPanel styleClass="filename" rendered="{!ApplicationFiles['Cost Estimate'].S3_Uploaded__c}">{!ApplicationFiles['Cost Estimate'].File_Name__c}</apex:outputPanel>
+                                </div>
+                                <div class="fileError2"></div>
+                            </apex:outputPanel>
+                        </div>
+                    </td>
+                </tr>
+                <apex:outputPanel layout="none" rendered="{!showQMServiceAgreement}">
+                    <tr>
+                        <td class="label-column">
+                            <label class="control-label2" >QM Service Agreement Addendum <a data-toggle="tooltip" class="help-icon" data-placement="right" data-trigger="hover" data-content="If applicable, a scanned copy of the customer-signed Service Agreement Addendum to your standard service agreement. As prerequisites to this measure, the customer must be requesting the Assessment measure incentive as well as the Airflow Correction and/or the Retrofit Motor measure incentive."><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a><br/>
+                                <span class="field-cite">(Required if One-year QM Service Agreement is checked)</span><br/>
+                            </label>
+                        </td>
+                        <td>
+                            <div class="input-append input-append2" style="margin-left:10px;">
+                                <apex:outputPanel layout="none" rendered="{!application.Status__c == null || application.Status__c == 'Created' || application.Status__c == 'Correction Required'}">
+                                    <apex:inputFile value="{!attachment3.body}" filename="{!attachment3.name}" filesize="{!att3size}" contentType="{!attachment3.contentType}" id="qmAddendum" styleClass="qmAddendum" style="font-size:12px;height:25px;line-height:15px;" onchange="validateFileField('3')" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!ApplicationFiles['QM Addendum'].Id != null}">
+                                    <br/>
+                                    <img src="{!URLFOR($Resource.bigacqc, '/img/file_icon.png')}"/>
+                                    <div class="filename-container">
+                                        <apex:outputLink rendered="{!NOT(ApplicationFiles['QM Addendum'].S3_Uploaded__c) && ApplicationFiles['QM Addendum'].Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, ApplicationFiles['QM Addendum'].Attachments[0].Id)}" target="_blank">{!ApplicationFiles['QM Addendum'].File_Name__c}</apex:outputLink>
+                                        <apex:outputPanel styleClass="filename" rendered="{!ApplicationFiles['QM Addendum'].S3_Uploaded__c}">{!ApplicationFiles['QM Addendum'].File_Name__c}</apex:outputPanel>
+                                    </div>
+                                    <div class="fileError3"></div>
+                                </apex:outputPanel>
+                            </div>
+                        </td>
+                    </tr>
+                </apex:outputPanel>
+                <tr>
+                    <td class="label-column">
+                        <label class="control-label2" for="autoLiabilityInsurance">Supplemental Documents / Photos <a data-toggle="tooltip" class="help-icon" data-placement="right" data-trigger="hover" data-content="Additional documentation or photos that may be helpful in processing the rebate. (ex. CVA calculations, Photos)"><img src="{!URLFOR($Resource.acqccontractor, 'images/icon-help.png')}" /></a></label>
+                    </td>
+                    <td>
+                        <div class="input-append" style="margin-left:10px;">
+                            <apex:outputPanel layout="none" rendered="{!application.Status__c == null || application.Status__c == 'Created' || application.Status__c == 'Correction Required'}">
+                                <apex:inputFile value="{!attachment4.body}" filename="{!attachment4.name}" filesize="{!att4size}" contentType="{!attachment4.contentType}" id="supplementalDoc" styleClass="supplementalDoc" style="font-size:12px;height:25px;line-height:15px;" onchange="validateFileField('4')" />
+                            </apex:outputPanel>
+                            <apex:repeat value="{!SupplementalDocs}" var="doc">
+                                <br/>
+                                <img src="{!URLFOR($Resource.bigacqc, '/img/file_icon.png')}"/>
+                                <div class="filename-container">
+                                    <apex:outputLink rendered="{!NOT(doc.S3_Uploaded__c) && doc.Attachments.size > 0}" value="{!URLFOR($Action.Attachment.Download, doc.Attachments[0].Id)}" target="_blank">{!doc.File_Name__c}</apex:outputLink>
+                                    <apex:outputPanel styleClass="filename" rendered="{!doc.S3_Uploaded__c}">{!doc.File_Name__c}</apex:outputPanel>
+                                </div>
+                            </apex:repeat>
+                            <div class="fileError4"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h2 class="sub-header">NOTES</h2>
+        <div id="conversation">
+            <textarea id="notes" name="notes" placeholder="Anything else you'd like to tell us about this application or the attached documents?"><apex:outputPanel layout="none" rendered="{!application.Status__c=='Correction Required' || application.Status__c == 'Created'}">{!application.Notes__c}</apex:outputPanel></textarea>
+
+            <apex:outputPanel layout="none" rendered="{!application.Status__c!=null && application.Status__c != 'Created'}">
+                <apex:repeat value="{!Notes}" var="note">
+                    <div class="conversation-note">
+                        <strong>{!note.CreatedBy.Name} [<apex:outputField value="{!note.CreatedDate}"/>]:</strong>
+                        <apex:outputPanel rendered="{!note.Note__c != ''}">
+                            <br/>
+                            <label class="subtitles-comments"><strong>Issues: </strong></label>
+                            <apex:outputField value="{!note.Note__c}"/>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!note.Additional_Comments_Note__c != ''}">
+                            <br/>
+                            <label class="subtitles-comments"><strong>Comments: </strong></label>
+                            <apex:outputField value="{!note.Additional_Comments_Note__c}"/>
+                        </apex:outputPanel>
+                        <br/><br/>
+                    </div>
+                </apex:repeat>
+                <a href="javascript:showConversation();" class="showConversation" id="showConversation">Show All</a>
+                <script>
+                    if ($(".conversation-note").size() > 2) {
+                        var $el = $(".conversation-note");
+                        $("#showConversation").show();
+                        $el.hide();
+                        $($el.get(0)).show();
+                        $($el.get(1)).show();
+                    }
+                </script>
+            </apex:outputPanel>
+        </div>
+
+        <apex:variable var="submitLabel" value="{!IF(application.Status__c=='Correction Required','Resubmit','Submit')}"/>
+        <apex:outputPanel layout="none" rendered="{!application.Status__c==null || application.Status__c == 'Created' || application.Status__c == 'Correction Required'}">
+        <p class="center" style="padding-top:20px" id="buttonsRow">
+            <button id="cancelButton" class="btn" type="button">Cancel</button>&nbsp;
+            <apex:commandButton id="saveButton" action="{!saveDraft}" styleClass="btn btn-primary" style="background-color: rgb(66, 139, 202)!important;background-image:none!important;" onclick="prepareSaveValidation(); return populateRebateIdsString();" value="Save"/>&nbsp;
+            <apex:commandButton id="submitButton" action="{!saveRebate}" styleClass="btn btn-primary" style="background-color: rgb(66, 139, 202)!important;background-image:none!important;" onclick="prepareSubmitValidation(); return populateRebateIdsString();" value="{!submitLabel}"/>
+        </p>
+        </apex:outputPanel>
+    </apex:form>
+    <apex:outputPanel layout="none" rendered="{!application.Status__c!=null && application.Status__c != 'Created' && application.Status__c != 'Correction Required'}">
+    <script>
+        $(".rebate_form input[type=text], .rebate_form input[type=file], .rebate_form input[type=checkbox], .rebate_form input[type=radio], .rebate_form textarea, .rebate_form select").each(function(){
+            $(this).attr("disabled","true");
+        });
+
+        $("div.searchButton").css("cursor","default");
+        $("div.searchButton").css("opacity","0.5");
+    </script>
+    </apex:outputPanel>
+    <div id="formLoading">
+        Processing request...
+        <img src="{!$Resource.loader}" />
+    </div>
+    </div>
+    </div>
+    <c:BIGPortalFooter />
+    <c:BIGPortalAHUSurvey />
+</div>
+</body>
+</html>
+</apex:page>

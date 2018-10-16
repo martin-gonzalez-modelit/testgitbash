@@ -1,0 +1,4 @@
+<apex:page standardController="Account" extensions="et4ae5.SendActionsControl" showHeader="false">
+	<c:MarketingCloudActions sObjRecord="{!mysObject}" sObjType="Account"/>
+	<apex:outputText value="{!Account.Name}" rendered="false" />			
+</apex:page>

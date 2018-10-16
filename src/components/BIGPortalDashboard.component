@@ -1,0 +1,33 @@
+<apex:component >
+	<div class="main-dashboard"></div>
+
+<!-- Get WrapperApplications -->
+<apex:attribute name="HUPcontroller" description="Instantiate HUP controller" type="BIGPortalManageDashboardController" />
+<apex:attribute name="ACQCController" description="Instantiate ACQC Controller" type="BIGPortalHVACDashboardController" />
+
+
+
+<apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/custom/dashboard/dashboardPlugin.js')}"/>
+<script>
+	// create a wrapper objet to pass to plugin 
+	var boxes = [];
+	
+	var pre_applications = {
+		title: "Pre-Installation Snapshot",
+		wrapperApplications: {!HUPcontroller.AdvancePreApplicationsByStatus}
+	}
+	
+	var post_applications = {
+		title: "Post-Installation Snapshot",
+		wrapperApplications: {!HUPController.AdvancePostApplicationsByStatus}
+	}
+	
+	// crate array of boxes 
+	boxes.push(pre_applications, post_applications);
+	
+	$('.main-dashboard').createBoxes(boxes, {
+		mainStatus : 'Rebate Issued',
+		siteUrl : '{!$Site.Prefix}/'
+	});
+</script>
+</apex:component>

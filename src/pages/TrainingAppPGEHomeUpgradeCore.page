@@ -1,0 +1,3 @@
+<apex:page >
+<flow:interview name="Training_App_PGE_Home_Upgrade_Core"/>
+</apex:page>

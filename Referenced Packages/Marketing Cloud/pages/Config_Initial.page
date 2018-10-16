@@ -1,0 +1,84 @@
+<apex:page controller="et4ae5.initialConfigControl" action="{!initialize}" tabStyle="ExactTargetPhoenix__tab">
+    <c:ConfigIncludes />
+    <c:ETHeader message="{!$Label.et4ae5__etconfig}" image="configuration.png" />
+    <apex:pageMessages />
+    <apex:form >
+        <input id="hiddenElementId" type="hidden" />
+        <script type="text/javascript">
+            function setFocus() 
+            {
+                document.getElementById("hiddenElementId").focus();
+            }
+            function addLoadEvent(func) 
+            {
+                var oldonload = window.onload;
+                if (typeof window.onload != 'function')
+                {
+                    window.onload = func;
+                } 
+                else
+                {
+                    window.onload = function() 
+                    {
+                        if (oldonload)
+                        {
+                            oldonload();
+                        }
+                        func();
+                    }
+                }
+            }
+            addLoadEvent(setFocus);
+        </script>
+        <apex:outputPanel id="pageMessages">
+            <c:pageMessages closableErrors="true" />
+        </apex:outputPanel>
+        <apex:pageBlock mode="view" id="thisDiv">
+            <i> 
+                {!$label.msg0033}
+            </i>
+            <br />
+            <br />
+            <br />
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0018}">
+                    <apex:outputLabel value="{!$Label.et4ae5__etusername}" />
+                    <apex:inputText value="{!etUsername}" style="width:250px" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0017}">
+                    <apex:outputLabel value="{!$Label.et4ae5__etpassword}" />
+                    <apex:inputSecret value="{!etPassword}" style="width:250px" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0034}">
+                    <apex:outputLabel value="{!$Label.et4ae5__reenterpw}" />
+                    <apex:inputSecret value="{!etConfirmP}" onkeyup="changeREP(this,'{!$Component.FirstPW}','{!$Component.RepLbl}');" style="width:250px" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0072}">
+                    <apex:outputLabel value="{!$Label.et4ae5__authapiurl}" />
+                    <apex:outputPanel id="panel">
+                        <apex:outputPanel rendered="{!AAURLro}" layout="block">
+                            <apex:outputLabel value="{!authApiUrl} " style="width:250px" />
+                            <apex:commandButton value="{!$Label.et4ae5__editurl}" action="{!editAAURL}" rerender="panel" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!AAURLed}">
+                            <apex:inputText value="{!authApiUrl}" style="width:250px"/>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <div align="center">
+                <table border="0">
+                    <tr>
+                        <td width="500px">
+                            <apex:outputPanel id="NextBtn" layout="block">
+                                <apex:commandButton id="AdvaBtn" value="{!$Label.et4ae5__next}" action="{!iSave}" disabled="{!buttonDisabled}" rendered="{!configAbsent}" />
+                                <apex:commandButton id="SaveBtn" value="{!$Label.et4ae5__next}" onclick="{!outstandingSendsReport}" action="{!next}" disabled="{!buttonDisabled}" rendered="{!configExists}" />
+                                <apex:commandButton id="CancBtn" value="{!$Label.et4ae5__cancel}" action="{!iCanc}" rendered="{!configExists}" />
+                            </apex:outputPanel>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

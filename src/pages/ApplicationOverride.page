@@ -1,0 +1,71 @@
+<apex:page standardController="Application__c" extensions="ApplicationOverride" action="{!getRecordType}" showHeader="true">
+
+    <style type="text/css">
+        #tabPanel {}
+        .appTab {background-color:white; }
+        .activeTab, .inactiveTab, .disabledTab {background-image:none; font-size:1em; }
+        .activeTab {font-weight:bold; background-color:white; color:black; }
+        .inactiveTab {font-weight:normal; background-color:white; color:black; }
+        .disabledTab {font-weight:normal; background-color:lightgrey; color:black; }
+    </style>
+    <!-- main Application detail -->
+
+    <chatter:feedWithFollowers entityId="{!app.Id}" />
+    <apex:detail subject="{!app.Id}" showChatter="false" title="true" inlineEdit="true" relatedList="false" />
+
+    <!-- Sub-Applications with tabbed view -->
+    <apex:pageBlock title="Sub Applications">
+        <apex:tabPanel switchType="client" value="{!tabFocus}" id="tabPanel" tabClass="activeTab" inactiveTabClass="inactiveTab" disabledTabClass="disabledTab" contentStyle="font-size:1em; ">
+            <!-- Post-Installation Sub-Application -->
+            <apex:tab styleClass="appTab" label="Pre-Installation" name="preApp" id="tabPreApp" disabled="{!preApp = null}">
+                <apex:detail subject="{!preApp}" title="false" inlineEdit="true" relatedList="true" rendered="{!preApp != null}" />
+            </apex:tab>
+            <!-- Post-Installation Sub-Application -->
+            <apex:tab styleClass="appTab" label="Post-Installation" name="postApp" id="tabPostApp" disabled="{!postApp = null}">
+                <apex:detail subject="{!postApp}" title="false" inlineEdit="true" relatedList="true" rendered="{!postApp != null}" />
+            </apex:tab>
+        </apex:tabPanel>
+    </apex:pageBlock>
+
+    <!-- Application related lists -->
+    <apex:relatedList list="PGE_Customer_Applications__r" />
+    <apex:relatedList list="Reviews__r" />
+    <apex:relatedList list="Measures__r" />
+    <apex:relatedList list="Corrections__r" />
+    <apex:relatedList list="Cases__r" />
+    <apex:relatedList list="Engagement_Applications__r" />
+    <apex:relatedList list="Rebate_Applications__r" />
+    <apex:relatedList list="ActivityHistories" />
+
+    <!-- field histories is an exception which cannot be rendered using relatedList -->
+    <apex:pageBlock id="histories" title="Application History">
+        <apex:pageBlockTable value="{!app.Histories}" var="h">
+            <apex:column headerValue="Date" value="{!h.CreatedDate}"/>
+            <apex:column headerValue="User">
+                <apex:outputLink value="/{!h.CreatedBy}">
+                    {!h.CreatedBy.Name}
+                </apex:outputLink>
+            </apex:column>
+            <!-- <apex:column headerValue="Connection" value="{!h.Connection}"/> -->
+            <apex:column headerValue="Action">
+                <apex:outputField rendered="{!h.oldvalue == null && h.newvalue == null}" value="{!h.field}"/>
+                <apex:outputPanel rendered="{!h.oldvalue != null || h.newvalue != null}">
+                    <apex:outputPanel layout="none" rendered="{!h.oldvalue != null && h.newvalue == null}">
+                        Deleted {!h.oldvalue} in <strong><apex:outputField value="{!h.field}"/></strong>.
+                    </apex:outputPanel>
+                    <apex:outputPanel layout="none" rendered="{!(h.oldvalue == null && h.newvalue != null) || (h.oldvalue != null && h.newvalue != null)}">
+                        Changed <strong><apex:outputField value="{!h.field}"/></strong>
+                        <apex:outputText value=" from {0}{!h.oldvalue}" rendered="{!h.oldvalue != null}">
+                            <apex:param value="{!IF(AND(h.field != 'Owner', $ObjectType.Application__c.fields[h.field].Type == 'currency'), '$', '')}"/>
+                        </apex:outputText>
+                        <apex:outputText escape="false" value=" to <strong>{0}{!h.newvalue}</strong>." rendered="{!h.newvalue != null}">
+                            <apex:param value="{!IF(AND(h.field != 'Owner', $ObjectType.Application__c.fields[h.field].Type == 'currency'), '$', '')}"/>
+                        </apex:outputText>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:column>
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+    <apex:relatedList list="Survey_Responses__r" />
+
+</apex:page>

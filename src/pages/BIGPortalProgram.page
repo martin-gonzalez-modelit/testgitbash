@@ -1,0 +1,62 @@
+<apex:page showheader="false" sidebar="false" cache="false"   standardstylesheets="false" controller="BIGPortalProgramController" action="{!checkPortal}" >
+<html>
+<meta charset="UTF-8" />
+<head> 
+<title>PG&amp;E Portal</title>
+<apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/jquery.js')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bootstrap.min.css')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bigutopia.css')}"/>
+<apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/bootstrap.min.js')}"/>
+<style>
+	div.container{
+		margin-top:100px;
+	}
+	
+	div.row-fluid div{
+		border:solid 1px #AAA;
+		height:200px;
+		padding:30px;
+		border-radius:10px;
+		-moz-border-radius:10px;
+		margin-left:auto;
+		margin-right:auto; 		
+	}
+	
+	div.row-fluid div p{
+		margin-left:auto;
+		margin-right:auto;
+		padding-left:auto;
+		padding-right:auto;
+		display:table;
+		font-size:120%;
+		font-weight:bold;
+	}
+
+	div.row-fluid div p.img{
+		height:100px;
+	}
+</style>
+</head>
+<body>
+ 
+    <div class="container">
+	   	<legend>Please select the Program you would like to log in to.</legend>
+        <div class="row-fluid">
+            <div class="span6">
+	            <apex:outputLink value="BIGPortalProgram?p=HU">
+            	<p class="img"><img src="{!URLFOR($Resource.bigutopia, '/img/pge_euc_logo.gif')}"/></p>
+            	<p>Home Upgrade Program</p>
+	            </apex:outputLink>
+            </div>
+            <div class="span6">
+	            <apex:outputLink value="BIGPortalProgram?p=ACQC">
+            	<p class="img"><img src="{!URLFOR($Resource.bigacqc, '/img/pge_acqc_logo.png')}"/></p>
+            	<p>AC Quality Care Rebate Program</p>
+	            </apex:outputLink>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+</apex:page>

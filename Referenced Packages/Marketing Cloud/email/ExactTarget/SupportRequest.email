@@ -1,0 +1,17 @@
+{!$Label.suprtReq}
+
+{!$Label.emailSend}:
+{!SupportRequest__c.Send_Definition__c}
+{!SupportRequest__c.Send_DefinitionId__c}
+
+{!$Label.requestdBy}:
+{!SupportRequest__c.CreatedBy} {!$Label.on} {!SupportRequest__c.CreatedDate}
+{!$Label.id}: {!SupportRequest__c.CreatedById}
+{!$Label.email}: {!SupportRequest__c.RequestEmail__c}
+{!$Label.phone}: {!SupportRequest__c.RequestPhone__c}
+
+
+{!$Label.comment}:
+{!SupportRequest__c.Comment__c}
+
+{!SupportRequest__c.Link}

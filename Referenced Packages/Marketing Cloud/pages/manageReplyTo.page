@@ -1,0 +1,133 @@
+<apex:page Controller="et4ae5.initialConfigControl" tabstyle="et4ae5__SendDefinition__c" action="{!initManageReplyTo}">
+    <apex:stylesheet value="{!$Resource.et4ae5__ExactTargetStyles}" />
+    <c:ConfigIncludes />
+    <c:ETHeader message="{!$Label.et4ae5__replytomgmt}" image="replyTo.png" />
+    <apex:pageMessages />
+    <apex:outputPanel id="pageMessages">
+        <c:pageMessages closableErrors="true" />
+    </apex:outputPanel>
+    <apex:form id="theForm">
+        <style>
+            .editPop
+            {
+                position: absolute;
+                display: block;
+                overflow: auto;
+                width: 450px;
+                max-height: 300px;
+                margin: 0;
+                padding: 0;
+                border: 2px #ccc solid;         
+            }
+            #opaque 
+            {
+                position: fixed;
+                top: 0px;
+                left: 0px;
+                width: 100%;
+                height: 100%;
+                z-index: 99;
+                display: none;
+                background-color: gray;
+                filter: alpha(opacity = 80);
+                opacity: 0.8;
+                -moz-opacity: 0.8;
+                -khtml-opacity: 0.8
+            }
+            #popupcontent
+            {
+                position: fixed;
+                top: 35%;
+                left: 25%;
+                width: 50%;
+                display: none;
+                overflow: auto;
+                z-index: 100;
+                padding: 5px;
+                line-height: 20px;
+        }       
+        </style>
+        <apex:actionFunction name="deleteReplyTo" action="{!deleteReplyTo}" rerender="theTable,popupOp">
+            <apex:param name="row" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="canceled" action="{!replyToCancel}" rerender="theTable" />
+        <apex:actionFunction name="editReplyTo" action="{!editReplyTo}" oncomplete="javascript:showpopup();" rerender="theTable,popupOp">
+            <apex:param name="row" value="" />
+            <apex:param name="friendly" value="" />
+            <apex:param name="email" value="" />
+        </apex:actionFunction>
+        <div id="opaque" />
+        <apex:outputPanel id="popupOp" >
+            <div id="popupcontent" >
+                <apex:pageBlock >
+                    <apex:pageBlockSection columns="1" >
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="{!$Label.et4ae5__friendlyname}" />
+                            <apex:inputText value="{!thisReplyTo.friendly}" style="width:400px" />
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="{!$Label.et4ae5__email}" />
+                            <apex:inputText value="{!thisReplyTo.email}" style="width:400px" />
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockButtons location="bottom" >
+                        <apex:commandButton value="{!$Label.et4ae5__ok}" action="{!replyToAdd}" oncomplete="javascript:hidepopup();" rerender="theTable,pageMessages"/>
+                        <apex:commandButton value="{!$Label.et4ae5__cancel}" action="{!replyToCancel}" oncomplete="javascript:hidepopup();" rerender="theTable"/>
+                    </apex:pageBlockButtons>
+                </apex:pageBlock>
+            </div>
+        </apex:outputPanel>
+        <apex:pageBlock id="theTable" >
+            <apex:outputPanel id="out" >
+                <apex:actionstatus id="status" startText="{!$Label.et4ae5__loadingcal}">
+                    <apex:facet name="stop">
+                        <apex:outputPanel >
+                            <apex:pageBlockTable value="{!callList}" var="call" >
+                                <apex:column style="width:1%;">
+                                    <a href="#" onclick="javascript:editReplyTo( '{!JSENCODE(call.row)}','{!JSENCODE(call.friendly)}','{!JSENCODE(call.email)}' );">
+                                        {!$Label.et4ae5__edit} 
+                                    </a>
+                                </apex:column>
+                                <apex:column style="width:2%;" >
+                                    <a href="#" onclick="javascript:deleteReplyTo( '{!JSENCODE(call.row)}' );">
+                                        {!$Label.et4ae5__delete} 
+                                    </a>
+                                </apex:column>
+                                <b> 
+                                    <apex:column style="width:31%;{!call.style}" value="{!call.friendly}">
+                                        <apex:facet name="header">
+                                            {!$Label.et4ae5__friendlyname}
+                                        </apex:facet>
+                                    </apex:column> 
+                                    <apex:column style="width:31%;{!call.style}" value="{!call.email}" >
+                                        <apex:facet name="header">
+                                            {!$Label.et4ae5__email}
+                                        </apex:facet>
+                                    </apex:column> 
+                                </b>
+                            </apex:pageBlockTable>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:actionstatus>
+            </apex:outputPanel>
+            <apex:pageBlockButtons location="top" >
+                <apex:commandButton value="{!$Label.et4ae5__add}" oncomplete="javascript:showpopup();" action="{!addReplyToBtn}" rerender="popupOp"/>
+                <apex:commandButton value="{!$Label.et4ae5__done}" action="{!replyToCancelPr}" />
+            </apex:pageBlockButtons>
+        </apex:pageblock>
+        <script>
+            function showpopup()
+            {
+                document.getElementById('opaque').style.display='block';
+                var popUp = document.getElementById("popupcontent");
+                popUp.style.display = "block";
+            }
+            function hidepopup()
+            {
+                document.getElementById('opaque').style.display='none';
+                var popUp = document.getElementById("popupcontent");
+                popUp.style.display = "none";
+            }
+        </script>
+    </apex:form>
+</apex:page>

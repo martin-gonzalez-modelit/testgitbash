@@ -1,0 +1,141 @@
+<apex:page controller="ApplicationFileController" showHeader="false" sidebar="false">
+    <apex:includeScript value="{!URLFOR($Resource.xml2json, 'jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.xml2json, 'bootstrap.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.xml2json, 'json-to-html.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.xml2json, 'jquery-json-to-html.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.xml2json, 'xml-to-json.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.xml2json, 'json.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.xml2json, 'bootstrap.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.xml2json, 'font-awesome.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.xml2json, 'prettify.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.xml2json, 'layout.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.xml2json, 'json.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.xml2json, 'style.css')}" />
+    
+    <script type="text/javascript">
+    	var __sfdcSessionId = '{!GETSESSIONID()}';
+        window.onload = processAppFile;
+        
+        function processAppFile() {
+            $('#modalLoader').modal('show');
+            
+            // get param from url
+            var appFileId = '{!$Request.appFileId}';
+           
+            // get application file details
+            records = getAppFile(appFileId);
+            
+            if (records[0]){ 
+                var myObj = records[0]; 
+                
+                // get xml attachment
+                recordsAtt = getXmlAttachment(appFileId); 
+                
+                if (recordsAtt == 'no attachment') {
+                    myObj.JSON__c = null;
+                    sforce.connection.update([myObj]);
+                    $('#modalLoader').modal('hide');
+                    $('#main').hide();
+                    layoutDiv('output','Error: No attachment found.')
+                } else if (recordsAtt == 'invalid') {
+                    myObj.JSON__c = null;
+                    sforce.connection.update([myObj]);
+                    $('#modalLoader').modal('hide');
+                    $('#main').hide();
+                    layoutDiv('output','Error: Attachment is not an XML file.')
+                } else {
+                    if (recordsAtt[0]){ 
+                        var myObjAtt = recordsAtt[0]; 
+                        // decode Base64
+                        var attachmentBody = atob(myObjAtt.Body);
+                        var xml2json = $.xml2json(attachmentBody);
+                        var jsonRaw = JSON.stringify(xml2json);
+                        // remove quotes on values that are numbers
+                        var json = jsonRaw.replace(/"(-?(\d+\.?\d*|\.\d+))"/g,"$1");
+                        myObj.JSON__c = json;
+                        sforce.connection.update([myObj]);
+                        
+                        $('#output').hide();
+                        $('#modalLoader').modal('hide');
+                        showJsonViewer(json);
+                    } else {
+                        layoutDiv('output', 'Error: XML to JSON conversion failed.');
+                    }
+                }
+            } else {
+                layoutDiv('output', 'Error: Invalid Application File.');
+            }
+            
+        }
+        
+        function getAppFile(id) {
+            var getAppFileQuery = "SELECT Id, JSON__c FROM Application_File__c WHERE Id = '" + id + "' LIMIT 1"; 
+            result = sforce.connection.query(getAppFileQuery); 
+            return result.getArray("records"); 
+        }
+        
+        function getXmlAttachment(id) {
+            var getAttachmentQuery = "SELECT Id, Name, Body FROM Attachment WHERE ParentId = '" + id + "' LIMIT 1";
+            resultAtt = sforce.connection.query(getAttachmentQuery); 
+            
+            resultAtt = resultAtt.getArray("records");
+            
+            if (resultAtt.length > 0) {
+                var re = /(?:\.([^.]+))?$/;
+                var ext = re.exec(resultAtt[0].Name)[1]; 
+                
+                if (ext != 'xml') {
+                    return 'invalid';
+                } else {
+                    return resultAtt;
+                }
+            } else {
+                return 'no attachment';
+            }
+        }
+        
+        function showJsonViewer(json) {
+            $('#main').fadeIn();
+            visualize(jQuery.parseJSON(json));
+        }
+        
+        function layoutDiv(id, msg) {
+            document.getElementById(id).innerHTML = msg;
+        }
+    </script>
+    <script src="/soap/ajax/35.0/connection.js"></script>
+    <script src="/soap/ajax/35.0/apex.js"></script>
+    
+    <div class="container">
+        <div id="output"></div>
+        
+        <!-- Modal Start here-->
+        <div class="modal fade in" id="modalLoader" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">
+                            <span class="glyphicon glyphicon-time">
+                            </span> Please Wait
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-info progress-bar-striped active" style="width: 100%">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal ends Here -->
+    </div>
+    
+    <div id="main">
+        <h2>XML Viewer</h2>
+        <p/>
+        <p>Application File ID: {!$Request.appFileId}</p>
+        <div class="divider"></div>
+        <div id='top'></div>
+    </div>
+</apex:page>

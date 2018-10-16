@@ -1,0 +1,236 @@
+<apex:page controller="et4ae5.MCCControl" tabStyle="ExactTargetPhoenix__tab" action="{!init}" sidebar="true">
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__jQuery)}" />
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__uxds, '/js/bootstrap.js')}"/>
+    <apex:includeScript value="/soap/ajax/31.0/connection.js"/>
+    <apex:includeLightning />      
+        
+    <apex:stylesheet value="{!URLFOR($Resource.et4ae5__uxds, '/css/uxds-bootstrap.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.et4ae5__modStyle)}" />
+    <apex:stylesheet value="{!URLFOR($Resource.et4ae5__componentStyles)}" />
+    
+    <style type="text/css">
+        .btn-custom:hover {
+            background: #54698d!important;
+        }
+        .btn-custom {
+            background: #0070D2!important; 
+            color:#f2f2f2!important;
+        }
+        .btn-custom-cancel:hover {
+            background: #54698d!important;
+            color:#f2f2f2!important;
+        }
+        .btn-custom-cancel {
+            background: white!important; 
+            color:black!important;
+        }
+    </style>
+    <script>
+        $j = jQuery.noConflict();
+        $j(document).ready(function() {
+            if('{!MetadataConnectionWarning}' == 'true'){
+                $j('#divRemoteSiteSettingModal').modal({
+                    backdrop: 'static'
+                })
+                $j('#divRemoteSiteSettingModal').modal('show');
+            }
+            else {
+                initializeLightningComponent();               
+            }
+        });
+        function closeModal() {
+            Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.MCCControl.completeRemoteSiteSetting}',function(result, event) {
+                if(!event.status) {                                   
+                    $j("#divMessage").html(event.message);                                    
+                }
+                else {
+                    hideModal();
+                }
+            });            
+        }
+        function hideModal() {
+            $j('#divRemoteSiteSettingModal').modal('hide');
+            initializeLightningComponent();            
+        }
+        function createRemoteSite() { 
+            $j("#btnRemoteSiteSetting").addClass("hide");
+            $j("#btnSkip").addClass("hide");
+            $j("#divContent").addClass("hide");
+            $j("#btnOk").removeClass("hide");
+            var binding = new XMLHttpRequest();
+            var request = 
+                '<?xml version="1.0" encoding="utf-8"?>' + 
+                '<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'+
+                    '<env:Header>' + 
+                        '<urn:SessionHeader xmlns:urn="http://soap.sforce.com/2006/04/metadata">' + 
+                            '<urn:sessionId>{!$Api.Session_ID}</urn:sessionId>' + 
+                        '</urn:SessionHeader>' + 
+                    '</env:Header>' + 
+                    '<env:Body>' +
+                        '<createMetadata xmlns="http://soap.sforce.com/2006/04/metadata">' + 
+                            '<metadata xsi:type="RemoteSiteSetting">' + 
+                                '<fullName>MetadataAPI</fullName>' + 
+                                '<description>Remote Site setting to make callouts</description>' + 
+                                '<disableProtocolSecurity>false</disableProtocolSecurity>' + 
+                                '<isActive>true</isActive>' + 
+                                '<url>https://{!JSENCODE(RemoteSiteSettingURL)}</url>' +
+                            '</metadata>' +
+                        '</createMetadata>' +
+                    '</env:Body>' + 
+                '</env:Envelope>'; 
+            binding.open('POST', 'https://{!JSENCODE(Host)}/services/Soap/m/31.0');
+            binding.setRequestHeader('SOAPAction','""');
+            binding.setRequestHeader('Content-Type', 'text/xml');
+            binding.onreadystatechange = 
+                function() { 
+                    if(this.readyState==4) {
+                        var parser = new DOMParser();
+                        var doc  = parser.parseFromString(this.response, 'application/xml');
+                        var errors = doc.getElementsByTagName('errors');
+                        if(errors.length > 0) {
+                            document.getElementById('btnRemoteSiteSetting').disabled = false;
+                            var messageText = '';
+                            var isDuplicate = false;
+                            for(var errorIdx = 0; errorIdx < errors.length; errorIdx++){
+                                messageText+= errors.item(errorIdx).getElementsByTagName('message').item(0).innerHTML + '\n';
+                                if(errors.item(errorIdx).getElementsByTagName('statusCode').item(0).innerHTML == 'DUPLICATE_DEVELOPER_NAME') {
+                                    isDuplicate = true;
+                                }
+                            }
+                            if(isDuplicate) {
+                                $j("#divMessage").html('{!JSENCODE($Label.rssverified)}');
+                                $j("#divMessage").removeClass("hide");
+                            }
+                            else {
+                                $j("#divMessage").html('{!JSENCODE($Label.rsserror)}');
+                                $j("#divMessage").removeClass("hide");
+                            } 
+                        }
+                        else {
+                            $j("#divMessage").html('{!JSENCODE($Label.rsscreated)}');
+                            $j("#divMessage").removeClass("hide");
+                        }
+                    }
+                }
+            binding.send(request); 
+        }
+        function initializeLightningComponent() {
+            $Lightning.use("et4ae5:marketingcloudconfig", function() {
+            $Lightning.createComponent("et4ae5:MarketingCloudConfiguration", null, "lightning");      
+            });
+        }
+    </script>
+    <div id="lightning" />
+    <body>
+        <div class="uxds" >
+            <div class="modal fade" id="divRemoteSiteSettingModal" role="dialog" data-backdrop="static">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" >{!$Label.rssReqd}</h4>
+                        </div>
+                        <div class="modal-body" style="line-height:1.42857143; font-size: 14px;">
+                            <div id="divContent">
+                                <apex:outputText value="{!$Label.et4ae5__msg0213}" escape="false"/> <b>https://{!HTMLENCODE(RemoteSiteSettingURL)}.</b>&nbsp;<apex:outputText value="{!$Label.et4ae5__msg0214}" escape="false"/>
+                            </div>
+                            <div id="divMessage" class="alert alert-warning hide">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="pull-right">
+                                <input id="btnSkip" class="btn btn-custom-cancel" type="button" onclick="hideModal();" value="{!$Label.skip}"/>
+                                <input id="btnRemoteSiteSetting" class="btn btn-custom" type="button" onclick="createRemoteSite();" value="{!$Label.vrfyLnchWiz}"/>
+                                <input id="btnOk" class="btn btn-custom hide" type="button" onclick="closeModal();" value="{!$Label.et4ae5__okay}"/>    
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <!-- Creating a reference to lightning labels in order for them to be added to the package -->
+    <apex:outputPanel rendered="false">
+            <apex:outputText value="{!$Label.et4ae5__mccsetup}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0190}"/>
+            <apex:outputText value="{!$Label.et4ae5__iagree}"/>
+            <apex:outputText value="{!$Label.et4ae5__configint}"/>
+            <apex:outputText value="{!$Label.et4ae5__configsumm}"/>
+            <apex:outputText value="{!$Label.et4ae5__okay}"/>
+            <apex:outputText value="{!$Label.et4ae5__configmccc}"/>
+            <apex:outputText value="{!$Label.et4ae5__preinstdefwfusr}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0191}"/>
+            <apex:outputText value="{!$Label.et4ae5__preinstsesssets}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0192}"/>
+            <apex:outputText value="{!$Label.et4ae5__preinstfls}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0193}"/>
+            <apex:outputText value="{!$Label.et4ae5__preinstupdtpglyts}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0194}"/>
+            <apex:outputText value="{!$Label.et4ae5__sbscmp}"/>
+            <apex:outputText value="{!$Label.et4ae5__ipadrsses}"/>
+            <apex:outputText value="{!$Label.et4ae5__workflows}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0196}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0196a}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0196b}"/>
+            <apex:outputText value="{!$Label.et4ae5__permsets}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0197}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0197a}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0212}"/>
+            <apex:outputText value="{!$Label.et4ae5__configsuccess}"/>
+            <apex:outputText value="{!$Label.et4ae5__hlplnks}"/>
+            <apex:outputText value="{!$Label.et4ae5__description}"/>
+            <apex:outputText value="{!$Label.et4ae5__forgotjson}"/>
+            <apex:outputText value="{!$Label.et4ae5__diffjson}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0198}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0199}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0200}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0201}"/>
+            <apex:outputText value="{!$Label.et4ae5__mcapiusr}"/>
+            <apex:outputText value="{!$Label.et4ae5__username}"/>
+            <apex:outputText value="{!$Label.et4ae5__mcapiusrabbr}"/>
+            <apex:outputText value="{!$Label.et4ae5__password}"/>
+            <apex:outputText value="{!$Label.et4ae5__connect}"/>
+            <apex:outputText value="{!$Label.et4ae5__apiurl}"/>
+            <apex:outputText value="{!$Label.et4ae5__configchklst}"/>
+            <apex:outputText value="{!$Label.et4ae5__updtpglyut}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0203}"/>
+            <apex:outputText value="{!$Label.et4ae5__configchklst}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0202}"/>
+            <apex:outputText value="{!$Label.et4ae5__crtmcsysusr}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0204}"/>
+            <apex:outputText value="{!$Label.et4ae5__crtmcapiusr}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0205}"/>
+            <apex:outputText value="{!$Label.et4ae5__title}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0206}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0207}"/>
+            <apex:outputText value="{!$Label.et4ae5__atmstup}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0208}"/>
+            <apex:outputText value="{!$Label.et4ae5__strtwiz}"/>
+            <apex:outputText value="{!$Label.et4ae5__manlstup}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0209}"/>
+            <apex:outputText value="{!$Label.et4ae5__configman}"/>
+            <apex:outputText value="{!$Label.et4ae5__rssmissing}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0210}"/>
+            <apex:outputText value="{!$Label.et4ae5__sbscmperr}"/>
+            <apex:outputText value="{!$Label.et4ae5__unkerror}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0211}"/>
+            <apex:outputText value="{!$Label.et4ae5__usrcrederr}"/>
+            <apex:outputText value="{!$Label.et4ae5__mcapiusr}"/>
+            <apex:outputText value="{!$Label.et4ae5__username}"/>
+            <apex:outputText value="{!$Label.et4ae5__mcapiusrabbr}"/>
+            <apex:outputText value="{!$Label.et4ae5__password}"/>
+            <apex:outputText value="{!$Label.et4ae5__connect}"/>
+            <apex:outputText value="{!$Label.et4ae5__apiurl}"/>
+            <apex:outputText value="{!$Label.et4ae5__backtosetup}"/>
+			<apex:outputText value="{!$Label.et4ae5__hlptrain}"/>
+			<apex:outputText value="{!$Label.et4ae5__msg0193a}"/>
+			<apex:outputText value="{!$Label.et4ae5__msg0195}"/>
+			<apex:outputText value="{!$Label.et4ae5__msg0198a}"/>
+			<apex:outputText value="{!$Label.et4ae5__msg0201a}"/>
+            <apex:outputText value="{!$Label.et4ae5__msg0199x}"/>
+            <apex:outputText value="{!$Label.et4ae5__advancedsettings}"/>
+            <apex:outputText value="{!$Label.et4ae5__editapiurl}"/>  
+            <apex:outputText value="{!$Label.et4ae5__environments}"/>
+            <apex:outputtext value="{!$Label.et4ae5__hide}"/>
+            <apex:outputText value="{!$Label.et4ae5__qaenvironments}"/>
+    </apex:outputPanel>     
+</apex:page>

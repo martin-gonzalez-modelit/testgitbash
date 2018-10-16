@@ -1,0 +1,3 @@
+<apex:page standardController="et4ae5__SMSDefinition__c" extensions="et4ae5.SendActionsControl" showHeader="false">
+		<c:MarketingCloudActions sObjRecord="{!mysObject}" sObjType="SMSDefinition__c"/>		
+</apex:page>

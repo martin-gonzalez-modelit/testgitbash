@@ -1,0 +1,7 @@
+<apex:page showheader="false" sidebar="false" controller="et4ae5.ThumbnailController" action="{!initialize}">
+  <apex:form >
+    <apex:outputpanel >
+        <img src="data:image/png;base64,{!thumbnail}"/>
+    </apex:outputpanel>
+  </apex:form>
+</apex:page>

@@ -1,0 +1,107 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,force:hasSObjectName" controller="ACQCApplicationSearchController" access="global">
+<!-- Attributes -->
+<aura:attribute name="userInput" type="String"/>
+<aura:attribute name="addresses" type="String[]"/>
+<aura:attribute name="addressToSearch" type="String"/>
+<aura:attribute name="searchResults" type="Application__c[]" />
+<aura:attribute name="errorMessage" type="String" default="An error has occurred. Please search again."/>
+<aura:attribute name="noResultsFoundMessage" type="String" default="No address found."/>
+<aura:attribute name="page" type="Integer" default="1"/>
+<aura:attribute name="pages" type="Integer" default="10"/>
+<aura:attribute name="total" type="Integer" default="200"/>
+<aura:attribute name="pageSize" type="Integer" default="10" />
+<aura:attribute name="accountId" type="String" />
+<aura:attribute name="applicationUrl" type="String"/>
+<aura:attribute name="runningTests" type="Boolean" default="false"/>
+<!-- Handlers -->
+<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+<aura:handler name="change" value="{!v.addressToSearch}" action="{!c.updateSearch}"/>
+<aura:handler event="c:PaginatorPageChangeEvt" action="{!c.pageChange}"/>
+<!-- Methods. They were added for testing purposes. -->
+<aura:method name="getAddresses" action="{!c.handleKeyPress}" description="Method used to test the functionality of handleKeyPress"/>
+<aura:method name="getApplications" action="{!c.updateSearch}" description="Method used to test the functionality of updateSearch"/>
+
+<lightning:card iconName="custom:custom62" title="Search Applications by Address" class="slds-is-relative">
+    <div class="slds-tile slds-p-horizontal_medium slds-p-bottom_small">
+        Search for in process or paid AC Quality Care applications to identify measures that have already been claimed. This information can be used to discuss eligible maintenance options with customers but is not a guarantee of eligibility or payment. Customers that have received ACQC rebates in the past 5 years are not eligible for the same rebates.
+    </div>
+
+    <div class="slds-form-element slds-p-horizontal_medium slds-tile">
+        <div class="slds-form-element__control">
+            <div class="slds-combobox_container">
+                <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-combobox-lookup"
+                     aria-expanded="false"
+                     aria-haspopup="listbox"
+                     role="combobox"
+                     aura:id="listBox">
+                    <div class="slds-combobox__form-element">
+                        <span onkeydown="{!c.handleKeyDown}">
+                            <aura:if isTrue="{!v.runningTests}">
+                                <input type="search"
+                                    value="{!v.userInput}"
+                                    onkeyup="{!c.handleKeyPress}"
+                                    class="searchInput"
+                                    aura:id="inputNormal"/>
+                            <aura:set attribute="else">
+                                <lightning:input type="search"
+                                    label="search"
+                                    variant="label-hidden"
+                                    placeholder="Search for an address"
+                                    value="{!v.userInput}"
+                                    onchange="{!c.handleKeyPress}"
+                                    class="slds-show_inline"/>
+                            </aura:set>
+                            </aura:if>
+                        </span>
+                        <c:TooltipCmp class="slds-p-top_small slds-p-left_xx-small"
+                            helpText="Enter address (Street, City Zip) and select result to view details." 
+                            helpTextPosition="slds-nubbin_left"
+                            minWidth="390px"/>
+                    </div>
+
+                    <div role="listbox">
+                        <ul class="slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid"
+                            role="presentation">
+
+                            <aura:iteration items="{!v.addresses}" var="option">
+                                <a data-value="{!option}"
+                                   onclick="{!c.selectAddress}"
+                                   onmouseover="{!c.handleHover}"
+                                   class="address slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta">
+                                    <li role="presentation" class="slds-listbox__item">{!option}</li>
+                                </a>
+                            </aura:iteration>
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ui:message aura:id="error" severity="error" class="slds-m-top_medium slds-hide">{!v.errorMessage}</ui:message>
+    </div>
+    
+    <div class="slds-m-top_small slds-p-horizontal_medium">
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped">
+            <tbody>
+                <aura:iteration items="{!v.searchResults}" var="application">
+                    <tr>
+                        <td>
+                            <c:ACQCApplicationSearchListCmp aura:id="resultList" applicationUrl="{!v.applicationUrl}" accountId="{!v.accountId}" application="{!application}" />
+                        </td>
+                    </tr>
+                </aura:iteration>
+            </tbody>
+        </table>
+    </div>
+
+    <div aura:id="paginator" class="slds-m-top_large slds-p-horizontal_medium slds-hide">
+        <center>
+            <c:PaginatorCmp aura:id="paginatorCmp" page="{!v.page}" pages="{!v.pages}" total="{!v.total}"/>
+        </center>
+    </div>
+
+    <lightning:spinner aura:id="spinner" variant="brand" size="large" alternativeText="Wait until the Application records are retrieved" class="slds-hide"/>
+</lightning:card>
+
+</aura:component>

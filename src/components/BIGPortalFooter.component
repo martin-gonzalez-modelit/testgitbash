@@ -1,0 +1,12 @@
+<apex:component >
+    <footer>
+        <div id="footer">
+            <div class="footer-wrap">
+                    <p>&quot;PG&amp;E&quot; refers to Pacific Gas and Electric Company, a subsidiary of PG&amp;E Corporation. 
+                       © {!YEAR(TODAY())} Pacific Gas and Electric Company. All rights reserved. 
+                       These offerings are funded by California utility customers and administered by PG&amp;E under the auspices of the California Public Utilities Commission.</p>
+            </div>
+        </div><!--end of footer div-->
+        <site:googleAnalyticsTracking />
+    </footer><!--end of footer-->
+</apex:component>

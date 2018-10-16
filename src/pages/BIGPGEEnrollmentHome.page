@@ -1,0 +1,47 @@
+<apex:page showheader="false" docType="html-5.0" standardstylesheets="false" sidebar="false"
+    cache="false" applyhtmltag="false" controller="BIGPGEEnrollmentController"
+    extensions="BIGPGEEnrollmentCompanyExtension,BIGPGEEnrollmentStaffExtension,BIGPGEEnrollmentCredentialsExtension,BIGPGEEnrollmentInsuranceExtension,BIGPGEEnrollmentAgreementsExtension,BIGPGEEnrollmentRetrieveAppExtension,BIGPGEEnrollmentResendEmailExtension,BIGPGEEnrollmentLoginExtension">
+<html data-ng-app="AppEnrollment">
+<head>
+    <title>PGE Application Program Enrollment</title>
+    <link rel="icon" href="{!URLFOR($Resource.PGEEnrollmentResources, '/images/favicon.ico')}" type="image/x-icon"/>
+    <meta charset="utf-8" />
+    <meta name="description" content="PG&E Portal Enrollment" />
+    <meta name="keywords" content="PG&E,enrollment,homeupgrade,acqc" />
+    <meta name="viewport" content="width=device-width" />
+    <base href="/apex/bigpgeenrollmenthome/" />
+
+    <script>
+        window.AppEnrollment = {
+            App: {
+                urls: JSON.parse('{!links}')
+            },
+            Salesforce: {
+                api: {
+                    session_id: '{!sid}'
+                },
+                assetsURL: '{!URLFOR($Resource.PGEEnrollmentResources)}',
+                page: '{!$CurrentPage.Name}',
+                baseUrl: '{!$Site.BaseUrl}',
+                prefixUrl: '{!$Site.Prefix}'
+            }
+        };
+    </script>
+    <apex:stylesheet value="{!URLFOR($Resource.PGEEnrollmentResources, 'css/bootstrap.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.PGEEnrollmentResources, 'css/cupertino_styles.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.PGEEnrollmentResources, 'css/styles.css')}"/>
+    <script src="{!URLFOR($Resource.PGEEnrollmentResources, 'js/build/lib.min.js')}"></script>
+    <script src="{!URLFOR($Resource.PGEEnrollmentResources, 'js/build/main.min.js')}"></script>
+    <script src="/soap/ajax/40.0/connection.js" type="text/javascript"></script>
+</head>
+<body>
+    <div class="wrapper">
+        <c:BIGPGEEnrollmentHeader />
+        <div class="main-content" data-ng-view="true">
+
+        </div>
+        <c:BIGPGEEnrollmentFooter />
+    </div>
+</body>
+</html>
+</apex:page>

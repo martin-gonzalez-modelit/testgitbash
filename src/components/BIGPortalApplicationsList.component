@@ -1,0 +1,647 @@
+<apex:component controller="BIGPortalApplicationsListController" id="applicationListComponent" allowDml="true">
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap-daterangepicker/daterangepicker.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/moment/moment.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap-daterangepicker/daterangepicker.js')}"/>
+<style>
+    .page-header {
+        padding-bottom: 15px;
+        margin: 10px 0px;
+        border-bottom: 3px solid #E5E5E5;
+        font-family: 'Open Sans' !important;
+        line-height: 20px;
+        font-size: 28px;
+        font-weight: 300;
+    }
+    .tab-content {
+        overflow: hidden;
+    }
+</style>
+
+<script>
+    (function($) {
+        var DATE_OPTIONS = {
+            FORMAT: "MM/DD/YYYY"
+        }
+
+        var ahuFieldQCStatuses = JSON.parse('{!AHUFieldQCStatuses}');
+        var huFieldQCStatuses = JSON.parse('{!HUFieldQCStatuses}');
+        var ahuPrePostStatuses = JSON.parse('{!AHUPrePostStatuses}');
+        var huStatuses = JSON.parse('{!HUStatuses}');
+
+        /**
+         * Function: fnGetColumnData
+         * Purpose: Return an array of table values from a particular column.
+         * Returns: array string: 1d data array
+         * Inputs: object:oSettings - dataTable settings object. This is always the last argument past to the function
+         * int:iColumn - the id of the column to extract the data from
+         * bool:bUnique - optional - if set to false duplicated values are not filtered out
+         * bool:bFiltered - optional - if set to false all the table data is used (not only the filtered)
+         * bool:bIgnoreEmpty - optional - if set to false empty values are not filtered from the result array
+         * Author: Benedikt Forchhammer <b.forchhammer /AT\ mind2.de>
+         */
+        $.fn.dataTableExt.oApi.fnGetColumnData = function (oSettings, iColumn, bUnique, bFiltered, bIgnoreEmpty) {
+            // check that we have a column id
+            if (typeof iColumn == "undefined") {
+                return new Array();
+            }
+
+            // by default we only want unique data
+            if (typeof bUnique == "undefined") {
+                bUnique = true;
+            }
+
+            // by default we do want to only look at filtered data
+            if (typeof bFiltered == "undefined") {
+                bFiltered = true;
+            }
+
+            // by default we do not want to include empty values
+            if (typeof bIgnoreEmpty == "undefined") {
+                bIgnoreEmpty = true;
+            }
+
+            // list of rows which we're going to loop through
+            var aiRows;
+
+            // use only filtered rows
+            if (bFiltered == true) {
+                aiRows = oSettings.aiDisplay;
+            }
+            // use all rows
+            else {
+                aiRows = oSettings.aiDisplayMaster;
+            } // all row numbers
+
+            // set up data array
+            var asResultData = new Array();
+
+            for (var i = 0, c = aiRows.length; i < c; i++) {
+                iRow = aiRows[i];
+                var aData = this.fnGetData(iRow);
+                var sValue = aData[iColumn];
+
+                // ignore empty values?
+                if (bIgnoreEmpty == true && (sValue == null || sValue.length == 0)) {
+                    continue;
+                }
+                // ignore unique values?
+                else if (bUnique == true && jQuery.inArray(sValue, asResultData) > -1) {
+                    continue;
+                }
+                // else push the value onto the result data array
+                else {
+                    asResultData.push(sValue);
+                }
+            }
+
+            return asResultData;
+        }
+
+        // Custom filtering function which will filter data in Status or Field QC Status column.
+        $.fn.dataTableExt.afnFiltering.push(function( oSettings, aData, iDataIndex ) {
+            var val = "{!$CurrentPage.parameters.filterby}";
+            var res = false;
+
+            if (val != "null") {
+                var statusFilter = '';
+                var fieldQCFilter = '';
+                var currentRecordStatus = aData[4];
+                var currentRecordFieldQC = aData[8];
+
+                if (oSettings.nTable.getAttribute('id') == 'advancedApplications') {
+                    statusFilter = $("#searchAdvancedStatus").val();
+                    fieldQCFilter = $("#searchAdvancedFieldQCStatus").val();
+                } else {
+                    statusFilter = $("#searchStatus").val();
+                    fieldQCFilter = $("#searchFieldQCStatus").val();
+                }
+
+                if (($.trim(statusFilter).length === 0 || $.trim(statusFilter) === $.trim(currentRecordStatus)) 
+                        || ($.trim(fieldQCFilter).length === 0 
+                        || $.trim(fieldQCFilter) === $.trim(currentRecordFieldQC))) {
+                    res = true;
+                }
+            }
+            return res;
+        });
+
+        // Do nothing if there's a missing field from json data.
+        $.fn.dataTable.ext.errMode = 'none';
+
+        function createSelectOptions(options) {
+            var r = '<option value="">All</option>';
+
+            for (var i = 0; i < options.length; i++) {
+                r += '<option value="'+ options[i] + '">'+ options[i] + '</option>';
+            }
+
+            return r;
+        }
+
+        function toUSD(number) {
+            if (number == undefined) {
+                return '';
+            }
+            var number = number.toString(), dollars = number.split('.')[0], cents = (number.split('.')[1] || '') +'00';
+            dollars = dollars.split('').reverse().join('').replace(/(\d{3}(?!$))/g, '$1,')
+                    .split('').reverse().join('');
+            return '$' + dollars + '.' + cents.slice(0, 2);
+        }
+
+        function handleResponse(table, result) {
+            table.fnClearTable();
+            table.fnSettings().oLanguage.sEmptyTable = result.success
+                    ? 'No data available in table'
+                    : result.errorMessage;
+            table.DataTable().rows.add(result.results).draw();
+        }
+
+        function processLoading(table) {
+            var $processing = table.prev();
+            // Can't use toggle() since the parent could be hidden and wont change the display attribute for childrens.
+            $processing.css('display') == 'none' ? $processing.show() : $processing.hide();
+        }
+
+        /**
+         * Actives the last tab visited by the user. Set 'Home Upgrade' tab
+         * by default in case the user has not selected one of them.
+         */
+        function setTabSelected() {
+            // If there are no advance applications we don't need render a tab.
+            if ({!hasAdvancedHUProgram}) {
+                var tabSelected = '{!programTabSelection}' !== '' ? '{!programTabSelection}' : 'Home Upgrade';
+
+                $('[data-name="'+tabSelected+'"]').tab('show');
+
+                $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    BIGPortalApplicationsListController.saveProgramTabSelection($(e.target).data('name'),
+                        function(result, event) {
+                    });
+                });
+            }
+        }
+
+        /**
+         * Only display check number and check date if both are available (not null) and the application's status
+         * is "Rebate Issued".
+         */
+        function renderCheckColumn(data, type, full) {
+            var array = [];
+            var object = {};
+            var missingCheckData = false;
+
+            if (full.Status__c === 'Rebate Issued' && full.Rebate_Applications__r != null) {
+                for (i = 0; i < full.Rebate_Applications__r.length; i++) {
+                    var check = full.Rebate_Applications__r[i].Check__c;
+
+                    if (check !== undefined) {
+                        if(!object.hasOwnProperty(check)) {
+                            var checkDate = full.Rebate_Applications__r[i].Check_Date__c;
+                            if (checkDate != null) {
+                                var date = new Date(checkDate);
+                                // Months in js starts in 0, so... add 1 to show month to the user.
+                                date = (date.getUTCMonth() + 1) + '/' + date.getUTCDate() + '/' +  date.getUTCFullYear();
+                                array.push(check + ' (' + date + ')<br/>');
+                                object[check] = 1;
+                            } else {
+                                missingCheckData = true;
+                            }
+                        }
+                    } else {
+                        missingCheckData = true;
+                    }
+                }
+            }
+
+            if (missingCheckData) {
+                array.push('n/a');
+            }
+
+            return array.join('');
+        }
+
+        $(document).ready(function() {
+            var filterBy = "{!$CurrentPage.parameters.filterby}";
+            var minDate = moment('2000-01-01');
+            var maxDate = moment(new Date().getFullYear() + '-12-31');
+            var dateRangeSettings = {
+                autoApply: true,
+                startDate: minDate,
+                endDate: maxDate,
+                minDate: minDate,
+                maxDate: maxDate,
+                opens: 'left',
+                showDropdowns: true,
+                ranges: {
+                    'View All': [minDate, maxDate],
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'Last 90 Days': [moment().subtract(89, 'days'), moment()],
+                    'Last 180 Days': [moment().subtract(179, 'days'), moment()],
+                    'Last 365 Days': [moment().subtract(364, 'days'), moment()]
+                }
+            };
+            var dateRangeHUSettings = $.extend(true, {}, dateRangeSettings);
+            var dateRangeAHUSettings = $.extend(true, {}, dateRangeSettings);
+
+            // If there's no filter parameter then set the daterange to "Last 90 Days" by default.
+            if (filterBy == "" || huStatuses.indexOf(filterBy) == -1) {
+                dateRangeHUSettings.startDate = moment().subtract(89, 'days');
+                dateRangeHUSettings.endDate = moment();
+            }
+            // If there's no filter parameter then set the daterange to "Last 90 Days" by default.
+            if (filterBy == "" || ahuPrePostStatuses.indexOf(filterBy) == -1) {
+                dateRangeAHUSettings.startDate = moment().subtract(89, 'days');
+                dateRangeAHUSettings.endDate = moment();
+            }
+            // If there's no filter parameter then set the daterange to "Last 90 Days" by default.
+            if (filterBy == "" || huFieldQCStatuses.indexOf(filterBy) == -1) {
+                dateRangeHUSettings.startDate = moment().subtract(89, 'days');
+                dateRangeHUSettings.endDate = moment();
+            }
+            // If there's no filter parameter then set the daterange to "Last 90 Days" by default.
+            if (filterBy == "" || ahuFieldQCStatuses.indexOf(filterBy) == -1) {
+                dateRangeAHUSettings.startDate = moment().subtract(89, 'days');
+                dateRangeAHUSettings.endDate = moment();
+            }
+
+            $('#dateRangeHU').daterangepicker(dateRangeHUSettings);
+            $('#dateRangeAHU').daterangepicker(dateRangeAHUSettings);
+            $('.daterangepicker').find('input').attr('readonly', 'readonly');
+            $('.range-filter .fa-calendar').on('click', function() {
+                $(this).prev().click();
+            });
+            $('.dateRange').on('hide.daterangepicker', function(ev, picker) {
+                var _startDate = picker.startDate.format() == picker.minDate.format();
+                var _endDate = picker.endDate.format(DATE_OPTIONS.FORMAT) == picker.maxDate.format(DATE_OPTIONS.FORMAT);
+                if (_startDate && _endDate) {
+                    $(this).val('');
+                }
+            });
+            $('.dateRange').on('apply.daterangepicker', function(ev, picker) {
+                var rtName = $(this).data('rt');
+                var table = rtName == 'HUP' ? oTable : advancedTable;
+                processLoading(table);
+                var _startDate = picker.startDate.format() == picker.minDate.format();
+                var _endDate = picker.endDate.format(DATE_OPTIONS.FORMAT) == picker.maxDate.format(DATE_OPTIONS.FORMAT);
+                if (_startDate && _endDate) {
+                    $(this).val('');
+                }
+
+                var status = table.find("[id$=Status]").val();
+                var fieldQCStatus = table.find("[id$=FieldQCStatus]").val();
+
+                var jsonData = {
+                    startDate: picker.startDate.format(),
+                    endDate: moment(picker.endDate.format()).add(1, 'days').hour(0).minute(0).second(0).format(),
+                    recordType: rtName,
+                    status: status != '' ? status : null,
+                    fieldQCStatus: fieldQCStatus != '' ? fieldQCStatus : null
+                }
+                BIGPortalApplicationsListController.getFilteredApplications(JSON.stringify(jsonData),
+                        function(result, event) {
+                    if (event.status) {
+                        handleResponse(table, result);
+                    }
+                    processLoading(table);
+                });
+            });
+
+            var oTable = $('#applications').dataTable({
+                "bSort": true,
+                "bAutoWidth": false,
+                "aaSorting": [[ 0, "desc" ]],
+                "processing": true,
+                "sPaginationType": "full_numbers",
+                "oLanguage": {
+                    sInfoFiltered: ""
+                },
+                "aoColumns": [
+                    {
+                        "mData": "Name",
+                        "mRender": function ( data, type, full ) {
+                            return '<a href="{!$Site.Prefix}/BIGPortalManageApplication?action=detail&id=' + full.Id +
+                                    '" title="Home Upgrade Application">' + data+ '</a>';
+                        }
+                    },
+                    {
+                        "sClass": "align-left",
+                        "mData": "Customer_Last_Name__c" ,
+                        "mRender": function (data, type, full) {
+                            if (full.Customer_Last_Name__c != null && full.Customer_First_Name__c != null) {
+                                return full.Customer_Last_Name__c + ", " + full.Customer_First_Name__c;
+                            } else if (full.Customer_Last_Name__c != null) {
+                                return full.Customer_Last_Name__c;
+                            } else if (full.Customer_First_Name__c != null) {
+                                return full.Customer_First_Name__c;
+                            } else {
+                                return "";
+                            }
+                        }
+                    },
+                    {
+                        "mData": "Dwelling_Unit_Street_Address__c"
+                    },
+                    {
+                        "sClass": "align-right",
+                        "mData": "Incentive_Total__c",
+                        "mRender": function ( data, type, full ) {
+                            return toUSD(data);
+                        },
+                    },
+                    {
+                        "mData": "Status__c"
+                    },
+                    {
+                        "mData": "Check__c",
+                        "mRender": function(data, type, full) {
+                            return renderCheckColumn(data, type, full);
+                        }
+                    },
+                    {
+                        "mData": "Application_Submission_Date__c",
+                        "mRender": function (data, type, full) {
+                            var d = "";
+                            if (data !== undefined && data !== null) {
+                                var d = new Date(data);
+                                // Months in js starts in 0, so... add 1 to show month to the user.
+                                d = (d.getMonth() + 1) + '/' + d.getDate() + '/' +  d.getFullYear();
+                            }
+                            return d;
+                        }
+                    },
+                    {
+                        "mData": "Name",
+                        "mRender": function (data, type, full) {
+                            if (full.CreatedBy != null) {
+                                if (full.CreatedBy.FirstName != null && full.CreatedBy.LastName != null) {
+                                    return full.CreatedBy.LastName + ", " + full.CreatedBy.FirstName;
+                                } else if (full.CreatedBy.LastName != null) {
+                                    return full.CreatedBy.LastName;
+                                } else if (full.CreatedBy.FirstName != null) {
+                                    return full.CreatedBy.FirstName;
+                                }
+                            }
+                            return "";
+                        }
+                    },
+                    {
+                        "mData": "Field_QC_Status__c"
+                    }
+                ]
+        });
+
+        $("#applications thead").append("<tr id='searchFilters'><td><div><input type='text' placeholder='Search'></div></td>"
+                + "<td><div><input type='text' placeholder='Search'></div></td>"
+                + "<td><div><input type='text' placeholder='Search'></div></td>"
+                + "<td><div><input type='text' placeholder='Search'></div></td>"
+                + "<td><select id='searchStatus'></select></td>"
+                + "<td><div><input id='searchCheck' type='text' placeholder='Search'></div></td>"
+                + "<td><div><input id='searchInitialSubmission' type='text' placeholder='Search'></div></td>"
+                + "<td><div><input id='searchCreatedBy' type='text' placeholder='Search'></div></td>"
+                + "<td><select id='searchFieldQCStatus'></select></td></tr>");
+
+        $("#applications thead tr td :input").keyup( function () {
+            oTable.fnFilter(this.value, $("#applications thead tr td :input").index(this));
+        });
+
+        $("#searchStatus").html(createSelectOptions(huStatuses))
+                .change(function(e,data) {
+                    var $dateRange = oTable.parent().prev().find('.dateRange');
+                    $dateRange.trigger('apply.daterangepicker', $dateRange.data('daterangepicker'))
+                })
+                .val("{!$CurrentPage.parameters.filterby}").trigger("change");
+
+        $("#searchFieldQCStatus").html(createSelectOptions(huFieldQCStatuses))
+                .change(function(e,data) {
+                    var $dateRange = oTable.parent().prev().find('.dateRange');
+                    $dateRange.trigger('apply.daterangepicker', $dateRange.data('daterangepicker'))
+                })
+                .val("{!$CurrentPage.parameters.filterby}").trigger("change");
+
+        // Check if there are advance HUP applications to render the table.
+        if ({!hasAdvancedHUProgram}) {
+            var advancedTable = $('#advancedApplications').dataTable({
+                "bSort": true,
+                "bAutoWidth": false,
+                "aaSorting": [[ 0, "desc" ]],
+                "processing": true,
+                "sPaginationType": "full_numbers",
+                "oLanguage": {
+                    sInfoFiltered: ""
+                },
+                "aoColumns": [
+                    {
+                        "mData": "Name",
+                        "mRender": function (data, type, full) {
+                            var pageAction = full.Status__c == 'Pre-Install Approved' ? 'detail' : 'view';
+                            return '<a href="{!$Site.Prefix}/BIGPortalAdvancedHUApplication?action=' + pageAction
+                                    + '&id=' + full.Id + '" title="Advanced Home Upgrade Application">' + data + '</a>';
+                        }
+                    },
+                    {
+                        "sClass": "align-left",
+                        "mData": "Customer_First_Name__c",
+                        "mRender": function ( data, type, full ) {
+                            if (full.Customer_Last_Name__c != null && full.Customer_First_Name__c != null) {
+                                return full.Customer_Last_Name__c + ", " + full.Customer_First_Name__c;
+                            } else if (full.Customer_Last_Name__c != null) {
+                                return full.Customer_Last_Name__c;
+                            } else if (full.Customer_First_Name__c != null) {
+                                return full.Customer_First_Name__c;
+                            } else {
+                                return "";
+                            }
+                        }
+                    },
+                    { "mData": "Dwelling_Unit_Street_Address__c" },
+                    {
+                        "mData": "Incentive_Total__c",
+                        "mRender": function ( data, type, full ) {
+                            if (full.Sub_Applications__r != null) {
+                                for (var i in full.Sub_Applications__r.records) {
+                                    //take a record from the list of records
+                                    var obj = full.Sub_Applications__r[i];
+                                    //goes through each object on the record
+                                    for (var ii in obj) {
+                                        //every record can contain more than 1 object
+                                        var fo = obj[ii];
+                                        var rt = fo["RecordType"]["Name"];
+                                        if (obj.length !== 'undefined'){
+                                            if (obj.length == 1) {
+                                                return toUSD(fo["Total_Incentive__c"]);
+                                            } else {
+                                                if (rt == "POST-APP") {
+                                                    return toUSD(fo["Total_Incentive__c"]);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            return toUSD(data);
+                        },
+                        "sClass": "align-right"
+                    },
+                    { "mData": "Status__c" },
+                    {
+                        "mData": "Check__c",
+                        "mRender": function(data, type, full) {
+                            return renderCheckColumn(data, type, full);
+                        }
+                    },
+                    {
+                        "mData": "Application_Submission_Date__c",
+                        "mRender": function (data, type, full) {
+                            var d = "";
+                            if (data !== undefined && data !== null) {
+                                var d = new Date(data);
+                                // Months in js starts in 0, so... add 1 to show month to the user.
+                                d = (d.getMonth() + 1) + '/' + d.getDate() + '/' +  d.getFullYear();
+                            }
+                            return d;
+                        }
+                    },
+                    {
+                        "mData": "Name",
+                        "mRender": function (data, type, full) {
+                            if (full.CreatedBy != null) {
+                                if (full.CreatedBy.FirstName != null && full.CreatedBy.LastName != null) {
+                                    return full.CreatedBy.LastName + ", " + full.CreatedBy.FirstName;
+                                } else if (full.CreatedBy.LastName != null) {
+                                    return full.CreatedBy.LastName;
+                                } else if (full.CreatedBy.FirstName != null) {
+                                    return full.CreatedBy.FirstName;
+                                }
+                            }
+
+                            return "";
+                        }
+                    },
+                    {
+                        "mData": "Field_QC_Status__c"
+                    }
+                ]
+            });
+
+            $("#advancedApplications thead").append("<tr id='searchAdvancedFilters'><td><div><input type='text' "
+                    + "placeholder='Search'></div></td>"
+                    + "<td><div><input type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input type='text' placeholder='Search'></div></td>"
+                    + "<td><select id='searchAdvancedStatus'></select></td>"
+                    + "<td><div><input id='searchCheck' type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input id='searchPreAppSubmission' type='text' placeholder='Search'></div></td>"
+                    + "<td><div><input id='searchCreatedByAHU' type='text' placeholder='Search'></div></td>"
+                    + "<td><select id='searchAdvancedFieldQCStatus'></select></td></tr>");
+
+            $("#advancedApplications thead tr td :input").keyup( function () {
+                advancedTable.fnFilter(this.value, $("#advancedApplications thead tr td :input").index(this));
+            });
+
+            $("#searchAdvancedStatus").html(createSelectOptions(ahuPrePostStatuses))
+                    .change(function(e,data) {
+                        var $dateRange = advancedTable.parent().prev().find('.dateRange');
+                        $dateRange.trigger('apply.daterangepicker', $dateRange.data('daterangepicker'));
+                    })
+                    .val("{!$CurrentPage.parameters.filterby}").trigger("change");
+
+            $("#searchAdvancedFieldQCStatus").html(createSelectOptions(ahuFieldQCStatuses))
+                    .change(function(e,data) {
+                        var $dateRange = advancedTable.parent().prev().find('.dateRange');
+                        $dateRange.trigger('apply.daterangepicker', $dateRange.data('daterangepicker'));
+                    })
+                    .val("{!$CurrentPage.parameters.filterby}").trigger("change");
+
+        }
+
+            // Set the last tab visited by the user.
+            setTabSelected();
+        });
+    }(jQuery));
+</script>
+
+<apex:attribute name="portalAccountId" description="Id of the portal Account"
+                  type="String" required="true" assignTo="{!accountId}"/>
+
+<apex:attribute name="advanceHUProgram" description="Has advanced HU Program"
+                  type="Boolean" required="true" assignTo="{!hasAdvancedHUProgram}"/>
+                <div class="page-header">Applications</div>
+                <div id="errorMessages"></div>
+                <apex:outputPanel rendered="{!hasAdvancedHUProgram}" layout="none">
+                    <ul class="nav nav-tabs table-tabs">
+                        <li class="active"><a href="#homeUpgrade" data-name="Home Upgrade" data-toggle="tab">Home Upgrade</a></li>
+                        <li class=""><a href="#advancedHomeUpgrade" data-name="Advanced Home Upgrade" data-toggle="tab">Advanced Home Upgrade</a></li>
+                    </ul>
+                </apex:outputPanel>
+                <div class="tab-content">
+                    <!-- HOME UPGRADE TAB -->
+                    <div class="tab-pane active" id="homeUpgrade">
+                        <a href="{!$Site.Prefix}/BIGPortalManageApplication?action=new" class="btn btn-primary {!IF(isHUSuspended || isHUTerminated,'disabled','')}" tabindex="{!IF(isHUSuspended || isHUTerminated,'-1','')}">
+                            <i class="icon-plus icon-white" style="margin-top:3px;"></i>
+                            Start an Application
+                        </a>
+                        <div class="form-group range-filter">
+                            <label class="range-label">Created Date Range</label>
+                            <div class="daterangepicker_input">
+                                <input id="dateRangeHU" class="form-control active dateRange" type="text" name="dateRangeHU" data-rt="HUP" readonly="readonly" />
+                                <i class="fa fa-calendar glyphicon glyphicon-calendar"></i>
+                            </div>
+                        </div>
+                        <!--  c:BIGPortalToogleApplicationList colNames="Customer,Address,Est. Incentive,Status,Check No.,Submitted On,Created By,Field QC Status" colIndexes="1,2,3,4,5,6,7,8" hiddenColumns="5,8" hasAdvanceHU="{!hasAdvancedHUProgram}"/-->
+                        <table id="applications" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 74px;">App No.</th>
+                                    <th style="min-width: 68px;">Customer</th>
+                                    <th style="min-width: 58px;">Address</th>
+                                    <th style="min-width: 90px;">Est. Incentive</th>
+                                    <th>Status</th>
+                                    <th style="min-width: 75px;">Check No.</th>
+                                    <th style="min-width: 94px;">Submitted On</th>
+                                    <th style="min-width: 75px;">Created By</th>
+                                    <th>Field QC Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot></tfoot>
+                        </table>
+                    </div>
+                    <apex:outputPanel rendered="{!hasAdvancedHUProgram}" layout="none">
+                        <!-- ADVANCED HOME UPGRADE TAB -->
+                        <div class="tab-pane" id="advancedHomeUpgrade">
+                            <a href="{!$Site.Prefix}/BIGPortalAdvancedHUApplication?action=new" class="btn btn-primary {!IF(isAHUSuspended,'disabled','')}" tabindex="{!IF(isAHUSuspended,'-1','')}">
+                                <i class="icon-plus icon-white" style="margin-top:3px;"></i>
+                                Start an Application
+                            </a>
+                            <div class="form-group range-filter">
+                                <label class="range-label">Created Date Range</label>
+                                <div class="daterangepicker_input">
+                                    <input id="dateRangeAHU" class="form-control active dateRange" type="text" name="dateRangeAHU" data-rt="AHU" readonly="readonly" />
+                                    <i class="fa fa-calendar glyphicon glyphicon-calendar"></i>
+                                </div>
+                            </div>
+                            <!--  c:BIGPortalToogleApplicationList colNames="Customer,Address,Est. Incentive,Status,Check No.,Submitted On,Created By,Field QC Status" colIndexes="1,2,3,4,5,6,7,8" hiddenColumns="5,8" hasAdvanceHU="{!hasAdvancedHUProgram}"/-->
+                            <table id="advancedApplications" class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width: 74px;">App No.</th>
+                                        <th style="min-width: 68px;">Customer</th>
+                                        <th style="min-width: 58px;">Address</th>
+                                        <th style="min-width: 90px;">Est. Incentive</th>
+                                        <th>Status</th>
+                                        <th style="min-width: 75px;">Check No.</th>
+                                        <th style="min-width: 94px;">Submitted On</th>
+                                        <th style="min-width: 75px;">Created By</th>
+                                        <th>Field QC Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot></tfoot>
+                            </table>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+</apex:component>

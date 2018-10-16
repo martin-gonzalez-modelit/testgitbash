@@ -1,0 +1,48 @@
+<apex:page standardStylesheets="false">
+
+    <apex:includeLightning />     
+    <apex:stylesheet value="{!URLFOR($Resource.et4ae5__componentStyles)}" /> 
+        
+    <div id="lightning" />
+
+    <script>
+    $Lightning.use("et4ae5:BusinessUnitManagementApp", function() {
+        $Lightning.createComponent("et4ae5:BusinessUnitManagement", null, "lightning");      
+    });
+
+    </script>
+    
+<apex:outputPanel rendered="false">
+		<apex:outputText value="{!$Label.et4ae5__previous}" />
+		<apex:outputText value="{!$Label.et4ae5__next}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmt}" />
+		<apex:outputText value="{!$Label.et4ae5__msg0035}" />
+		<apex:outputText value="{!$Label.et4ae5__save}" />
+		<apex:outputText value="{!$Label.et4ae5__cancel}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtableheaders}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtnodatalabel}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtnodatamsg}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtnodatafilter}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtentriesperpagepre}" />  
+		<apex:outputText value="{!$Label.et4ae5__dtentriesperpagesuf}" /> 
+		<apex:outputText value="{!$Label.et4ae5__dtfilterprefix}" /> 
+		<apex:outputText value="{!$Label.et4ae5__dtfiltersuffix}" />
+		<apex:outputText value="{!$Label.et4ae5__dtinfoprefix}" />
+		<apex:outputText value="{!$Label.et4ae5__dtinfomid1}" />
+		<apex:outputText value="{!$Label.et4ae5__dtinfomid2}" />
+		<apex:outputText value="{!$Label.et4ae5__dtinfosuffix}" />    	
+		<apex:outputText value="{!$Label.et4ae5__dtbuildingtable}" />		
+		<apex:outputText value="{!$Label.et4ae5__bumgmtnochangeerror}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtnochangeerrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtrecordlimiterror}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtrecordlimiterrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtrecordloaderror}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtrecordloaderrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtsaveerror}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtsaveerrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtsaveservererror}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtsaveservererrortitle}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtsavesuccess}" />
+		<apex:outputText value="{!$Label.et4ae5__bumgmtsavesuccesstitle}" />				
+	</apex:outputPanel>    
+</apex:page>

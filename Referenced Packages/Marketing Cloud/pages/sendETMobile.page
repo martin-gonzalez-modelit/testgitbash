@@ -1,0 +1,913 @@
+<apex:page controller="et4ae5.phoenixSendControl" tabStyle="et4ae5__SMSDefinition__c" action="{!initializeSms}">    
+    <apex:composition template="et4ae5__SendTemplate">
+        <apex:define name="customCSS">
+            <style>
+                /* overwriting values in component */
+                .alert-et 
+                {
+                    color: black;
+                    background-color: white;
+                    border-color: #7ab800;
+                }
+                #popupcontentCM 
+                {
+		            position: fixed;
+		            top: 20%;
+		            left: 20%;
+		            width: 60%;
+		            height: 60%;
+		            display: none;
+		            overflow: auto;
+		            border: 3px solid #585858;
+		            background-color: white; //
+		            border: 1px solid #333;
+		            z-index: 100;
+		            padding: 5px;
+		            line-height: 20px;
+		        }
+		        #opaqueCM
+		        {
+		            position: fixed;
+		            top: 0px;
+		            left: 0px;
+		            width: 100%;
+		            height: 100%;
+		            z-index: 99;
+		            display: none;
+		            background-color: gray;
+		            filter: alpha(opacity=80);
+		            opacity: 0.8;
+		            -moz-opacity: 0.8;
+		            -khtml-opacity: 0.8
+		        }
+		        * html #opaqueCM 
+		        {
+		            position: absolute;
+		        }
+            </style>
+        </apex:define>
+        <apex:define name="sendTypeImage">
+            <img height="45" src="{!URLFOR( $Resource.ExactTargetImages, 'mobile.png' )}" />
+        </apex:define>
+        <apex:define name="buManagementImage">
+            <img height="45" src="{!URLFOR( $Resource.ExactTargetImages, 'bumgmtmobile.png' )}" />
+        </apex:define>
+        <apex:define name="sendTypeLabel">
+            {!$Label.et4ae5__etmosend}
+        </apex:define>
+    </apex:composition>
+    <apex:form styleClass="fieldForm">
+        <apex:actionFunction name="selectEmailJS" action="{!selectEmail}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,recipientReportWrapper,sendEmailForm,sendButton,listChoosers"
+            status="listEmailsStatus">
+            <apex:param name="emailId" value="" />
+            <apex:param name="emailName" value="" />
+            <apex:param name="emailSubject" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="selectReportJS" action="{!selectReport}"
+            rerender="pageMessages,emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,recipientReportWrapper,sendEmailForm,recipientReportsZ,recipSourcePicklists"
+            status="recipPicklistStatus">
+            <apex:param name="ReportId" value="" />
+            <apex:param name="ReportName" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="selectExcluReportJS"
+            action="{!selectExcluReport}"
+            rerender="pageMessages,emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,recipientReportWrapper,sendEmailForm,recipientReportsZ,recipSourcePicklists,listChoosers"
+            status="excluRecipPicklistStatus">
+            <apex:param name="ReportId" value="" />
+            <apex:param name="ReportName" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="selectExclusionReportJS"
+            action="{!selectExclusionReport}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,exclusionReportWrapper,sendEmailForm"
+            status="clickExcluReportStatus">
+            <apex:param name="ExclusionReportId" value="" />
+            <apex:param name="ExclusionReportName" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="getFolderInfo" action="{!expandFolder}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,recipientReportWrapper"
+            status="listEmailsStatus">
+            <apex:param name="folderId" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="openReportFolder"
+            action="{!expandReportFolder}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,recipientReportWrapper,recipientReportsZ,pageMessages"
+            status="recipPicklistStatus">
+            <apex:param name="reportFolderId" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="openExcluReportFolder"
+            action="{!expandReportFolder}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,recipientReportWrapper,recipientReportsZ,listChoosers"
+            status="excluRecipPicklistStatus">
+            <apex:param name="reportFolderId" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="openExclusionReportFolder"
+            action="{!expandExclusionReportFolder}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,exclusionReportWrapper"
+            status="clickExcluReportStatus">
+            <apex:param name="exclusionReportFolderId" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="openSubscriberListFolder"
+            action="{!expandSubscriberListFolder}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,subscriberListWrapper"
+            status="listSubscriberListsStatus">
+            <apex:param name="subscriberListFolderId" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="inclusionAdd" action="{!inclusionAdd}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,subscriberListWrapper,inclusionCampaignsZ,recipientReportsZ,listChoosers" 
+            status="recipPicklistStatus" />
+        <apex:actionFunction name="inclusionRemove"
+            action="{!removeCampaignList}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,subscriberListWrapper,inclusionCampaignsZ,recipSourcePicklists"
+            status="clickReportStatus">
+            <apex:param name="removeCampaignListId" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="exclusionAdd" action="{!exclusionAdd}" rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,subscriberListWrapper,inclusionCampaignsZ,recipientReportsZ,listChoosers" 
+        status="excluRecipPicklistStatus" />
+        <apex:actionFunction name="exclusionRemove"
+            action="{!removeExcluCampaignList}"
+            rerender="emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,subscriberListWrapper,inclusionCampaignsZ,recipSourcePicklists,listChoosers"
+            status="clickExcluReportStatus">
+            <apex:param name="removeCampaignListId" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="checkSendEmailReadiness"
+            action="{!sendEnabler}" rerender="sendbutton" />
+        <apex:actionFunction name="isSSon" action="{!isSSon}"
+            rerender="sendbutton" />
+        <apex:actionFunction name="isSSoff" action="{!isSSoff}"
+            rerender="sendbutton" />
+        <apex:actionFunction name="mobileMsgSelect"
+            action="{!mobileMsgSelect}"
+            rerender="pageMessages,sendEmailForm,messageText,shortCode,emailName,emailSubject,exactTargetEmails,emailPreviewLinkWrapper,subscriberListWrapper,inclusionCampaignsZ,recipientReportsZ,listChoosers"
+            status="messageNameStatus">
+            <apex:param name="msgId" value="" />
+            <apex:param name="msgName" value="" />
+            <apex:param name="msgText" value="" />
+            <apex:param name="msgShortCode" value="" />
+            <apex:param name="msgKeyword" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="selectLuBu" action="{!selectLuBu}"
+            rerender="sendEmailForm,recipSourcePicklists,excluSourcePicklists,sendClassificationWrapper,popupCreateMessage,pageMessages"
+            status="wholePageBlock">
+            <apex:param name="luBuId" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="createBuFilter" action="{!createBuFilter}"
+            oncomplete="chooseFromAddress();showpopup();"
+            rerender="popupOP,sendEmailForm,bottomBlock" status="wholePageBlock" />
+        <apex:actionFunction name="searchServerMessage" action="{!runMessageSearch}" rerender="messagesReturned,pageMessages">
+    		<apex:param name="messageSearch" value=""/>
+   		</apex:actionFunction>
+	    <apex:actionFunction name="searchServer" action="{!runFolderSearch}" rerender="foldersReturned,pageMessages">
+	    	<apex:param name="folderSearch" value=""/>
+	   	</apex:actionFunction>
+	    <apex:actionFunction name="searchServerExc" action="{!runFolderSearch}" rerender="foldersReturnedExc,pageMessages">
+	    	<apex:param name="folderSearchExc" value=""/>
+	    </apex:actionFunction>
+        <apex:stylesheet value="{!$Resource.et4ae5__ExactTargetStyles}" />
+        <div align="right">
+            <apex:outputpanel >
+            	<apex:commandLink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__abtests}" onMouseOver="this.style.textDecoration='underline'" onMouseOut="this.style.textDecoration='none'"
+        			action="{!goToABTest}" />
+        		<apex:outputText value="{!pipe}" rendered="{!showDeepLinks}"/>
+		        <apex:outputLink style="text-decoration:none;color:#015ba7;" value="javascript:void(0)" onMouseOver="this.style.textDecoration='underline'" onMouseOut="this.style.textDecoration='none'" onclick="return iLoginHome('{!etLink}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');" rendered="{!showDeepLinks}">
+		          {!$Label.et4ae5__gotoet}
+		        </apex:outputLink>
+                <apex:outputText rendered="{!hasEmail}" value="{!pipe}" />
+                <apex:commandLink rendered="{!hasEmail}"
+                    style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__emailsend}"
+                    onMouseOver="this.style.textDecoration='underline'"
+                    onMouseOut="this.style.textDecoration='none'" action="{!goToEmail}" />
+                <apex:outputText value="{!pipe}" rendered="{!hasTriggered}"/>
+                <apex:commandLink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__sendatmtn}" onMouseOver="this.style.textDecoration='underline'" onMouseOut="this.style.textDecoration='none'"
+        		action="{!goToTriggeredSends}" rendered="{!hasTriggered}"/>      
+                <apex:outputText rendered="{!isAdmin}" value="{!isAdminPipe}" />
+                <apex:commandLink rendered="{!isAdmin}"
+                    style="text-decoration:none;color:#015ba7;"
+                    value="{!$Label.et4ae5__configint}"
+                    onMouseOver="this.style.textDecoration='underline'"
+                    onMouseOut="this.style.textDecoration='none'"
+                    action="{!goToSettings}" />
+                &nbsp;&nbsp;&nbsp;
+            </apex:outputpanel>
+        </div>
+        <br />
+        <!-- Create New Message Pop up -->
+	    <apex:outputPanel id="popupCreateMessage">
+	        <apex:outputPanel id="popupCM" rendered="true">
+	            <div id="opaqueCM" onclick="cancelMessageCreate();"/>
+	            <div id="popupcontentCM">
+	            	<apex:pageBlock >
+		            	<div class="header" style="background-color:white;">
+		            		<div style="display:inline-block;">
+		            		<img height="45" src="{!URLFOR( $Resource.ExactTargetImages, 'mobile.png' )}" />
+		            			<span style="font-size:36px;color:#4f4f4f;font-weight:bold;margin:0 0 15px 0;vertical-align:super;">{!$Label.createMsg}</span>
+		            		</div>            		
+		            	</div>
+		            	<apex:pageBlock mode="edit">
+			            	<apex:pageBlockSection columns="1">
+	            				<apex:pageBlockSectionItem >
+		            				<apex:outputLabel value="{!$Label.et4ae5__msgname}"/>
+		            				<apex:outputPanel >
+			            				<apex:inputText value="{!locMessageNameNew}"/>
+			            				<img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" />
+		           					</apex:outputPanel>
+		            			</apex:pageBlockSectionItem>
+			            		<apex:pageBlockSectionItem >
+			            			<apex:outputLabel value="{!$Label.et4ae5__shortcode}"/>
+		            				<apex:outputPanel >
+			            				<apex:selectList value="{!locShortCodeNew}" size="1">
+			            					<apex:selectOptions value="{!availableShortCodes}"/>
+		            							<apex:actionSupport event="onchange"
+		            										action="{!retrieveKeywords}"
+		            										rerender="keywordSelect"
+		            										status="keywordRetrieveStatus"/>	            					
+		           						</apex:selectList>
+		           						<img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" />
+									</apex:outputPanel>
+								</apex:pageBlockSectionItem>
+								<apex:pageBlockSectionItem >
+		                  			<apex:outputLabel value="{!$Label.et4ae5__keyword}"/>
+		                  			<apex:actionStatus id="keywordRetrieveStatus">
+			                            <apex:facet name="start">
+			                              <apex:outputPanel >
+			                                <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+			                              </apex:outputPanel>
+			                            </apex:facet>
+			                            <apex:facet name="stop">
+		                   					<apex:outputpanel id="keywordSelect">
+			            						<apex:selectList value="{!msgKeywordNew}" size="1" >
+			            							<apex:selectOptions value="{!availableKeywords}" />
+		           								</apex:selectList>
+		           								<img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" />
+		           							</apex:outputpanel>
+		           						</apex:facet>
+	           						</apex:actionStatus>
+		       					</apex:pageBlockSectionItem>
+								<apex:pageBlockSectionItem >
+			       					<apex:outputLabel value="{!$Label.et4ae5__msgtext}" />
+			       					<apex:outputpanel >
+			                        	<apex:inputTextArea id="smsTextNew" rows="5" style="width: 200px;"
+			                               value="{!locMessageTextNew}" onkeydown="textCounterNew(this)" onkeyup="textCounterNew(this)">
+			                           	</apex:inputTextArea>
+			                           	<span id="charCountNew" style="font-weight:bold;color:black;vertical-align:bottom;" />
+			                           	<img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" />
+			                       	</apex:outputpanel>
+		                       	</apex:pageBlockSectionItem>
+		                       	<apex:pageBlockSectionItem >
+		                       		<apex:outputLabel value=""/>
+		                       		<apex:outputpanel >
+					            		<apex:commandButton value="{!$Label.et4ae5__create}" action="{!createNewMobileMessage}"/>
+					            		<apex:commandButton value="{!$Label.et4ae5__cancel}" onclick="cancelMessageCreate(); return false;"/>
+		                            </apex:outputpanel>
+		                        </apex:pageBlockSectionItem>
+			            	</apex:pageBlockSection>
+		            	</apex:pageBlock>		            		
+	            	</apex:pageBlock>
+	            </div>
+	        </apex:outputPanel>
+	    </apex:outputPanel>        
+        <apex:outputPanel id="pageMessages">
+            <c:pageMessages closableErrors="true" />
+        </apex:outputPanel>
+        <apex:actionStatus id="wholePageBlock">
+            <apex:facet name="start">
+                <img class="spinnerLarge"
+                    src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+            </apex:facet>
+            <apex:facet name="stop">
+                <apex:pageBlock mode="view">
+                    <div align="right">
+                        <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" /> 
+                        <b> 
+                            = {!$Label.reqdInfo}
+                        </b>
+                    </div>
+                    <apex:pageBlockSection id="sendEmailForm" columns="1">
+                        <apex:pageBlockSectionItem rendered="{!renderBULookup}"
+                            helpText="{!$Label.et4ae5__msg0014}">
+                            <apex:outputLabel value="{!$Label.et4ae5__busunit}" />
+                            <apex:outputPanel >
+                                <table>
+                                    <tr>
+                                        <td><apex:outputText value="{!selectedBuDisp}" /></td>
+                                        <td><input type="image"
+                                            onclick="javascript:createBuFilter();swapFromSource();swapDateSource();return false;"
+                                            src="/s.gif" id="showPopBtn" /></td>
+                                        <td><img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" /></td>
+                                    </tr>
+                                </table>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+
+                        <!-- Message -->
+                        <apex:pageBlockSectionItem id="emailTemplate"
+                            helpText="{!$Label.et4ae5__msg0134}">
+                            <apex:outputLabel for="emailName" value="{!$Label.et4ae5__message}" />
+                            <apex:outputPanel id="emailWrapper" layout="block">
+                                <apex:outputPanel id="messageName">
+                                    <apex:actionStatus id="messageNameStatus">
+                                        <apex:facet name="start">
+                                            <img class="spinnerLarge"
+                                                src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+                                        </apex:facet>
+                                        <apex:facet name="stop">
+                                            <apex:outputText id="emailName" value="{!localSend.msg.name}" style="padding-right:10px;" rendered="{!IF( NOT( ISNULL( localSend.msg.name ) ), true, false )}"/>
+                                        </apex:facet>
+                                    </apex:actionStatus>
+                                </apex:outputPanel>
+                                <apex:outputPanel >
+                                    <apex:actionStatus id="listEmailsStatus">
+                                        <apex:facet name="start">
+                                            <img class="spinnerLarge"
+                                                src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+                                        </apex:facet>
+                                        <apex:facet name="stop">
+                                            <apex:commandButton id="listEmails" value="{!$Label.et4ae5__find}"
+                                                action="{!listMobileMessages}"
+                                                rerender="exactTargetEmails,pageMessages,sendEmailForm,emailName,emailSubject,emailPreviewLinkWrapper,subscriberListWrapper,inclusionCampaignsZ,recipientReportsZ,listChoosers"
+                                                status="listEmailsStatus" />
+                                        </apex:facet>
+                                    </apex:actionStatus>
+                                    <apex:outputpanel rendered="{!canUserCreateSMS}">
+	                                    <apex:outputText value="{!pipe}"/>
+						                  <apex:outputLink style="padding-right:10px;" value="#" onclick="showCreateMessage();">
+						          	      	{!$Label.et4ae5__new}
+						        		  </apex:outputLink>
+						        	</apex:outputpanel>
+                                    <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" />
+                                    <apex:outputPanel id="exactTargetEmails" layout="block">
+                                        <apex:actionStatus id="clickEmailStatus">
+                                            <apex:facet name="start">
+                                                <img class="spinnerLarge"
+                                                    src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+                                            </apex:facet>
+                                            <apex:facet name="stop">
+                                                <apex:outputPanel styleClass="popup" layout="block"
+                                                    rendered="{!ShowEmailChooser }">
+                                                    <script type="text/javascript">
+                                                        function toggleFolderDisplay( folderId ) {
+
+                                                            // Identify folder div.
+                                                            var folderDiv = document.getElementById( folderId );
+                                                            
+                                                            // Pull the folder class.
+                                                            var folderClass = folderDiv.className;
+                                                            
+                                                            // Determine if the folder is open or closed.
+                                                            var newFolderClass = 'emailFolder closed';
+                                                            if( folderClass.indexOf( 'closed' ) > -1 ) {
+                                                                newFolderClass = 'emailFolder open';
+                                                            }
+
+                                                            // Assing new class.
+                                                            folderDiv.className = newFolderClass;
+
+                                                        }
+                                                    </script>
+                                                    <apex:pageBlock >
+                                                        <apex:pageBlockButtons location="both">
+                                                            <apex:commandButton action="{!selectEmailCancel}"
+                                                                value="{!$Label.et4ae5__cancel}" rerender="exactTargetEmails"
+                                                                status="clickEmailStatus" />
+                                                        </apex:pageBlockButtons>
+                              							<input type="text" placeholder="{!$Label.findMessage}" id="messageSearch" onkeyup="doMessageSearch();"/>
+                              							<br/>
+                              							<apex:outputpanel id="messagesReturned">
+                              								<apex:outputLabel value="{!limitMessage}" style="color:red;font-weight:bold;display:block;"/>
+                              								<apex:outputpanel rendered="{!IF(ISBLANK(limitMessage),true,false)}">
+	                              								<table>
+	                              									<tr>
+	                              										<td> <b>{!$Label.et4ae5__msgname}</b> </td>
+	                              										<td> <b>{!$Label.et4ae5__shortcode}</b></td>
+	                             									</tr>                                                     
+		                                                        	<apex:repeat value="{!mobileMsgs}" var="mobileMsg">
+		                                                        	<tr>
+			                                                            <td>
+			                                                            	<a href="#"
+			                                                                	onclick="javascript:mobileMsgSelect('{!mobileMsg.Id}','{!JSENCODE(mobileMsg.encName)}','{!JSENCODE(mobileMsg.encTitle)}','{!JSENCODE(mobileMsg.shortCode)}','{!JSENCODE(mobileMsg.keyWord)}');">
+			                                                            		{!mobileMsg.name} 
+		                                                            		</a>
+			                                                            </td>
+			                                              				<td>
+			                                              					{!mobileMsg.shortCode}
+			                                              				</td>
+		                                              				</tr>
+		                                                            <br />
+		                                                        	</apex:repeat>
+	                                                        	</table>
+                                                        	</apex:outputpanel>
+                                                        </apex:outputpanel>
+                                                    </apex:pageBlock>
+                                                </apex:outputPanel>
+                                            </apex:facet>
+                                        </apex:actionStatus>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem id="messageText" helptext="{!$Label.et4ae5__msg0135}"
+                            rendered="{!renderMobilePieces}">
+                            <apex:outputLabel value="{!$Label.et4ae5__msgtext}" />
+                            <apex:outputPanel >
+                                <apex:inputTextArea id="smsText" rows="5" style="width: 200px;"
+                                    value="{!locMessageText}" onkeydown="textCounter(this)" onkeyup="textCounter(this)">
+                                </apex:inputTextArea>
+                                <span id="charCount" style="font-weight:bold;color:black;" />
+                                <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" />
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!renderMobilePieces}"
+                            id="keyword"
+                            helpText="{!$Label.et4ae5__msg0136}">
+                            <apex:outputLabel value="{!$Label.et4ae5__keyword}" />
+                            <apex:outputPanel rendered="{!renderMobilePieces}">
+                                <apex:outputText id="keywords" value="{!msgKeyword}"/>                                
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!renderMobilePieces}"
+                            id="shortcode"
+                            helpText="{!$Label.et4ae5__msg0137}">
+                            <apex:outputLabel value="{!$Label.et4ae5__shortcode}" />
+                            <apex:outputText value="{!locShortCode}" />
+                        </apex:pageBlockSectionItem>
+                        </apex:pageblocksection>
+                        <apex:pageblocksection id="listChoosers" columns="1">
+
+                            <!-- Recipient Sources -->
+                            <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0046}">
+                                <apex:outputLabel value="{!$Label.et4ae5__recipients}" />
+                                <apex:outputPanel layout="block">
+                                    <apex:outputPanel id="recipSourcePicklists">
+                                        <table>
+                                            <tr>
+                                                <td>
+	                                                <apex:actionStatus id="recipPicklistStatus">
+							                        	<apex:facet name="start">
+							                        		<apex:outputPanel >
+							                                	<img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+							                              	</apex:outputPanel>
+							                            </apex:facet>
+							                            <apex:facet name="stop">
+							                              <apex:outputPanel >
+			                                                <apex:selectList id="recipSourceDropdown"
+			                                                    value="{!recipientType}" size="1">
+			                                                    <apex:selectOptions value="{!recipSource}" />
+			                                                    <apex:actionSupport event="onchange"
+			                                                        action="{!changeRecipientType}" rerender="listChoosers" status="recipPicklistStatus" />
+			                                                </apex:selectList> 
+	                                                		<apex:image value="/s.gif" style="width: 5px;" /> 
+	                                                		<apex:outputPanel id="campaignInput" rendered="{!renderRecipCampaign}">
+	                                                    		<apex:inputField id="campaignRecip" value="{!send.et4ae5__Campaign__c}" style="width: 300px;" />
+	                                                		</apex:outputPanel>
+	                                               		</apex:outputPanel>
+	                                           		</apex:facet>
+	                                       		</apex:actionStatus>
+                                       		</td>
+                                      		<td>
+                                            	<apex:outputLink value="javascript:inclusionAdd();">
+                                                    <apex:image value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, 'plusOn.jpg' )}"
+                                                        alt="{!$Label.et4ae5__add}" title="{!$Label.et4ae5__add}" />
+                                                </apex:outputLink>
+                                            </td>
+                                           </tr>
+                                        </table>
+                                        <apex:outputPanel id="recipientReportsZ">
+                                            <apex:actionStatus id="clickReportStatus">
+                                                <apex:facet name="start">
+                                                    <img class="spinnerLarge"
+                                                        src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+                                                </apex:facet>
+                                                <apex:facet name="stop">
+                                                    <apex:outputPanel styleClass="popup"
+                                                        rendered="{!showRecipientReportChooser}">
+                                                        <apex:pageBlock >
+                                                            <apex:pageBlockButtons location="both">
+                                                                <apex:commandButton action="{!selectSalesforceReportCancel}" value="{!$Label.et4ae5__cancel}"
+                                                                    rerender="pageMessages,sendEmailForm,recipientReports,recipientReportsZ"
+                                                                    status="clickReportStatus" />
+                                                            </apex:pageBlockButtons>
+                                                            <input type="text" placeholder="{!$Label.findFolder}" id="folderSearch" onkeyup="doReportFolderSearch();"/>
+                              								<br/>
+                              								<apex:outputpanel id="foldersReturned">
+                              	  								<apex:outputLabel value="{!limitMessage}" style="color:red;font-weight:bold;display:block;"/>
+	                                                            <apex:repeat value="{!localSend.reports}"
+	                                                                var="recipientReportsFolder">
+	                                                            +
+	                                                            <a href="#"
+	                                                                    onclick="openReportFolder('{!recipientReportsFolder.Id}')">
+	                                                                <b> {!recipientReportsFolder.name} </b> </a>
+	                                                                <br />
+	                                                                <div id="reportFolder_{recipientReportsFolder.Id}">
+	                                                                <apex:repeat value="{!recipientReportsFolder.contents}"
+	                                                                    var="recipientReport"
+	                                                                    rendered="{!NOT(ISBLANK(recipientReportsFolder.contents))}">
+	                                                                    &nbsp;-&nbsp;
+	                                                                    <a
+	                                                                        href="#"
+	                                                                        onclick="javascript:selectReportJS( '{!recipientReport.id}', '{!JSENCODE(recipientReport.encName)}' );">
+	                                                                    {!recipientReport.name} </a>
+	                                                                    <br />
+	                                                                </apex:repeat></div>
+	                                                            </apex:repeat>
+                                                            </apex:outputpanel>
+                                                        </apex:pageBlock>
+                                                    </apex:outputPanel>
+                                                </apex:facet>
+                                            </apex:actionStatus>
+                                        </apex:outputPanel>
+                                        <table>
+                                            <tr>
+                                                <td valign="top"><select id="recipRightList"
+                                                    class="multilist" size="3" style="width: 300px;">
+                                                    <apex:repeat value="{!recipChosen}" var="recipChosens">
+                                                        <option value="{!recipChosens.value}">
+                                                        {!recipChosens.label}</option>
+                                                    </apex:repeat>
+                                                </select></td>
+                                                <td>
+                                                <table>
+                                                    <tr>
+                                                        <td><img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" /></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><apex:outputLink value="javascript:inclusionRemove(document.getElementById('recipRightList').options[document.getElementById('recipRightList').selectedIndex].value);">
+                                                            <apex:image value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, recipMinus )}" />
+                                                        </apex:outputLink></td>
+                                                    </tr>
+                                                </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:pageBlockSectionItem>
+
+                            <!-- Exclusion Sources -->
+                            <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0138}">
+                                <apex:outputLabel value="{!$Label.et4ae5__exclusions}" />
+                                <apex:outputPanel layout="block">
+                                    <apex:outputPanel id="excluSourcePicklists">
+                                        <table>
+                                            <tr>
+                                                <td>
+                                                	<apex:actionStatus id="excluRecipPicklistStatus">
+							                            <apex:facet name="start">
+							                              <apex:outputPanel >
+							                                <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+							                              </apex:outputPanel>
+							                            </apex:facet>
+							                            <apex:facet name="stop">
+                              								<apex:outputPanel >        
+				                                                <apex:selectList id="excluSourceDropdown"
+				                                                    value="{!exclusionType}" size="1">
+				                                                    <apex:selectOptions value="{!excluSource}" />
+				                                                    <apex:actionSupport event="onchange"
+				                                                        action="{!changeExclusionType}" rerender="listChoosers" status="excluRecipPicklistStatus"/>
+				                                                </apex:selectList> <apex:image value="/s.gif" style="width: 5px;" /> 
+				                                                <apex:outputPanel id="campaignExcluInput" rendered="{!renderExcluCampaign}">
+				                                                    <apex:inputField id="campaignExclu"
+				                                                        value="{!send.et4ae5__ExclusionCampaign__c}" style="width: 300px;" />
+				                                                </apex:outputPanel>
+			                                                </apex:outputPanel>
+		                                                </apex:facet>
+	                                                </apex:actionStatus>
+                                                </td>
+                                                <td>
+	                                                <apex:outputLink value="javascript:exclusionAdd();">
+	                                                	<apex:image value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, 'plusOn.jpg' )}" alt="{!$Label.et4ae5__add}" title="{!$Label.et4ae5__add}" />
+	                                                </apex:outputLink>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <apex:outputPanel id="exclusionReportsZ">
+                                            <apex:actionStatus id="clickExcluReportStatus">
+                                                <apex:facet name="start">
+                                                    <img class="spinnerLarge"
+                                                        src="{!URLFOR( $Resource.ExactTargetImages, 'spinMOBIL.GIF' )}" />
+                                                </apex:facet>
+                                                <apex:facet name="stop">
+                                                    <apex:outputPanel styleClass="popup"
+                                                        rendered="{!showExclusionReportChooser}">
+                                                        <apex:pageBlock >
+                                                            <apex:pageBlockButtons location="both">
+                                                                <apex:commandButton action="{!selectSalesforceExcluReportCancel}"
+                                                                    value="{!$Label.et4ae5__cancel}"
+                                                                    rerender="pageMessages,sendEmailForm,exclusionReports,exclusionReportsZ"
+                                                                    status="clickExcluReportStatus" />
+                                                          </apex:pageBlockButtons>
+							                              <input type="text" placeholder="{!$Label.findFolder}" id="folderSearchExc" onkeyup="doReportfolderSearchExc();"/>
+							                              <br/>
+							                              <apex:outputpanel id="foldersReturnedExc">
+							                              		<apex:outputLabel value="{!limitMessage}" style="color:red;font-weight:bold;display:block;"/>                                                            
+	                                                            <apex:repeat value="{!localSend.exclusionReports}"
+	                                                                var="exclusionReportsFolder">
+	                                                            +
+	                                                            <a href="#"
+	                                                                    onclick="openExcluReportFolder('{!exclusionReportsFolder.Id}')">
+	                                                                <b> {!exclusionReportsFolder.name} </b> </a>
+	                                                                <br />
+	                                                                <div id="excluReportFolder_{exclusionReportsFolder.Id}">
+	                                                                <apex:repeat value="{!exclusionReportsFolder.contents}"
+	                                                                    var="exclusionReport"
+	                                                                    rendered="{!NOT(ISBLANK(exclusionReportsFolder.contents))}">
+	                                                                    &nbsp;-&nbsp;
+	                                                                    <a
+	                                                                        href="#"
+	                                                                        onclick="javascript:selectExcluReportJS( '{!exclusionReport.id}', '{!JSENCODE(exclusionReport.encName)}' );">
+	                                                                    {!exclusionReport.name} </a>
+	                                                                    <br />
+	                                                                </apex:repeat></div>
+	                                                            </apex:repeat>
+                                                            </apex:outputpanel>
+                                                        </apex:pageBlock>
+                                                    </apex:outputPanel>
+                                                </apex:facet>
+                                            </apex:actionStatus>
+                                        </apex:outputPanel>
+                                        <table>
+                                            <tr>
+                                                <td valign="top"><select id="excluRightList"
+                                                    class="multilist" size="3" style="width: 300px;">
+                                                    <apex:repeat value="{!excluChosen}" var="excluChosens">
+                                                        <option value="{!excluChosens.value}">
+                                                        {!excluChosens.label}</option>
+                                                    </apex:repeat>
+                                                </select></td>
+                                                <td>
+                                                <table>
+                                                    <tr>
+                                                        <td height="18px" />
+                                                    </tr>
+                                                    <tr>
+                                                        <td><apex:outputLink value="javascript:exclusionRemove(document.getElementById('excluRightList').options[document.getElementById('excluRightList').selectedIndex].value);">
+                                                            <apex:image value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, excluMinus )}" />
+                                                        </apex:outputLink></td>
+                                                    </tr>
+                                                </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:pageBlockSectionItem>
+                        </apex:pageblocksection>
+
+                        <apex:pageblocksection id="bottomBlock" columns="1">
+
+                            <!-- Dedupe Subscribers -->
+                            <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0139}">
+                                <apex:outputLabel value="{!$Label.et4ae5__dedupesubs}" />
+                                <apex:inputCheckbox value="{!sms.et4ae5__DedupeSubscribers__c}" selected="true"/>
+                            </apex:pageBlockSectionItem>
+
+                            <!-- Scheduled Send Date/Time -->
+                            <apex:pageBlockSectionItem id="sendDateTimeRadios"
+                                helpText="{!$Label.et4ae5__msg0140}">
+                                <apex:outputLabel for="dateBlock" value="{!$Label.et4ae5__snddandt}" />
+                                <apex:outputPanel id="dateBlock" layout="block">
+                                    <apex:outputPanel layout="block">
+                                        <input type="radio" id="fromSelectorIm" name="immeSelector"
+                                            onclick="swapDateSource();" status="sendButtonStatus" />
+                                        <apex:outputLabel for="imme" value="{!$Label.et4ae5__immedtly}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel id="sendDateTimeWrapper" layout="block"
+                                        rendered="true">
+                                        <input type="radio" id="fromSelectorDT" name="immeSelector"
+                                            onclick="swapDateSource();" status="sendButtonStatus" />
+                                        <apex:outputLabel for="sendDateTime"
+                                            value="{!$Label.et4ae5__schedfutsd}" />
+                                        <br />
+                                        <apex:outputPanel id="schCalendar">
+                                            <apex:inputField id="sendDateTime"
+                                                value="{!sms.et4ae5__Scheduled_Date_Time__c}" />
+                                            <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqMobil.png' )}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                </apex:pageBlockSectionitem>
+
+                                <!-- Certify Opt-in -->
+                                <apex:pageblockSectionItem >
+                                	<apex:outputLabel value=""/>
+                                	<p>{!$Label.et4ae5__smslegal}</p>
+                                	<p>{!$Label.et4ae5__smslegal2}</p>
+                                </apex:pageblockSectionItem>
+                                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0141}">
+                                    <apex:outputLabel value="{!$Label.et4ae5__iagree}" />
+                                    <apex:inputCheckbox value="{!optIn}">
+                                        <apex:actionSupport event="onclick" action="{!sendEnabler}"
+                                            rerender="sendbutton" />
+                                    </apex:inputCheckbox>
+                                </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection id="sendbutton">
+
+                        <!-- Send Button -->
+                        <apex:pageBlockSectionItem rendered="{!optIn}">
+                            <apex:outputLabel value="" />
+                            <apex:commandButton value="{!$Label.et4ae5__send}" onclick="return submitSend();" ondblclick="return submitSend();" action="{!mobileSendWasPressed}"
+                                style="background:#7ab800;color:white" />
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!NOT( optIn )}">
+                            <apex:outputLabel value="" />
+                            <apex:commandButton value="{!$Label.et4ae5__send}" disabled="true" />
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </apex:facet>
+        </apex:actionStatus>
+    </apex:form> 
+    <apex:includeScript value="{!$Resource.et4ae5__MciLogin}"/> 
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__jQueryUI, 'jquery-ui-1.9.2.custom/js/jquery-1.8.3.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.et4ae5__bootstrap, 'dist/js/bootstrap.js')}" /> <apex:includeScript value="{!URLFOR($Resource.et4ae5__bootstrap, 'dist/js/bootstrap.min.js')}" />
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+        // Identify triggerable elements.
+        var fsEmail = jQuery( '[id$=fromSelectorEmail]' );
+        var fsSC = jQuery( '[id$=fromSelectorSC]' );
+        var fsImme = jQuery( '[id$=fromSelectorIm]' );
+        var fsDaTi = jQuery( '[id$=fromSelectorDT]' );
+
+        // Assign event actions.
+        fsEmail.onclick = swapFromSource;
+        fsSC.onclick = swapFromSource;
+        fsImme.onclick = swapDateSource;
+        fsDaTi.onclick = swapDateSource;
+        
+        var sendBtnEnabled = true;
+        function submitSend()
+        {
+            if (sendBtnEnabled)
+            {
+                sendBtnEnabled = false;
+                return true;
+            }
+            return false;
+        }
+        
+        // Initial swap execution.
+        swapFromSource();
+        swapDateSource();
+        
+
+        // Swap enablement for the picklists.
+        function swapFromSource() {
+            j$ = jQuery.noConflict();
+            fsEmail = jQuery( '[id$=fromSelectorEmail]' );
+            fsSC = jQuery( '[id$=fromSelectorSC]' );
+            // Identify picklists.
+            var fromList = jQuery( '[id$=from]' );
+            var scList = jQuery( '[id$=sendClassification]' );
+            var fromOP = jQuery( '[id$=fromPicklist]' );
+            var scOP = jQuery( '[id$=scPicklist]' );
+            
+            // Disable both picklists.
+            if( fromList != null ) fromList.attr("disabled",true);
+            if( scList != null ) scList.attr("disabled",true);
+            fromOP.hide();
+            scOP.hide();
+            
+            if (jQuery( '[id$=fromSelectorEmail]' ).is(':checked') == true || (jQuery( '[id$=theHiddenInput1]' ).val() == "true" && jQuery( '[id$=fromSelectorSC]' ).is(':checked') == false))
+                fsEmail.attr("checked","checked");
+            if (jQuery( '[id$=fromSelectorSC]' ).is(':checked') == true || (jQuery( '[id$=theHiddenInput2]' ).val() == "true" && jQuery( '[id$=fromSelectorEmail]' ).is(':checked') == false))
+                fsSC.attr("checked","checked");
+            if( fsEmail.is(":checked") == false && fsSC.is(":checked") == false )
+                fsEmail.attr("checked","checked");
+                
+            // Enable the correct picklist.
+            if( fsEmail.is(":checked") == true ) {
+                if( scList != null ) scList.val("");
+                if( fromList != null ) fromList.removeAttr("disabled");
+                fromOP.show();
+            } if( fsSC.is(":checked") == true ) {
+                if( fromList != null ) fromList.val("");
+                if( scList != null ) scList.removeAttr("disabled");
+                scOP.show();
+            }
+
+        }
+        
+        function chooseFromAddress() {
+            fsEmail = jQuery( '[id$=fromSelectorEmail]' );        
+            fsEmail.attr("checked","checked");
+            fsImme = jQuery( '[id$=fromSelectorIm]' );
+            fsImme.attr("checked","checked");
+            swapFromSource();
+            swapDateSource();
+        }
+        
+        function swapDateSource() {
+            j$ = jQuery.noConflict();
+            fsImme = jQuery( '[id$=fromSelectorIm]' );
+            fsDaTi = jQuery( '[id$=fromSelectorDT]' );
+            // Identify picklists.
+            var SDT = jQuery( '[id$=schCalendar]' );
+            var calChoice = jQuery( '[id$=sendDateTime]' );
+        
+            // Disable both picklists.
+            SDT.hide();
+
+            if (jQuery( '[id$=fromSelectorDT]' ).is(':checked') == true )
+                fsDaTi.attr("checked","checked");
+            if (jQuery( '[id$=fromSelectorDT]' ).is(':checked') == false &&  jQuery( '[id$=fromSelectorIm]' ).is(':checked') == false){
+                fsImme.attr("checked","checked");
+            }
+            if( fsDaTi.is(":checked") == true ) {
+                SDT.show();
+                isSSon();
+            }else{
+                calChoice.val(null);
+                isSSoff();
+            }
+           
+            checkSendEmailReadiness();
+        }
+        
+        function changeTargetAudience()
+        {
+            changeTargetAudienceJS(jQuery( '[id$=fromSelectorEmail]' ).is(':checked'),jQuery( '[id$=fromSelectorSC]' ).is(':checked'));
+        }
+        
+        function changeBusinessUnit()
+        {
+            changeBusinessUnitJS(jQuery( '[id$=fromSelectorEmail]' ).is(':checked'),jQuery( '[id$=fromSelectorSC]' ).is(':checked'));
+        }
+        function showpopup()
+        {
+            document.getElementById('opaque').style.display='block';
+            var popUp = document.getElementById("popupcontent");
+            popUp.style.display = "block";
+        } 
+
+        function hidepopup()
+        {
+            var popUp = document.getElementById("popupcontent");
+            popUp.style.display = "none";
+            document.getElementById('opaque').style.display='none';
+        }
+        function doMessageSearch()
+	    {
+	    	searchServerMessage(document.getElementById("messageSearch").value);
+	    }
+	    function doReportFolderSearch()
+	    {
+	    	searchServer(document.getElementById("folderSearch").value);
+	    }
+	    function doReportfolderSearchExc()
+	    {
+	    	searchServerExc(document.getElementById("folderSearchExc").value);
+	    }
+	    function textCounter(field)
+	    {
+	    	if(field.value.length > 800)
+			{
+				field.value = field.value.substring(0,800);
+			}
+	    	document.getElementById("charCount").innerHTML = 160 - field.value.length;
+	    	var charCount = document.getElementById("charCount").innerHTML;
+			if (charCount > 20)
+			{
+				document.getElementById("charCount").style.color = "#b6b6b6";
+			}
+			else if (charCount > 10)
+			{
+				document.getElementById("charCount").style.color = "maroon";
+			}
+			else
+			{
+				document.getElementById("charCount").style.color = "red";
+			}
+	    }
+	    function textCounterNew(field)
+	    {
+	    	if(field.value.length > 800)
+			{
+				field.value = field.value.substring(0,800);
+			}
+	    	document.getElementById("charCountNew").innerHTML = 160 - field.value.length;
+	    	var charCount = document.getElementById("charCountNew").innerHTML;
+			if (charCount > 20)
+			{
+				document.getElementById("charCountNew").style.color = "#b6b6b6";
+			}
+			else if (charCount > 10)
+			{
+				document.getElementById("charCountNew").style.color = "maroon";
+			}
+			else
+			{
+				document.getElementById("charCountNew").style.color = "red";
+			}
+	    }
+	    function cancelMessageCreate()
+	    {
+	    	document.getElementById("opaqueCM").style.display = "none";
+	    	document.getElementById("popupcontentCM").style.display = "none";	
+	    }
+	    function showCreateMessage()
+	    {
+		    	document.getElementById("opaqueCM").style.display = "block";
+		    	document.getElementById("popupcontentCM").style.display = "block";    
+	    }
+    </script>
+</apex:page>

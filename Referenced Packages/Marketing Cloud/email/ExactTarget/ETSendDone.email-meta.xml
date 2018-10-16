@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <available>true</available>
+    <encodingKey>UTF-8</encodingKey>
+    <name>ETSendDone</name>
+    <style>none</style>
+    <subject>{!$Label.etEmSend} {!SendDefinition__c.Name} - {!SendDefinition__c.SendStatus__c}</subject>
+    <textOnly>{!$Label.emailSend}: {!SendDefinition__c.Name}
+{!$Label.initiatdOn} {!SendDefinition__c.InitiatedDate__c}
+{!$Label.status}: {!SendDefinition__c.SendStatus__c} {!$Label.at_lc} {!SendDefinition__c.Status_Date_Time__c}
+    
+{!$Label.subject}: {!SendDefinition__c.Subject__c}
+{!$Label.from}: {!SendDefinition__c.FromName__c}
+    
+{!$Label.recpSourcs}:
+{!SendDefinition__c.AllSources__c}
+    
+{!SendDefinition__c.Messages__c}
+    
+{!SendDefinition__c.Link}</textOnly>
+    <type>custom</type>
+</EmailTemplate>

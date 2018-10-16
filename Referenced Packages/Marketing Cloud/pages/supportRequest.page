@@ -1,0 +1,33 @@
+<apex:page tabStyle="et4ae5__SendDefinition__c" controller="et4ae5.supportRequestControl" action="{!initialize}">
+    <c:ETHeader message="{!$Label.et4ae5__suprtreq}" image="supportEmail.png" trailingBR="false" />
+    <apex:pageMessages />
+    <apex:form >
+        <div align="center">
+            <apex:outputpanel >
+                <apex:commandButton value="{!$Label.et4ae5__submit}" onclick="{!emailSending}" action="{!submit}" />
+                <apex:commandButton value="{!$Label.et4ae5__cancel}" action="{!cancel}" />
+            </apex:outputpanel>
+        </div>
+        <br />
+        <apex:pageBlock >
+            <apex:pageBlockSection id="Comment" columns="1">
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0039}">
+                    <apex:outputLabel value="{!$Label.et4ae5__emailsend}" />
+                    <apex:outputLabel value="{!sendDefNo}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.et4ae5__msg0042}">
+                    <apex:outputLabel value="{!$Label.et4ae5__comment}" />
+                    <apex:inputTextArea value="{!supReq.et4ae5__Comment__c}" tabindex="1" style="width:75%;height:250px;" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <br />
+        <div align="center">
+            <apex:outputpanel >
+                <apex:commandButton value="{!$Label.et4ae5__submit}" onclick="{!emailSending}" action="{!submit}" />
+                <apex:commandButton value="{!$Label.et4ae5__cancel}" action="{!cancel}" />
+            </apex:outputpanel>
+        </div>
+        <br />
+    </apex:form>
+</apex:page>

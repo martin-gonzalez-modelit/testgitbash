@@ -1,0 +1,238 @@
+<apex:page showheader="false" sidebar="false" cache="false" standardstylesheets="false" applyhtmltag="false"
+    controller="BIGPortalManageDashboardController" action="{!checkUserAccess}">
+<head>
+    <title>PG&amp;E Portal - Dashboard</title>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bigutopia.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <style>
+        body {
+            background-color: #CCFFFF;
+        }
+    </style>
+    <script type="text/javascript">
+      var menu = "";
+    </script>
+<style>
+
+.dashboard-container{
+    width:860px;
+    float:left;
+    padding:10px;
+    background-color:white;
+    border-radius:10px;
+    -moz-border-radius:10px;
+    box-shadow:inset 2px 2px 0 rgba(256,255,255,.6), 0px 0px 2px rgba(0,0,0,.6);
+}
+
+.dashboard-header{
+    width:840px;
+    padding:10px;
+    margin:0 auto;
+    background-color:#e7e7e7;
+    border-radius:6px;
+    -moz-border-radius:6px;
+}
+
+div.announcement{
+    padding-right:10px;
+}
+
+.big-margin {
+    margin-left: 50px;
+}
+
+.mid-margin {
+    margin-left: 40px;
+}
+
+.small-margin {
+    margin-left: 15px;
+}
+
+.no-pad-bottom {
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.no-pad-top {
+    padding-top: 0;
+    margin: 5px 0 10px 0!important;
+}
+
+#announcement {
+    margin-left: 0;
+    border-right: 1px solid #cfcfcf;
+}
+
+#events {
+    width: 405px;
+    margin-left: 20px;
+}
+
+ a.uline:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+
+.cell-right {
+    width: 70px;
+    text-align: right;
+}
+
+.big-text {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.blue-header {
+    color: #0c6698;
+    font-weight: 600;
+    font-size: 24px;
+    border-bottom: 0;
+    margin-bottom: 5px;
+}
+
+.dash-header {
+    font-size: 1.2em;
+    margin: 10px 0 20px 0;
+    height: 20px;
+    line-height: 20px;
+}
+
+.slim-margin {
+    padding: 0;
+    margin: 8px 0;
+}
+
+.smaller {
+    font-size: .9em;
+}
+
+.breadcrumb {
+    background-color: #fafcfb;
+}
+
+.divider {
+    color: #393939!important;
+}
+
+.active {
+    color: #393939!important;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+    <c:BIGPortalHeader />
+    <div id="mainContent">
+        <div class="cushion">
+            <ul class="breadcrumb" style="margin-left:0;padding:0;">
+                <li><a href="BIGPortalManageDashboard">Dashboard</a> <span class="divider">/</span></li>
+                <li class="active">
+                    <apex:outputPanel rendered="{!$CurrentPage.parameters.q == 'PA'}">
+                    Program Announcement
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!$CurrentPage.parameters.q == 'FTE'}">
+                    Future Trainings &amp; Events
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!$CurrentPage.parameters.q == 'QR'}">
+                    Quick Reference
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!$CurrentPage.parameters.q == 'FQC'}">
+                    Upcoming Field QC Inspections
+                    </apex:outputPanel>
+                </li>
+            </ul>
+
+            <div class="clearfix">
+                <div class="dashboard-container">
+                    <apex:outputPanel rendered="{!$CurrentPage.parameters.q == 'PA'}">
+                        <h2 class="dash-header">Program Announcement</h2>
+                        <hr/>
+
+                        <apex:variable var="thisCounter" value="{!1}"/>
+                        <apex:repeat value="{!ProgramAnnouncements}" var="p">
+                        <apex:outputPanel rendered="{!thisCounter != 1}"><!-- <hr/> --> <br/></apex:outputPanel>
+                        <apex:variable var="thisCounter" value="{!thisCounter+1}"/>
+                        <div class="announcement">
+                            <strong>{!p.Name} (<apex:outputField value="{!p.Start_Date__c}"/>)</strong><br/>
+                            {!p.Announcement__c}
+                            <apex:outputPanel rendered="{!p.URL__c != ''}">
+                            <br/>
+                            <a href="{!IF(OR(CONTAINS(p.URL__c,'http://'),CONTAINS(p.URL__c,'https://')), p.URL__c, 'http://' + p.URL__c)}" target="_blank" class="uline">More Information</a>
+                            </apex:outputPanel>
+                        </div>
+                        </apex:repeat>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel rendered="{!$CurrentPage.parameters.q == 'FTE'}">
+                        <h2 class="dash-header">Future Trainings &amp; Events</h2>
+                        <hr/>
+                        <apex:variable var="thisCounter2" value="{!1}"/>
+                        <apex:repeat value="{!Events}" var="p">
+                            <apex:outputPanel rendered="{!thisCounter2 != 1}"><!-- <hr/> --> <br/></apex:outputPanel>
+                            <apex:variable var="thisCounter2" value="{!thisCounter2+1}"/>
+                            <div class="event">
+                                <strong>{!p.Name} (<apex:outputField value="{!p.Start_Date__c}"/>)</strong><br/>
+                                {!p.Announcement__c}
+                                <apex:outputPanel rendered="{!p.URL__c != ''}">
+                                <br/>
+                                <a href="{!IF(OR(CONTAINS(p.URL__c,'http://'),CONTAINS(p.URL__c,'https://')), p.URL__c, 'http://' + p.URL__c)}" target="_blank" class="uline">More Information &amp; Registration</a>
+                                </apex:outputPanel>
+                            </div>
+                       </apex:repeat>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel rendered="{!$CurrentPage.parameters.q == 'QR'}">
+                        <h2 class="dash-header">Quick Reference</h2>
+                        <hr/>
+
+                        <apex:variable var="thisCounter3" value="{!1}"/>
+                        <apex:repeat value="{!QuickReferences}" var="p">
+                        <apex:outputPanel rendered="{!thisCounter3 != 1}"><!-- <hr/> --><br/></apex:outputPanel>
+                        <apex:variable var="thisCounter3" value="{!thisCounter3+3}"/>
+                        <div class="announcement">
+                            <apex:outputPanel rendered="{!p.New_window__c == false}">
+                                <a href="{!IF(OR(CONTAINS(p.URL__c,'http://'),CONTAINS(p.URL__c,'https://')), p.URL__c, 'http://' + p.URL__c)}" class="uline">{!p.Title__c}</a>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!p.New_window__c != false}">
+                                <a href="{!IF(OR(CONTAINS(p.URL__c,'http://'),CONTAINS(p.URL__c,'https://')), p.URL__c, 'http://' + p.URL__c)}" target="_blank" class="uline">{!p.Title__c}</a>
+                            </apex:outputPanel>
+                        </div>
+                        </apex:repeat>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel rendered="{!$CurrentPage.parameters.q == 'FQC'}">
+                        <h2 class="dash-header">Upcoming Field QC Inspections</h2>
+                        <hr/>
+                        <apex:outputPanel rendered="{!Inspections.size != 0}">
+                            <apex:variable var="counter4" value="{!1}"/>
+                            <apex:repeat value="{!Inspections}" var="p">
+                            <apex:outputPanel rendered="{!counter4 != 1}"><br/></apex:outputPanel>
+                            <apex:variable var="counter4" value="{!counter4+1}"/>
+                            <div class="event">
+                                <strong><apex:outputField value="{!p.Field_QC_Date_Time__c}"/></strong><br/>
+                                <span class="smaller">{!p.Building_Street_Address__c}, {!p.Building_City__c}</span><br/>
+                                <a href="/pgeportal/BIGPortalManageApplication?action=detail&id={!p.Id}" class="uline">More Information</a>
+                            </div>
+                            </apex:repeat>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <br/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <c:BIGPortalFooter />
+    <c:BIGPortalAHUSurvey />
+</div>
+</body>
+</apex:page>

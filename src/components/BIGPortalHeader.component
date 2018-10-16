@@ -1,0 +1,60 @@
+<apex:component layout="none" controller="BIGPortalManageApplicationController">
+<style>
+.btn-header {
+    display: inline-block;
+    margin-bottom: 0px;
+    line-height: 20px;
+    text-align: center;
+    text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.75);
+    vertical-align: middle;
+    cursor: pointer;
+    background-image: linear-gradient(to bottom, #FFF, #E6E6E6);
+    background-repeat: repeat-x;
+    border-width: 1px;
+    border-style: solid;
+    -moz-border-top-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    border-image: none;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) #B3B3B3;
+    border-radius: 4px;
+    box-shadow: 0px 1px 0px rgba(255, 255, 255, 0.2) inset, 0px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+h1, h2, h3, h4, h5, h6{
+	text-rendering:auto !important;
+}
+</style>    
+    
+    <div id="header" class="row-fluid">
+        <div class="span4">
+            <img src="{!URLFOR($Resource.bigutopia, '/img/pge_euc_logo.gif')}" style="margin-top: 11px; margin-left: 17px; height: 74px;"/>
+        </div>
+        <apex:outputPanel rendered="{!hasACQCProgram}">
+            <!--<div style="float: right;margin-top: 50px;color: #0d759a;font-size: 95%;padding: 10px;font-weight: bold;margin-right: 20px;">
+                <img src="{!$Resource.iconarrow}" /> <a style="margin-top:3px;" href="BIGPortalProgram?p=ACQC">Switch to ACQC Rebate Program</a>
+            </div>-->
+            <div style="float: right;margin-top: 45px;padding: 8px;font-weight: bold;margin-right: 30px;">		
+				<a class="btn btn-header" href="BIGPortalProgram?p=ACQC" style="font-family: 'Open Sans' !important;color: #0d759a;font-size: 95%;padding:4px 10px;height:22px;font-weight:bold;"><img src="{!URLFOR($Resource.acqcicons,'iconarrow.png')}" /> <span style="line-height:1.5">Switch to ACQC Rebate Program</span></a>
+			</div>
+        </apex:outputPanel>
+    </div>
+    <div class="navbar">
+        <ul class="nav-bar">
+            <li class="{!IF(OR(LOWER($CurrentPage.Name) =='bigportalmanagedashboard', LOWER($CurrentPage.Name) =='bigportaldashboarddetail'),'active', '')}"><apex:outputLink value="BIGPortalManageDashboard">Dashboard</apex:outputLink></li>
+            <li class="{!IF(OR(LOWER($CurrentPage.Name) =='bigportalmanageapplication', LOWER($CurrentPage.Name) == 'bigportaladvancedhuapplication'),'active', '')}"><apex:outputLink value="BIGPortalManageApplication">Applications</apex:outputLink></li>
+            <li class="{!IF(LOWER($CurrentPage.Name) =='bigportalmanagebuilding','active', '')}"><apex:outputLink value="BIGPortalManageBuilding">Buildings</apex:outputLink></li>
+            <li class="{!IF(LOWER($CurrentPage.Name) =='bigportalhuphelp','active', '')}"><a href="BIGPortalHUPHelp">Help</a></li>
+            <li class="dropdown" style="float:right;padding-right:20px;">
+                <a id="usernameMenu" class="dropdown-toggle" data-toggle="dropdown" href="#" style="font-weight:normal;"><i class="icon-user"></i>&nbsp;You are logged in as {!$User.FirstName}&nbsp;{!$User.LastName}&nbsp;<span class="caret" style="display: inline-block;margin-top: 17px;"></span></a>
+                <ul class="dropdown-menu" style="background-color:#096ba0;">
+                    <!-- <li><a href="{!$Site.Prefix}/BIGPortalHUPCompanyProfile">Company Profile</a></li> -->
+                    <li>
+                        <a id="logout" href="{!$Site.Prefix}/secur/logout.jsp">Logout</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</apex:component>

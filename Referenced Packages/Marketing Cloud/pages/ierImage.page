@@ -1,0 +1,124 @@
+<apex:page standardController="et4ae5__IndividualEmailResult__c" extensions="et4ae5.ierController" action="{!initialize}" showHeader="false">
+    <style type="text/css">
+body {
+    margin: 0;
+    padding: 0;
+    
+    font-size: 11px;
+}
+.row {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+.cell {
+    display: inline-block;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    
+    vertical-align: top;
+}
+/* Widget styles */
+.widget {
+    margin: 12px;
+    border: 1px solid #e0e3e5;
+    padding: 12px;
+    min-height: 166px;
+    
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}
+
+.widget .header {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+img.helpOrb {
+    vertical-align: bottom;
+}
+.pic{
+    max-height:50%;
+}
+/* Mobile styles */
+@media only screen and (max-width: 480px) {
+    body: {
+        font-size: 16px;
+    }
+    .container {
+        padding: 0 8px 0 8px;
+    }
+    .cell.mobile {
+        display: block;
+        width: 100%;
+    }
+
+    .widget {
+        background-color: hsl(0, 0%, 100%);
+    }
+    .helpOrb,
+    .hide-mobile {
+        /* Hide help orb icon on mobile */
+        display: none;
+    }
+    .pic.mobile {
+        width: 100%;
+    }
+    </style>
+	<apex:stylesheet value="{!URLFOR($Resource.et4ae5__Tooltips)}"/>
+    <div class="container">
+        <div class="row">
+            <div class="cell mobile">
+                <div class="widget">
+                    <div class="header">
+                            <span class="helpButton">
+                                {!$Label.emlThmbnl}
+                            </span>
+                            <div class="row">
+                                <div class="photo" style="margin-top: 1em;" id="imgThumb">
+                                    <img class="pic mobile" type="image" src="data:image/png;base64,{!imageThumbnail}"  />
+                                </div>
+                                <div class="body" style="display:none;font-weight:normal;" id="noThumb">
+                                <br/>
+                                    <span>{!$Label.noThumbnail}</span>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function addLoadEvent(func) 
+		{ 
+		  var oldonload = window.onload; 
+		  if (typeof window.onload != 'function') 
+		  { 
+		     window.onload = func; 
+		  } 
+		  else 
+		  { 
+		      window.onload = function()  
+		      { 
+		        if (oldonload) 
+		        { 
+		           oldonload(); 
+		        } 
+		        func(); 
+		      } 
+		   } 
+		} 
+		  
+		addLoadEvent(displayThumbnail);
+        function displayThumbnail (){
+            if ('{!JSENCODE(imageThumbnail)}'== '')
+            {
+                document.getElementById('imgThumb').style.display = "none";
+                document.getElementById('noThumb').style.display="inline-block";
+            }
+        }
+    </script >
+</apex:page>

@@ -1,0 +1,6 @@
+<apex:page >
+  <!-- Begin Default Content REMOVE THIS -->
+  <h1>RedirectURI</h1>
+  This is your new RedirectURI Page
+  <!-- End Default Content REMOVE THIS -->
+</apex:page>

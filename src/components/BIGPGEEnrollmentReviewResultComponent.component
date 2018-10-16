@@ -1,0 +1,51 @@
+<apex:component controller="BIGPGEEnrollmentReviewResultController" selfClosing="true" access="global">
+    <apex:attribute name="applicationId" description="Enrollment Application Id."
+                  type="String" required="required" assignTo="{!appId}"/>
+    <apex:attribute name="internalMessages" description="Flag for internal/external use."
+                  type="Boolean" default="false" assignTo="{!showInternalMessages}"/>
+
+    <apex:repeat value="{!reviews}" var="review">
+        <div style="font-size: 11pt; margin-top: 15px; margin-left: 15px; font-weight: bold; color: #006699; font-family: 'Open Sans', sans-serif;">
+            <apex:outputPanel rendered="{!review.title == 'Application'}">
+                COMPANY INFORMATION AND INSURANCE
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!review.title == 'ACQC'}">
+                AC QUALITY CARE
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!review.title == 'AHU'}">
+                ADVANCED HOME UPGRADE AND HOME UPGRADE
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!review.title == 'HU'}">
+                HOME UPGRADE
+            </apex:outputPanel>
+        </div>
+        <div style="font-size: 10pt; margin-left: 30px; font-weight: bold;">
+            <div>Status</div>
+            <span style="color: {!IF(review.status == 'Approved', '#008000' , IF(review.status == 'Rejected', '#FF0000', '#FF5E00'))}">{!review.status}</span>
+        </div>
+        <apex:outputPanel layout="block" rendered="{!review.returnedField.size > 0}" style="margin-left: 30px; margin-top: 15px; font-size: 10pt; font-weight: bold;">
+            <div>Requests for More Information</div>
+            <apex:repeat value="{!review.returnedField}" var="field">
+                <p style="font-size: 10pt; color: #333; font-weight: normal; line-height: 22px; margin: 0;">
+                    <span>- {!field}</span>
+                </p>
+            </apex:repeat>
+        </apex:outputPanel>
+        <apex:outputPanel layout="block" rendered="{!review.externalMsg.size > 0}" style="margin-left: 30px; margin-top: 15px; font-size: 10pt; font-weight: bold;">
+            <div>Messages to Applicant</div>
+            <apex:repeat value="{!review.externalMsg}" var="message">
+                <p style="font-size: 10pt; color: #333; font-weight: normal; line-height: 22px; margin: 0 0 10px;">
+                    <span>{!message}</span>
+                </p>
+            </apex:repeat>
+        </apex:outputPanel>
+        <apex:outputPanel layout="block" rendered="{!showInternalMessages && review.internalMsg.size > 0}" style="margin-left: 30px; margin-top: 15px; font-size: 10pt; font-weight: bold;">
+            <div>Internal  Messages</div>
+            <apex:repeat value="{!review.internalMsg}" var="message">
+                <p style="font-size: 10pt; color: #333; font-weight: normal; line-height: 22px; margin: 0 0 10px;">
+                    <span>{!message}</span>
+                </p>
+            </apex:repeat>
+        </apex:outputPanel>
+    </apex:repeat>
+</apex:component>

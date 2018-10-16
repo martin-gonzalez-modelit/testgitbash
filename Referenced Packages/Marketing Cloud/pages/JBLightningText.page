@@ -1,0 +1,18 @@
+<apex:page standardStylesheets="false">    
+	<apex:outputPanel rendered="false">
+		<apex:outputText value="{!$Label.et4ae5__journeys}"/>
+		<apex:outputText value="{!$Label.et4ae5__addtojourney}"/>
+		<apex:outputText value="{!$Label.et4ae5__addtojourneyerror}"/>
+		<apex:outputText value="{!$Label.et4ae5__addtojourneysuccess}"/>		
+		<apex:outputText value="{!$Label.et4ae5__addtojourneyemptyfieldserrortitle}"/>
+		<apex:outputText value="{!$Label.et4ae5__fieldnotavailableerror}"/>
+		<apex:outputText value="{!$Label.et4ae5__deserializationerroraddtojourney}"/>				
+		<apex:outputText value="{!$Label.et4ae5__select_journey_message}"/>
+		<apex:outputText value="{!$Label.et4ae5__selectajourney}"/>
+		<apex:outputText value="{!$Label.et4ae5__journey_name}"/>
+		<apex:outputText value="{!$Label.et4ae5__journey_description}"/>
+		<apex:outputText value="{!$Label.et4ae5__business_unit}"/>
+		<apex:outputText value="{!$Label.et4ae5__unknownerror}"/>		
+		<apex:outputText value="{!$Label.et4ae5__journeybuildercomponent}"/>
+	</apex:outputPanel>    
+</apex:page>

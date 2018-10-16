@@ -1,0 +1,39 @@
+<aura:component implements="lightning:availableForFlowScreens">
+    <!-- Attributes -->
+    <aura:attribute name="parentId" type="String"/>
+    <aura:attribute name="reason" type="String"/>
+    <aura:attribute name="appFileId" type="String" default=""/>
+    <aura:attribute name="attachId" type="String" default=""/>
+    <aura:attribute name="totalUploadedFiles" type="Integer" default="0"/>
+    <aura:attribute name="disabledButtons" type="Boolean" default="false"/>
+    <aura:attribute name="commentsErrorMessage" type="String" default="" />
+    <aura:attribute name="filesErrorMessage" type="String" default="" />
+    <!-- Text Area -->
+    <div class="slds-form-element">
+        <label class="slds-form-element__label">
+            <abbr class="slds-required" title="required">*</abbr>Please provide any additional comments.
+        </label>
+        <div class="slds-form-element__control">
+            <textarea aura:id="comments" class="slds-textarea"/>
+        </div>
+    </div>
+    <div class="slds-text-body_small slds-text-color_error slds-m-bottom_small">{!v.commentsErrorMessage}</div>
+
+    <!-- Call component that has Upload file functionality -->
+    <c:AttachmentUploadCmp parentId = "{!v.parentId}" filesErrorMessage="{!v.filesErrorMessage}" 
+        disabledButtons="{!v.disabledButtons}" totalUploadedFiles="{!v.totalUploadedFiles}"/>
+
+    <!-- Explanation text -->
+    <p>If you click "Next", your information will be saved, and the field QC requirement for this application 
+       will be permanently waived. If you do not want to permanently waive this application's field QC 
+       requirement, but would prefer to temporarily cancel an existing appointment and reschedule later,
+       please click "Previous" until first screen and select "Cancel current appointment (reschedule later)".</p>
+
+    <!-- Navigation Buttons -->
+    <div class="slds-clearfix slds-p-top_medium">
+        <div class="slds-float_right">
+            <lightning:button aura:id="BACK" label="Previous" variant="neutral" disabled="{!v.disabledButtons}" onclick="{!c.handleButtonPressed}"/>
+            <lightning:button aura:id="NEXT" label="Next" variant="brand" disabled="{!v.disabledButtons}" onclick="{!c.handleButtonPressed}"/>
+        </div>
+   </div>
+</aura:component>

@@ -1,0 +1,17 @@
+<apex:page standardController="CampaignMember" extensions="et4ae5.CampaignMemberHistoryControl" readOnly="true" sidebar="false" id="page">
+    <apex:pageMessages id="messages" />
+    <apex:form id="frm">
+	<apex:pageBlock >
+        <apex:pageBlockTable value="{!cmhTableData}" var="item">
+            <apex:column value="{!item.emailName}" headerValue="Email Name" width="10%"/> 
+			<apex:column value="{!item.dateSent}" headerValue="Date Sent" width="10%"/>
+			<apex:column value="{!item.bounce}" headerValue="Bounce" width="10%"/>
+			<apex:column value="{!item.dateBounced}" headerValue="Date Bounced" width="10%"/>
+			<apex:column value="{!item.dateOpened}" headerValue="Date Opened" width="10%"/>
+			<apex:column value="{!item.unsubscribed}" headerValue="Date Unsubscribed" width="10%"/>
+            <apex:column value="{!item.linkName}" headerValue="Link Name" width="10%"/>
+			<apex:column value="{!item.lastClicked}" headerValue="Last Clicked" width="10%"/>
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,105 @@
+<apex:page controller="BuildingFinderController" readOnly="true">
+	<apex:stylesheet value="{!URLFOR($Resource.PGEResources, '/css/searchBuilding.css')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.PGEResources, '/js/search.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.PGEResources, '/js/jquery-1.8.2.min.js')}"/>
+    
+	<body>
+	    <p>
+	        <h1 class="search-header">{!$Label.PGEBuildingSearchHeader}</h1>
+	        <p><apex:outputText value="{!$Label.PGEBuildingSearchDescription}" escape="false" /></p>
+	        
+	        <apex:form onKeyPress="return submitenter(event,'{!$Component.btnSearch}');">
+	        	<apex:inputText value="{!searchKeyword}" size="40" title="Search..." maxlength="100" />
+	        	<apex:selectRadio value="{!buildingType}" required="true" label="Type" title="Building type" styleClass="building-options">
+	            	<apex:selectOptions value="{!items}"/>
+	            </apex:selectRadio>
+	            <apex:commandButton action="{!searchBuildings}" id="btnSearch" styleClass="search" onclick="showPopup();" oncomplete="hidePopup();" reRender="results" value="Find Now" />
+	        </apex:form>
+	    </p>
+	    <apex:outputPanel id="results" styleClass="results">
+	        <p><strong>{!message}</strong></p>
+	        
+	        <apex:form styleClass="building-form">
+	        	<apex:outputPanel rendered="{!accounts.size > 0}" layout="none">
+			    	<table class="building-table">
+			            <tr class="header">		                
+			                <th class="building-name">Building Name</th>
+			                <th class="building-address">Address</th>
+			                <th class="building-city">City</th>
+			                <th class="building-state">State</th>
+			                <th class="building-zipcode">Zip Code</th>
+			                <th class="building-county">County</th>
+			                <th class="building-account">Account Name</th>
+			            </tr>
+			            <apex:repeat value="{!accounts}" var="building">
+			            	<tr>
+				                <td><a href="/{!building.id}">{!building.Building_Name__c}</a></td>
+				                <td>{!building.Street_Address__c}</td>
+				                <td>{!building.City__c}</td>
+				                <td>{!building.State__c}</td> 
+				                <td>{!building.Zip_Code__c}</td>
+				                <td>{!building.County__c}</td>
+				                <td>{!building.Name}</td>
+			            	</tr>
+			            </apex:repeat>
+			        </table>
+			    </apex:outputPanel>
+			    <apex:outputPanel rendered="{!contacts.size > 0}" layout="none">
+			    	<table class="building-table">
+			            <tr class="header">
+			                <th class="homeowner-name">Homeowner Name</th>		                
+			                <th class="homeowner-phone">Phone</th>
+			                <th class="homeowner-email">Email</th>
+			                <th class="homeowner-account">Account Name</th>		                
+			            </tr>
+			            <apex:repeat value="{!contacts}" var="contact">
+			            	<tr>
+				                <td><a href="/{!contact.id}">{!contact.First_Name__c} {!contact.Last_Name__c}</a></td>
+				                <td>{!contact.Phone_Number__c}</td>
+				                <td>{!contact.Email__c}</td>		                
+				                <td><a href="/{!contact.account.Id}">{!contact.account.name}</a></td>
+			            	</tr>
+			            </apex:repeat>
+			        </table>
+			    </apex:outputPanel>
+		        <apex:outputPanel rendered="{!totalPages > 0}" layout="none">
+				    <div class="bottomNav">
+				    	<div class="paginator">
+				    		<span class="prevNextLinks">				    
+				    			<span class="prevNext">
+				    				<apex:image styleClass="firstoff" value="/s.gif" rendered="{!NOT(con.hasPrevious)}" />
+				    				<apex:commandLink action="{!con.first}" rendered="{!con.hasPrevious}"><img src="/s.gif" class="first" /></apex:commandlink>
+				    			</span>	    			
+				    			<span class="prevNext">
+				    				<apex:outputPanel rendered="{!NOT(con.hasPrevious)}" layout="none">
+				    					<apex:image styleClass="prevoff" value="/s.gif" />Previous
+				    				</apex:outputPanel>
+				    				<apex:outputPanel rendered="{!con.hasPrevious}" layout="none">
+				    					<apex:commandLink action="{!con.previous}"><apex:image styleClass="prev" value="/s.gif" />Previous</apex:commandlink>	    					
+				    				</apex:outputPanel>
+				    			</span>
+				    			<span class="prevNext">
+				    				<apex:outputPanel rendered="{!NOT(con.hasNext)}" layout="none">
+				    					Next<apex:image styleClass="nextoff" value="/s.gif" />
+				    				</apex:outputPanel>
+				    				<apex:outputPanel rendered="{!con.hasNext}" layout="none">
+				    					<apex:commandLink action="{!con.next}">Next<apex:image styleClass="next" value="/s.gif" /></apex:commandlink>	    					
+				    				</apex:outputPanel>
+				    			</span>
+				    			<span class="prevNext">
+				    				<apex:image styleClass="lastoff" value="/s.gif" rendered="{!NOT(con.hasNext)}" />
+				    				<apex:commandLink action="{!con.last}" rendered="{!con.hasNext}"><img src="/s.gif" class="last" /></apex:commandlink>
+				    			</span>
+				    		</span>
+				    		<span class="right">Page {!con.pageNumber} of {!totalPages}</span>
+				    	</div>
+				    </div>
+			    </apex:outputPanel>
+		    </apex:form>
+		              
+	    </apex:outputPanel>
+	    <div id="searchingMessage" class="searchingMessage">
+            <span>Searching...</span>
+        </div>
+	</body>
+</apex:page>

@@ -1,0 +1,4 @@
+<apex:page standardController="Lead" extensions="et4ae5.SendActionsControl" showHeader="false">
+	<c:MarketingCloudActions sObjRecord="{!mysObject}" sObjType="Lead"/>
+	<apex:outputText value="{!Lead.Name}" rendered="false" />			
+</apex:page>

@@ -1,0 +1,5 @@
+<apex:page standardController="Application__c" showHeader="false" sidebar="false">
+    <flow:interview name="SoCalGas_Customer_Account_Validation" finishLocation="{!URLFOR('/apex/AppRedirectSoCalGas?id=' & Application__c.Id)}" >
+        <apex:param name="vID" value="{!Application__c.Id}" />
+    </flow:interview>
+</apex:page>

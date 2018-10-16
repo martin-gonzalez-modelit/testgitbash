@@ -1,0 +1,345 @@
+<apex:page controller="et4ae5.OAuthRedirect" action="{!redirectUser}">
+	<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+		<head>
+			<meta charset="utf-8" />
+		  	<meta http-equiv="x-ua-compatible" content="ie=edge" />
+		  	<meta name="viewport" content="width=device-width, initial-scale=1" />
+		
+			<apex:stylesheet value="{!URLFOR($Resource.et4ae5__uxds, 'css/uxds-bootstrap.min.css')}" />
+			<apex:includeScript value="{!URLFOR($Resource.et4ae5__jQueryUI, 'jquery-ui-1.9.2.custom/js/jquery-1.8.3.js')}" />
+		  	<!-- Import the Design System style sheet -->
+		  	<apex:slds />
+	            
+	            <style>
+	                .uxds {
+		                font-family: Salesforce Sans,Proxima Nova,Arial,Sans-serif !important;
+		                font-size: medium !important;
+		                font-weight: normal !important;
+		                color: #54698d !important;
+	                }
+	                
+	                .uxdslabel {
+		                display: inline-block;
+		                max-width: 100%;
+		                margin-bottom: 5px;
+		                font-weight: 700;
+	                }
+	                
+	                .uxdswellmsg {
+		                margin: 0 0 10px !important;
+		                color: #54698d !important;
+		                font-size: 14px !important;
+		                display: block !important;
+	                }
+	                
+	                .uxdswell {
+		                width: 400px !important;
+		                min-height: 20px !important;
+		                padding: 19px !important;
+		                margin-bottom: 20px !important;
+		                background-color: #f5f5f5 !important;
+		                border: 1px solid #e3e3e3 !important;
+		                border-radius: 4px !important;
+		                box-sizing: border-box;
+		                box-shadow: inset 0 1px 1px rgba(0,0,0,.05) !important;
+	                }
+	                
+	                .uxdscenter {
+		                display: block;
+		                margin-right: auto;
+		                margin-left: auto;
+	                }
+	                
+	                .bumessatetitle {
+		                margin: 10px !important;
+		                display: block !important;
+		                font-weight: bold !important;
+	                }
+	                
+	                .bumessatemsg {
+	                	margin: 10px !important;
+	                }
+	                
+	                .bumessage {
+		                border-color: #bee6ff;
+		                background-color: #f5fcff;
+		                color: #464646;
+		                padding: 5px;
+		                margin: 5px;
+		                border-width: 1px;
+		                border-style: solid;
+		                border-radius: 5px;
+		                font-size: 13px;
+		                line-height: 18px;
+		                opacity: 1;
+		                transition: opacity .2s ease-out;
+	                }
+	                
+	                .dropdown-vf {
+	                	width: 100% !important;
+	                }
+	                
+	                .button-vf {
+		                width: 100% !important;
+		                color: #fff !important;
+		                font-size: 100% !important;
+		                text-shadow: none !important;
+		                cursor: pointer !important;
+		                text-transform: none !important;
+		                border-radius: 4px !important;
+		                border: 0 !important;
+		                border-top: 1px solid rgba(255,255,255,.45) !important;
+		                margin: 2px 3px !important;
+		                padding: 4px 6px !important;
+		                background: #0070d2 !important;
+	                }
+	                
+	                .buconfirm--scrollable {
+		                max-height: 280px !important;
+	                }
+	                
+	                .buconfirm--header-img {
+	                	height: 60px;
+	                	width: 60px;
+	                }
+	                
+	                .buconfirm--header-warning {
+		                font-size: 2rem !important;
+		                vertical-align: middle;
+	                }
+	                
+	                .buconfirm--warning-box {
+	                	padding: 0 !important;
+	                }
+	                
+	                .buconfirm--warning-icon {
+			            background-color: #ffb75d;
+			            border-radius: 50%;
+			            height: 30px !important;
+			            width: 30px !important;
+			            color: white;
+			            font-weight: 500 !important;
+		            }
+	            
+		            tr.burec--list-element td {
+		            	color: #16325c;
+		            }
+		            
+		            #label-bu-confirmation {
+		            	color: #16325c;
+		            	font-size: 1rem;
+		            	line-height: 1.25;
+		            }
+		            
+		            
+	            </style>
+	            <script>
+				    j$ = jQuery.noConflict();
+					j$(document).ready(function ()
+				    {
+				    	var checkboxBuConfirmation = j$('#checkbox-bu-confirmation');
+				    	var buttonBuConfirmation = j$('#button-bu-confirmation');
+				    	var buttonBuRevert = j$('#button-bu-revert');
+				    	var modalBackdrop = j$('#modal-backdrop');
+				    	var modalConfirm = j$('#modal-confirm');
+				    	var modalCancel = j$('#modal-cancel');
+				    	var closeModal = j$('.close-modal');
+				    	var buConfirmationDisplay = j$('#bu-confirmation-display');
+				    
+				        checkboxBuConfirmation.click(function() {
+				            if (this.checked) {
+				                buttonBuConfirmation.prop('disabled', false);
+				            } else {
+				                buttonBuConfirmation.prop('disabled', true);
+				            }
+				        });
+				            
+				        buttonBuConfirmation.click(function(e) {
+				            e.preventDefault(e);
+				            modalBackdrop.addClass('slds-backdrop--open');
+				            modalConfirm.addClass('slds-fade-in-open');  
+				            modalConfirm.prop('aria-hidden', false);
+				            buConfirmationDisplay.prop('aria-hidden', true);
+				        });
+				            
+				        buttonBuRevert.click(function(e) {
+				            e.preventDefault(e);
+				            modalBackdrop.addClass('slds-backdrop--open');
+				            modalCancel.addClass('slds-fade-in-open');  
+				            modalCancel.prop('aria-hidden', false);
+				            buConfirmationDisplay.prop('aria-hidden', true);
+				        });
+				        
+				        closeModal.click(function(e) {
+				            e.preventDefault(e);
+				            modalBackdrop.removeClass('slds-backdrop--open');
+				            modalConfirm.removeClass('slds-fade-in-open');  
+				            modalConfirm.prop('aria-hidden', true);
+			            	modalCancel.removeClass('slds-fade-in-open');
+			            	modalCancel.prop('aria-hidden', true);
+				            buConfirmationDisplay.prop('aria-hidden', false);
+				            checkboxBuConfirmation.prop('checked', false);
+				            buttonBuConfirmation.prop('disabled', true);
+				        });
+				    });                                               
+			    </script>
+	        </head>
+	        <body>
+	            <apex:form id="mainForm">
+	                <apex:pagemessages id="pgMessages" />
+	                <apex:outputPanel styleClass="slds-scope" id="buconfirmation" rendered="{!lRemovedBusinessUnits != null && lRemovedBusinessUnits.size > 0}">
+		                <div id="modal-confirm" role="dialog" tabindex="-1" aria-labelledby="header-modalconfirm" class="slds-modal" aria-hidden="true">
+		                    <div class="slds-modal__container">
+		                        <div class="slds-modal__header">
+		                            <button class="slds-button slds-modal__close slds-button--icon-inverse close-modal" title="Close">
+		                                    <img src="{!URLFOR($Resource.SLDS100, 'assets/icons/utility/close_60.png')}"/>
+		                                <span class="slds-assistive-text">Close</span>
+		                              </button>
+		                            <h2 id="header-modalconfirm" class="slds-text-heading--medium">{!$Label.msg0282}</h2>
+		                        </div>
+		                        <div class="slds-modal__content slds-p-around--medium">
+		                            <div class="slds-align--absolute-center"><img class="buconfirm--img-warning" src="{!URLFOR($Resource.SLDS100, 'assets/icons/utility/warning_60.png')}"/>
+		                            </div>
+		                            <div class="slds-m-top--small">{!sBuRecLastChance}</div>
+		                        </div>
+		                        <div class="slds-modal__footer">
+		                            <button class="slds-button slds-button--neutral close-modal" >{!$Label.Cancel}</button>
+		                            <apex:commandButton styleClass="slds-button slds-button--destructive" value="{!$Label.et4ae5__msg0286}" action="{!confirmRemoveBUs}" />
+		                        </div>
+		                    </div>
+		                </div>
+		                <div id="modal-cancel" role="dialog" tabindex="-1" aria-labelledby="header-modalcancel" class="slds-modal" aria-hidden="true">
+		                    <div class="slds-modal__container">
+		                        <div class="slds-modal__header">
+		                            <button class="slds-button slds-modal__close slds-button--icon-inverse close-modal" title="Close">
+		                                    <img src="{!URLFOR($Resource.SLDS100, 'assets/icons/utility/close_60.png')}"/>
+		                                <span class="slds-assistive-text">Close</span>
+		                              </button>
+		                            <h2 id="header-modalcancel" class="slds-text-heading--medium">{!$Label.msg0287}</h2>
+		                        </div>
+		                        <div class="slds-modal__content slds-p-around--medium">
+		                            <div class="slds-m-top--small">{!$Label.msg0291}</div>
+		                        </div>
+		                        <div class="slds-modal__footer">
+		                            <button class="slds-button slds-button--neutral close-modal" >{!$Label.msg0294}</button>
+		                            <apex:commandButton styleClass="slds-button slds-button--brand" value="{!$Label.et4ae5__msg0285}" action="{!cancelRemoveBUs}" />
+		                        </div>
+		                    </div>
+		                </div>
+	                    <div id="modal-backdrop" class="slds-backdrop"></div>
+	                    <div id="bu-confirmation-display" class="slds slds-m-left--medium slds-m-right--medium" aria-hidden="true">
+	                        <div class="slds-m-bottom--medium slds-text-body--medium">
+	                            <div class="slds-scope">
+	                                <div class="slds-m-top--medium slds-m-bottom--small">
+	                                    <img class="buconfirm--header-img" src="{!URLFOR($Resource.SLDS100, 'assets/icons/utility/warning_60.png')}"/>
+	                                    <span class="slds-text-heading--large slds-m-left--small buconfirm--header-warning">{!$Label.msg0270}</span>
+	                                </div>
+	                                <div class="slds-m-top--medium slds-m-bottom--small">
+	                                    <span class="slds-text-heading--small">{!sBuRecDeleteAccess}</span>
+	                                </div>         
+	                            </div>
+	                            <div class="slds-scrollable--y slds-m-bottom--medium slds-border--bottom slds-border--top slds-border--left slds-border--right buconfirm--scrollable" > 
+	                                <table class="slds-table  slds-table--bordered slds-table--striped slds-no-row-hover" role="grid">
+	                                    <thead>
+	                                        <tr class="slds-text-title--caps">
+	                                            <th scope="col">
+	                                                <div class="slds-truncate" title="{!$Label.buName}">{!$Label.buName}</div>
+	                                            </th>
+	                                            <th scope="col">
+	                                                <div class="slds-truncate" title="{!$Label.buId}">{!$Label.buId}</div>
+	                                            </th>
+	                                        </tr>
+	                                    </thead>
+	                                    <tbody>
+	                                        <apex:repeat value="{!lRemovedBusinessUnits}" var="bu">
+	                                            <tr class="burec--list-element">
+	                                                <td data-label="{!$Label.et4ae5__buname}">
+	                                                    <div class="slds-truncate" title="{!bu.Name}">
+	                                                        {!bu.Name}
+	                                                    </div>
+	                                                </td>
+	                                                <td data-label="{!$Label.et4ae5__buid}">
+	                                                    <div class="slds-truncate" title="{!bu.et4ae5__Business_Unit_ID__c}">
+	                                                        {!bu.et4ae5__Business_Unit_ID__c}
+	                                                    </div>
+	                                                </td>
+	                                            </tr>
+	                                        </apex:repeat>
+	                                    </tbody>
+	                                </table>
+	                            </div>
+                                <div class="slds-m-top--medium slds-m-bottom--small">
+                                	<apex:outputText value="{!sBuRecWillBeDeleted}" escape="false" styleClass="slds-text-heading--small" />
+                                </div>
+                                <apex:repeat value="{!lBuRecWarningMessages}" var="warningMessage">
+		                            <div class="slds-box slds-grid slds-grid--vertical-align-center slds-m-top--small buconfirm--warning-box">
+		                                <div class="slds-size--1-of-12 slds-m-around--small slds-text-heading--large slds-align--absolute-center buconfirm--warning-icon">!</div>
+		                                <apex:outputText value="{!warningMessage}" escape="false" styleClass="slds-size--11-of-12 slds-text-heading--small slds-m-top--small slds-m-right--small slds-m-bottom--small" />
+		                            </div>
+	                            </apex:repeat>
+	                            <div class="slds-form-element slds-m-top--medium">
+	                                <div class="slds-form-element__control">
+	                                    <span class="slds-checkbox">
+	                                        <input type="checkbox" name="options" id="checkbox-bu-confirmation" checked="" />
+	                                        <label class="slds-checkbox__label" for="checkbox-bu-confirmation">
+	                                            <span class="slds-checkbox--faux"></span>
+	                                            <span class="slds-form-element__label" id="label-bu-confirmation">{!$Label.msg0288}</span>
+	                                        </label>
+	                                    </span>
+	                                </div>
+	                            </div>
+	                            <div class="slds-m-top--medium">
+	                            	<button id="button-bu-revert" class="slds-button slds-button--neutral">{!$Label.Cancel}</button>
+	                            	<button id="button-bu-confirmation" class="slds-button slds-button--brand" disabled="disabled">{!$Label.msg0293}</button>
+	                            </div>
+	                        </div>
+	                    </div>
+	                </apex:outputpanel>
+	                <apex:outputpanel styleclass="uxds" rendered="{!lBusinessUnits != null && lBusinessUnits.size > 0}">
+		            <div style="min-height: 15px !important;"></div>
+		            <div>
+		                <div class="bumessage">
+		                    <h4 class="bumessatetitle">
+		                        {!$Label.slctABU}
+		                    </h4>
+		                    <div class="bumessatemsg">
+		                        {!$Label.msg0239}
+		                    </div>
+		                </div>
+		                <div style="min-height: 15px !important;"></div>
+		                <div class="uxdscenter" align="center">
+		                    <div class="uxdswell">
+		                        <legend style="font-weight: normal;color: #54698d;">
+		                            {!$Label.mccBUs}
+		                        </legend>
+		                        <p class="uxdswellmsg" align="left">
+		                            {!$Label.msg0176}
+		                        </p>
+		                        <div style="min-height: 15px !important;"></div>
+		                        <div align="left">
+		                            <label class="uxdslabel">
+		                                {!$Label.busUnit}
+		                            </label>
+		                            <apex:selectlist id="buDropdown" value="{!sSelectedBusinesUnit}" size="1" styleclass="dropdown-vf">
+		                                <apex:selectoptions value="{!lBusinessUnits}" />
+		                            </apex:selectlist>
+		                        </div>
+		                        <div style="min-height: 15px !important;"></div>
+		                        <div align="left">
+		                            <apex:actionstatus id="selectBUStatus">
+		                                <apex:facet name="start">
+		                                    <apex:outputtext value="{!$Label.et4ae5__processing}" />
+		                                </apex:facet>
+		                                <apex:facet name="stop">
+		                                    <apex:commandbutton value="{!$Label.et4ae5__slctbu}" action="{!selectBU}" styleclass="button-vf" rerender="mainForm" status="selectBUStatus" />
+		                                </apex:facet>
+		                            </apex:actionstatus>
+		                        </div>
+		                    </div>
+		                </div>
+		            </div>
+		        </apex:outputpanel>
+		    </apex:form>
+	    </body>
+	</html>
+</apex:page>

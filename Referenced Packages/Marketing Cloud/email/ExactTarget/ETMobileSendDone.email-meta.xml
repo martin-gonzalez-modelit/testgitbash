@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <available>true</available>
+    <encodingKey>UTF-8</encodingKey>
+    <name>ETMobileSendDone</name>
+    <style>none</style>
+    <subject>{!$Label.etMoSend} {!SMSDefinition__c.Name} - {!SMSDefinition__c.SendStatus__c}</subject>
+    <textOnly>{!$Label.mobileSend}: {!SMSDefinition__c.Name}
+{!$Label.initiatdOn} {!SMSDefinition__c.InitiatedDate__c}
+{!$Label.status}: {!SMSDefinition__c.SendStatus__c} {!$Label.at_lc} {!SMSDefinition__c.Status_Date_Time__c}
+
+{!$Label.message} {!$Label.name}: {!SMSDefinition__c.smsName__c}
+{!$Label.shortCode}: {!SMSDefinition__c.shortCode__c}
+{!$Label.keyword}: {!SMSDefinition__c.Keyword__c}
+{!$Label.msgText}: {!SMSDefinition__c.Message_Text__c}
+
+{!$Label.recpSourcs}:
+{!SMSDefinition__c.AllSources__c}
+
+{!SMSDefinition__c.Messages__c}
+
+{!SMSDefinition__c.Link}</textOnly>
+    <type>custom</type>
+</EmailTemplate>

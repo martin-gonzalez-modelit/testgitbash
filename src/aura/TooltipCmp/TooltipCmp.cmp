@@ -1,0 +1,24 @@
+<aura:component >
+<!-- Attributes -->
+<aura:attribute name="title" type="String"/>
+<aura:attribute name="class" type="String"/>
+<aura:attribute name="helpText" type="String"/>
+<aura:attribute name="helpTextPosition" type="String"/>
+<aura:attribute name="minWidth" type="String" default="auto"/>
+<aura:attribute name="showHelpText" type="Boolean" default="false"/>
+
+<div class="slds-form-element slds-show_inline">
+   <div class="slds-form-element__icon slds-align-middle"
+        onmouseover="{!c.showHelpText}"
+        onmouseout="{!c.hideHelpText}">
+      <button class="{!v.class + ' slds-button slds-button_icon'}" title="{!v.title}">
+         <lightning:icon iconName="utility:info" size="x-small"/>
+      </button>
+        <div class="{! 'helpText slds-popover slds-popover_tooltip ' + (v.showHelpText ? ' ' : 'slds-hide ') + v.helpTextPosition}"
+             style="{! 'min-width:' + v.minWidth}">
+            <div class="slds-popover__body">{!v.helpText}</div>
+        </div>
+   </div>
+</div>
+
+</aura:component>

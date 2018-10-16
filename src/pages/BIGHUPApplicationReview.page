@@ -1,0 +1,333 @@
+<apex:page sidebar="false" controller="BIGHUPApplicationReviewController">
+<apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+<style>
+
+.requiredInput .requiredMark { display:none }
+
+#backToHupApplication {
+    float:left;
+    width:100%;
+    padding-bottom:10px;
+    display:block;
+}
+
+#backToHupApplication a {
+    text-decoration:underline;
+    color:rgb(1, 91, 167) !important;
+}
+
+body button.btn.btn-primary, input.btn.btn-primary[type="submit"] {
+    background-image: linear-gradient(rgb(0, 136, 204), rgb(0, 68, 204)) !important;
+    background-repeat: repeat-x !important;
+    color: white;
+    border-color: rgb(0, 68, 204) rgb(0, 68, 204) rgb(0, 42, 128);
+    background-color: rgb(0, 68, 204) !important;
+}
+body button, body button.btn, body input.btn[type="submit"] {
+    background-image: linear-gradient(rgb(255, 255, 255), rgb(230, 230, 230));
+    color: rgb(51, 51, 51);
+    background-color: rgb(230, 230, 230) !important;
+    padding: 4px 12px !important;
+    font-family: Arial,Helvetica,sans-serif !important;
+    font-weight: normal;
+}
+
+.FlowContainer {
+    width:32%;
+    float:left;
+}
+
+.FlowContainer .pbBottomButtons .pbTitle {
+    display:none;
+}
+
+.FlowContainer .pbHeader .pbTitle, #rightPane .pbHeader .pbTitle {
+    width: 90% !important;
+}
+
+.FlowContainer .pbHeader .pbTitle h2, #rightPane .pbHeader .pbTitle h2 {
+    text-align: left !important;
+    padding-left:10px;
+}
+
+.FlowContainer .labelCol { width: 75% !important; text-align:left !important; padding-left:10px; }
+.FlowContainer .dataCol { width: 25% !important }
+
+.FlowContainer .pbBody { margin:0px !important }
+
+.FlowContainer select { width:120px }
+
+.FlowContainer a {
+    color: rgb(1, 91, 167) !important;
+    text-decoration:underline;
+}
+
+.FlowContainer .FlowPreviousBtn {
+    display:none;
+}
+
+.commentsLabel {
+    padding-left:4px !important;
+}
+
+#rejectButton {
+    float:left;
+    background-image: linear-gradient(rgb(255, 70, 70), rgb(255, 0, 0)) !important;
+    border: solid 1px red;
+    padding: 4px 12px;
+    color: white;
+    font-family: Arial,Helvetica,sans-serif !important;
+    border-radius: 3px;
+    font-size: 0.9em;
+    cursor:pointer;
+}
+
+#rightPane {
+    width:67%;
+    float:right;
+}
+
+.bPageBlock .detailList .labelCol {
+    width: 60%;
+}
+
+.bPageBlock .requiredInput {
+    width:110px;
+}
+
+#frame {
+    border:solid 0px black;
+    min-height:700px;
+    width:100%;
+}
+
+#commentPane {
+    width:32%;
+    float:left;
+}
+
+.pbButtonb {
+    text-align:right;
+}
+
+textarea {
+    width:100%;
+    resize:none;
+    height:100px;
+}
+
+td {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+.interviewDisplayTextRow td {
+    padding-left: 20px;
+}
+
+.interviewDisplayTextRow td span {
+    font-weight: bold;
+    color: red;
+}
+</style>
+    <div id="backToHupApplication">« <a href="/{!Application.Id}">Back to HUP Application</a><br/></div>
+    <apex:variable var="doesNotExist" value="{!IF(Application.Id==null,'display:none','')}"/>
+    <br/>
+    <apex:pageMessage summary="Application does not exist." severity="error" rendered="{!Application.Id==null}"/>
+
+    <div class="container" style="{!doesNotExist}">
+        <flow:interview name="HUP_Application_Review" finishLocation="{!URLFOR('/apex/BIGHUPReviewMessage?id='+$CurrentPage.parameters.id)}">
+            <apex:param name="vID" value="{!$CurrentPage.parameters.id}"/>
+        </flow:interview>
+<script>
+
+var messages = new Object();
+<apex:repeat value="{!ReviewMessages}" var="msg">
+messages["{!msg.Field__c}"] = "{!msg.Message__c}";
+</apex:repeat>
+
+var approveButton = $(".pbBottomButtons .FlowNextBtn");
+approveButton.val("Approve");
+approveButton.addClass("btn").addClass("btn-primary");
+approveButton.addClass("approveButton");
+
+
+var rejectButton = $(".pbBottomButtons .FlowNextBtn").clone();
+rejectButton.attr("id","rejectButton");
+rejectButton.removeClass("approveButton").removeClass("btn").removeClass("btn-primary").addClass("rejectButton").val("Reject");
+
+var requestMoreInfoButton = $(".approveButton").clone();
+requestMoreInfoButton.removeClass("approveButton").addClass("requestMoreInfoButton").val("Return for Correction");
+
+var saveButton = $(".approveButton").clone();
+saveButton.removeClass("approveButton").addClass("saveButton").val("Save");
+
+
+approveButton.before(rejectButton).before(saveButton).before(requestMoreInfoButton);
+$(".pbBottomButtons .FlowNextBtn").css("visibility","visible");
+$(".pbHeader .pbTitle").html("<h2 class='mainTitle'>HUP Application Review Checklist</h2>");
+$(".pbHeader .FlowNextBtn").remove();
+
+function getChecklistValue(select){
+    var result = "";
+    $(select).find("option").each(function(){
+        if($(this).attr("selected")){
+            result = $(this).html();
+        }
+    });
+    return result;
+}
+
+function getAction(){
+    var result;
+    $("label.FlowDropdown").each(function(){
+        if($(this).html().indexOf("Hidden - Do Not Remove")>=0){
+            result = $(this).parent().parent().find("select");
+        }
+    });
+    return result;
+}
+
+$(".approveButton").click(function() {
+    if (confirm("Are you sure you want to Approve?")) {
+        getAction().val("Approve_Action");
+        return true;
+    }
+    return false;
+});
+
+$(".rejectButton").click(function() {
+    if ($(".FlowContainer textarea").val() === '') {
+        alert("Please specify the issues before Rejecting.");
+        return false;
+    }
+
+    if (confirm("Are you sure you want to Reject?")) {
+        getAction().val("Reject_Action");
+        return true;
+    }
+    return false;
+});
+
+$(".requestMoreInfoButton").click(function() {
+    if ($(".FlowContainer textarea").val() === '') {
+        alert("Please specify the issues before returning for correction.");
+        return false;
+    }
+
+    if (confirm("Are you sure you want to return for correction?")) {
+        getAction().val("Request_More_Information_Action");
+        return true;
+    }
+    return false;
+});
+
+$("div.FlowContainer select").change(function(){
+    updateComments(this);
+});
+
+function updateComments(select) {
+    var comments = "";
+    var disable = false;
+
+    $("div.FlowContainer select").each(function() {
+        $(this).find("option").each(function() {
+            if ($(this).attr("selected")) {
+                var field = $(this).parent().parent().parent().prev().find("label").contents().filter(function() {
+                    return this.nodeType === 3;
+                }).text();
+                if ($(this).html() === "No") {
+                    if ($(this).parent().parent().parent().prev().find("label a").size() > 0) {
+                        field += $(this).parent().parent().parent().prev().find("label a").contents().filter(function() {
+                            return this.nodeType === 3;
+                        }).text();
+                    }
+                    if (comments !== "") {
+                        comments += "\r\n";
+                    }
+                    comments += "- " + messages[field];
+                }
+            }
+        });
+    });
+
+    $(".FlowContainer textarea").first().val(comments);
+}
+
+// customize Comments css
+var $el = $(".FlowContainer textarea");
+$el.first().parent().attr("colspan","2").prev().remove();
+$el.first().before("<label class='commentsLabel labelCol'>Issues:</label>");
+
+// ** Additional Comments **
+$el.eq(1).parent().attr("colspan","2").prev().remove();
+$el.eq(1).before("<label class='commentsLabel labelCol'>Comments:</label>");
+
+// hide action field
+$(".FlowDropdown").each(function() {
+    if ($(this).html().indexOf("Hidden - Do Not Remove") >= 0) {
+        $(this).parent().parent().hide();
+    }
+})
+
+var raterEmail;
+// hide rater email
+$("div.FlowContainer input[type=text]").each(function() {
+    var id = $(this).attr("id");
+
+    if (id != null && id.indexOf("Rater_Email") >= 0) {
+        $(this).parent().parent().hide();
+        raterEmail = $(this);
+    }
+});
+
+$(".interviewDisplayTextRow td span").each(function() {
+    if($(this).html()=="") {
+        $(this).parent().parent().hide();
+        $(this).parent().parent().next().hide();
+    }
+});
+
+// disable focus on text area
+function setFocusOnLoad() {}
+
+function addSelectText(){
+    $("div.FlowContainer select").each(function(){
+        if(getChecklistValue(this)==""){
+            $($(this).find("option").get(0)).html("Select one...");
+        }
+    });
+
+}
+
+$(document).ready(function(){
+    addSelectText();
+    populateRaters();
+});
+
+function populateRaters(){
+    var select = $("<select></select>");
+    if(select){
+        select.append("<option value=''></option>");
+        <apex:repeat value="{!Raters}" var="rater">
+            select.append("<option value='{!rater.Id}'>{!JSENCODE(rater.Name)}</option>");
+        </apex:repeat>
+        select.change(function(){
+            raterEmail.val(select.val());
+        });
+    }
+    var tr = $("<tr><td class='labelCol'>Rater</td><td class='col02'></td></tr>");
+    tr.find("td.col02").append(select);
+    tr.insertAfter(raterEmail.parent().parent());
+}
+
+</script>
+  <div id="rightPane" class="content-area left">
+    <apex:pageBlock title="HUP Application Form Details" mode="edit">
+        <div style="padding:20px">
+    <iframe id="frame" src="BIGACQCRebateApplicationDetail?id={!$CurrentPage.parameters.id}" name="frame"/>
+        </div>
+    </apex:pageBlock>
+  </div>
+</div>
+</apex:page>

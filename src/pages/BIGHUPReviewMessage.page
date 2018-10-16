@@ -1,0 +1,68 @@
+<apex:page controller="BIGHUPApplicationReviewController" sidebar="false" action="{!checkAction}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractorreview, '/css/bootstrap.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractorreview, '/css/style.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/jquery-ui.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/jquery.validate.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/jquery.maskedinput.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigacqc, '/js/jquery.validate.additionalMethods.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/bootstrap.min.js')}"/>
+    <style>
+        .content-area {
+            width:100%;
+            float:left;
+            text-align:left;
+            font-weight:normal;
+            height:auto !important
+        }
+        .content-area label {
+            font-weight:bold;
+        }
+        .content-area a {
+            text-decoration:underline;
+            font-size:85% !important;
+            color:rgb(1, 91, 167) !important;
+        }
+        div.panel-body{
+            padding:20px;
+        }
+        .msgIcon {
+            min-width:24px;
+            min-height:24px;
+        }
+    </style>
+    <div class="content-area left">
+        <div class="cushion">
+            <div class="panel top-border" id="iframePanel">
+                <h1>Application Form: {!Application.Name}</h1>
+                <hr/>
+                <apex:outputPanel rendered="{!HasError}" layout="none">
+                    The Application Form cannot be approved due to the following:
+                </apex:outputPanel>
+                <apex:pageMessages />
+                <br/>
+                <apex:outputPanel rendered="{!hasIssues}">
+                    <label class="pointer">Issues:</label>
+                    <apex:outputField value="{!Review.Comments__c}"/>
+                    <br/>
+                    <br/>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!hasComments}">
+                    <label class="pointer">Comments:</label>
+                    <apex:outputField value="{!Review.Additional_Comments__c}"/>
+                </apex:outputPanel>
+                <hr/>
+                <apex:outputPanel rendered="{!HasError || Application.Status__c =='Submitted' || Application.Status__c == 'Resubmitted'}" layout="none">
+                    <a href="{!URLFOR('/apex/BIGHUPApplicationReview?id='+Application.Id)}">Back to Review Page</a><br/>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!HasError==false}" layout="none">
+                    <a href="/{!Application.Id}">View Application Form</a>
+                </apex:outputPanel>
+                <br/>
+                <br/>
+            </div>
+        </div>
+    </div>
+</apex:page>

@@ -1,0 +1,402 @@
+<apex:page cache="false" showHeader="false" standardStyleSheets="false">
+
+<style>
+body{
+   font-family:"Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
+   font-size:12px;
+}
+p, h1, form, button{border:0; margin:0; padding:0;}
+
+.spacer{clear:both; height:1px;}
+
+.myform{
+    width:640px;
+}
+
+#stylized h1 {
+    font-size:14px;
+    font-weight:bold;
+    margin-bottom:8px;
+}
+
+#stylized p{
+    font-size:11px;
+    color:#666666;
+    margin-bottom:20px;
+    border-bottom:solid 1px #b7ddf2;
+    padding-bottom:10px;
+}
+
+#stylized label{
+    display:block;
+    font-weight:bold;
+    text-align:left;
+    width:220px;
+    float:left;
+}
+
+#stylized .required{
+    color:red;
+    font-size:10px;
+    font-weight:normal;
+    text-align:left;
+}
+
+
+#stylized .small{
+    color:#666666;
+    display:block;
+    font-size:11px;
+    font-weight:normal;
+    text-align:left;
+    width:220px;
+}
+
+#stylized input{
+    float:left;
+    font-size:12px;
+    padding:4px 2px 4px;
+    border:solid 1px #aacfe4;
+    width:300px;
+    margin:2px 0 30px 10px;
+}
+
+#stylized button{
+    clear:both;
+    margin-left:230px;
+    margin-top: 0px;
+    width:225px;
+    height:31px;
+    background:#666666 url(img/button.png) no-repeat;
+    text-align:center;
+    line-height:31px;
+    color:#FFFFFF;
+    font-size:11px;
+    font-weight:bold;
+}
+
+#stylized textarea{
+    float:left;
+    font-size:12px;
+    padding:4px 2px;
+    border:solid 1px #aacfe4;
+    width:300px;
+    margin:2px 0 30px 10px;
+}
+
+#stylized select{
+    float:left;
+    font-size:12px;
+    padding:4px 2px;
+    border:solid 1px #aacfe4;
+    width:300px;
+    margin:2px 0 30px 10px;
+}
+</style>
+
+
+
+<script>
+function validateFormOnSubmit(theForm) {
+   var formError = 0;
+   formError += validateEmpty(theForm.first_name, 'lbl_first_name');
+   formError += validateEmpty(theForm.last_name, 'lbl_last_name');
+   formError += validateEmpty(theForm.title, 'lbl_title');
+   formError += validateEmpty(theForm.company, 'lbl_company');
+   formError += validateEmail(theForm.email, 'lbl_email');
+   formError += validateEmpty(theForm.street, 'lbl_street');
+   formError += validateEmpty(theForm.city, 'lbl_city');
+   formError += validateEmpty(theForm.state, 'lbl_state');
+   formError += validateNumber(theForm.zip, 'lbl_zip');
+   formError += validatePhone(theForm.phone, 'lbl_phone');
+   formError += validateDropdown(theForm['00NA0000008rfy0'], 'lbl_00NA0000008rfy0');
+   //formError += validateEmpty(theForm['00NA0000008rfy5'], 'lbl_00NA0000008rfy5');
+   formError += validateNumber(theForm['00NA0000008rfyA'], 'lbl_00NA0000008rfyA');  
+   formError += validateNumber(theForm['00NA0000008rfyF'], 'lbl_00NA0000008rfyF');
+   formError += validateDropdown(theForm['00NA0000008rfyK'], 'lbl_00NA0000008rfyK');
+   formError += validateDropdown(theForm['00NA0000008rfyP'], 'lbl_00NA0000008rfyP');
+   formError += validateDropdown(theForm['00NA0000008rfyU'], 'lbl_00NA0000008rfyU');
+   formError += validateDropdown(theForm['00NA0000008rfyZ'], 'lbl_00NA0000008rfyZ');
+   formError += validateDropdown(theForm['00NA0000008rfyj'], 'lbl_00NA0000008rfyj');
+   formError += validateDropdown(theForm['00NA0000008rfyo'], 'lbl_00NA0000008rfyo');
+ 
+   if (formError > 0) {
+     return false;
+   }
+   return true;
+}  
+
+function validateDropdown(fld, lbl_id) {
+    var lbl = document.getElementById(lbl_id);
+    if (fld.selectedIndex < 1) {
+        fld.style.background = 'yellow'; 
+        lbl.style.color = "red";
+        return 1;
+    } else {
+        fld.style.background = 'White';
+        lbl.innerHTML = "";
+        return 0;
+    }
+ }
+
+function trim(s) {
+   return s.replace(/^\s+|\s+$/, '');
+} 
+
+function validateEmail(fld, lbl_id) {
+    var lbl = document.getElementById(lbl_id);
+    var error= true;
+    lbl.style.color = "red";
+    var tfld = trim(fld.value);                        
+    var emailFilter = /^[^@]+@[^@.]+\.[^@]*\w\w$/ ;
+    var illegalChars= /[\(\)\<\>\,\;\:\\\"\[\]]/ ;
+    
+    if (fld.value == "") {
+        fld.style.background = 'Yellow';
+        lbl.innerHTML = "You didn't enter an email address";
+    } else if (!emailFilter.test(tfld)) {              //test email for illegal characters
+        fld.style.background = 'Yellow';
+        lbl.innerHTML = "Please enter a valid email address";
+    } else if (fld.value.match(illegalChars)) {
+        fld.style.background = 'Yellow';
+        lbl.innerHTML = "The email address contains illegal characters";
+    } else {
+        fld.style.background = 'White';
+        lbl.innerHTML = "";
+        return 0;
+    }
+    return 1;
+}
+
+function validateNumber(fld, lbl_id){
+    var error = validateEmpty(fld, lbl_id);
+    var lbl = document.getElementById(lbl_id);
+    if (error == 1) {
+        return error;
+    } else {
+        if (!is_int(fld.value)) {
+            fld.style.background = 'Yellow';
+            lbl.innerHTML = "Please enter a number";
+            return 1;
+        } 
+        return 0;
+    }
+}
+
+function is_int(value){
+  if((parseFloat(value) == parseInt(value)) && !isNaN(value)){
+      return true;
+  } else {
+      return false;
+  }
+}
+
+function validateEmpty(fld, lbl_id) {
+    var lbl = document.getElementById(lbl_id);
+    lbl.style.color = "red";
+  
+    if (fld.value.length == 0) {
+        fld.style.background = 'yellow'; 
+    } else {
+        fld.style.background = 'White';
+        lbl.innerHTML = "";
+        return 0;
+    }
+    return 1;   
+}
+
+function validatePhone(fld, lbl_id) {
+    var lbl = document.getElementById(lbl_id);
+    var stripped = fld.value.replace(/[\(\)\.\-\ ]/g, '');     
+    lbl.style.color = "red";
+    
+   if (fld.value == "") {
+        lbl.innerHTML = "You didn't enter a phone number";
+        fld.style.background = 'Yellow';
+    } else if (isNaN(parseInt(stripped))) {
+        lbl.innerHTML = "The phone number contains illegal characters";
+        fld.style.background = 'Yellow';
+    } else if (!(stripped.length == 10)) {
+        lbl.innerHTML = "The phone number is the wrong length. Make sure you included an area code";
+        fld.style.background = 'Yellow';
+    } else {
+        fld.style.background = 'White';
+        lbl.innerHTML = "";
+        return 0;
+    }
+    return 1;
+}
+</script>
+
+<body>
+
+<p>
+Please complete the form below to let us know that you are interested 
+in participating in the program and to provide us with preliminary information about your proposed project.  Thank you!
+</p>
+
+<br /><br />
+<div id="stylized" class="myform">
+<form action="https://www.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8" method="POST" 
+   onsubmit="return validateFormOnSubmit(this)">
+
+<input type="hidden" name="oid" value="00DA0000000CLtI" />
+<input type="hidden" name="retURL" value="http://builditgreen-main.force.com/pgewhrp/interestform_thankyou" />
+<input type="hidden" name="lead_source" value="PGE Web Interest Form" />
+<input type="hidden" name="recordType" value="012A0000000GZqy" />
+
+
+<label>First Name<span class="required">*</span>
+<span id="lbl_first_name" class="small">Enter your first name</span>
+</label>
+<input maxlength="100" name="first_name" />
+
+<label>Last Name<span class="required">*</span>
+<span id="lbl_last_name" class="small">Enter your last name</span>
+
+</label>
+<input maxlength="100"  type="text" name="last_name"  />
+
+
+<label>Company Name<span class="required">*</span>
+<span id="lbl_company" class="small">Enter your company name</span>
+</label>
+<input  id="company" maxlength="100" name="company" size="20" type="text" />
+
+<label>Position/Title<span class="required">*</span>
+<span id="lbl_title" class="small">Enter your position/position</span>
+</label>
+<input maxlength="100" name="title" size="80" type="text" />
+ 
+<label>Email<span class="required">*</span>
+<span id="lbl_email" class="small">Enter a valid email address</span>
+</label>
+<input maxlength="100"  type="text" name="email" id="email" />
+
+<label>Phone Number<span class="required">*</span>
+<span id="lbl_phone" class="small">Enter your phone number</span>
+</label>
+<input maxlength="40" name="phone" size="20" type="text" />
+
+ 
+
+<label>
+Project Name<span class="required"></span>
+<span id="lbl_00NA0000008rfy5" class="small">Enter the project name</span>
+</label>
+<input maxlength="255" name="00NA0000008rfy5" size="20" type="text" />
+
+
+<label>Project Street Address<span class="required">*</span>
+<span id="lbl_street" class="small">Enter the project street address</span>
+</label>
+<input maxlength="255"  type="text" name="street" id="street" />
+
+<label>City<span class="required">*</span>
+<span id="lbl_city" class="small">Enter the city</span>
+</label><input maxlength="50" name="city" size="20" type="text" />
+
+<label>State<span class="required">*</span>
+<span id="lbl_state" class="small">California (CA) participant only</span>
+</label>
+<input maxlength="20" name="state" size="20" type="text" value="CA"  />
+
+ 
+<label>Zip<span class="required">*</span>
+<span id="lbl_zip" class="small">Please enter zip code</span>
+</label>
+<input  id="zip" maxlength="5" name="zip" size="5" type="text" />
+
+<label>
+# of Building Stories<span class="required">*</span>
+<span id="lbl_00NA0000008rfyA" class="small">How many stories in the building?</span>
+</label>
+<input name="00NA0000008rfyA" size="20" type="text" />
+
+<label>
+# of Units in Building<span class="required">*</span>
+<span id="lbl_00NA0000008rfyF" class="small">How many units in the building?</span>
+</label>
+<input name="00NA0000008rfyF" size="20" type="text" />
+
+<label>
+Electricity Service Provider<span class="required">*</span>
+<span id="lbl_00NA0000008rfyK" class="small">What is your electricity service provider?</span>
+</label>
+<select name="00NA0000008rfyK" title="Electricity Service Provider"><option value="">--None--</option><option value="Pacific Gas and Electric Company">Pacific Gas and Electric Company</option>
+<option value="Other">Other</option>
+</select>
+
+<label>
+Natural Gas Service Provider<span class="required">*</span>
+<span id="lbl_00NA0000008rfyP" class="small">What is your natural gas service provider?</span>
+</label>
+<select name="00NA0000008rfyP" title="Natural Gas Service Provider"><option value="">--None--</option><option value="Pacific Gas and Electric Company">Pacific Gas and Electric Company</option>
+<option value="Other">Other</option>
+</select>
+
+<label>
+Primary Heating Fuel<span class="required">*</span>
+<span id="lbl_00NA0000008rfyU" class="small">What is your primary heating fuel<span class="required">*</span></span>
+</label>
+<select name="00NA0000008rfyU" title="Primary Energy Fuel"><option value="">--None--</option>
+<option value="Gas">Gas</option>
+<option value="Electricity">Electricity</option>
+<option value="Other">Other</option>
+</select>
+
+<label>
+Deed-Restricted Affordable Housing?<span class="required">*</span>
+<span id="lbl_00NA0000008rfyZ" class="small">Deed-Restricted Affordable Housing Multifamily Energy Retrofit?</span>
+</label>
+<select style="margin-bottom: 40px" name="00NA0000008rfyZ"><option value="">--None--</option><option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+
+<label>
+Any Subsidized or Section 8 Tenants?<span class="required">*</span>
+<span id="lbl_00NA0000008rqKY" class="small">Any Subsidized or Section 8 Tenants?</span>
+</label>
+<select style="margin-bottom: 40px" name="00NA0000008rqKY"><option value="">--None--</option><option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+
+<label>
+Does your building have a mixed-use designation?<span class="required">*</span>
+<span id="lbl_00NA0000008rqKd" class="small">Does your building have a mixed-use designation?</span>
+</label>
+<select style="margin-bottom: 40px" name="00NA0000008rqKd"><option value="">--None--</option><option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+
+<label>
+Can you complete improvements by 12/31/2013?<span class="required">*</span>
+<span id="lbl_00NA0000008rfyj" class="small">Complete improvements by 12/31/2013</span>
+</label>
+<select style="margin-bottom: 40px" name="00NA0000008rfyj"><option value="">--None--</option><option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+
+
+<label>How did you find out about the program?
+<span id="lbl_00NA0000008rfye" class="small">Please let us know </span> 
+</label>
+<select style="margin-bottom: 40px"  id="00NA0000008rfye" name="00NA0000008rfye">
+<option value="">--None--</option>
+<option value="Build It Green Website">Build It Green Website</option>
+<option value="PGE Marketing">PG&amp;E Marketing</option>
+<option value="Internet Search">Internet Search</option>
+<option value="Internet Search">Referral</option>
+<option value="Other">Other</option>
+</select>
+
+<button type="submit">Sign Up</button>
+<br /><br /><br /><br /><br />
+<div class="spacer"></div>
+
+
+</form>
+</div>
+
+</body>
+</apex:page>

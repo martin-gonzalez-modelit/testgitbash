@@ -1,0 +1,46 @@
+<apex:page showheader="false" sidebar="false" cache="false"   standardstylesheets="false" controller="BIGPortalHomeController" action="{!skipHome}">
+<html>
+<meta charset="UTF-8" />
+<head> 
+    <title>PG&amp;E EUC Portal</title>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bigutopia.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+</head>
+<body>
+ 
+    <div class="container" style="min-height:92%">
+        <div class="row-fluid">
+            <div class="span4"><img src="{!URLFOR($Resource.bigutopia, '/img/pge_euc_logo.gif')}"/></div>
+        </div>
+        <div class="navbar">
+          <div class="navbar-inner">
+            <ul class="nav">
+              <li class="active"><a href="{!$Site.Prefix}/BIGPortalHome"><strong>Home</strong></a></li>
+              <li><a href="{!$Site.Prefix}/bigportalmanagebuilding"><strong>Building</strong></a></li>
+              <li><a href="{!$Site.Prefix}/BIGPortalManageApplication"><strong>Application</strong></a></li>
+              <li><a href="#"><strong>Help</strong></a></li>
+            </ul>
+            <ul class="nav pull-right">
+          		<li class="dropdown">
+  					<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-user"></i>&nbsp;{!$User.FirstName}&nbsp;{!$User.LastName}&nbsp;<span class="caret"></span></a>
+  					<ul class="dropdown-menu">
+    					<!-- <li><a href="#">{!accountName}</a></li> -->
+						<li><a href="{!$Site.Prefix}/secur/logout.jsp">Logout</a></li>
+  					</ul>
+  				</li>
+			</ul>
+         </div>
+		</div>
+    </div>
+<div id="footer" style="background-color:#f5f5f5;min-height:60px;padding-top:20px;font-size:11px;color:#5a5a5a;">
+<div class="container">
+<p>&quot;PG&amp;E&quot; refers to Pacific Gas and Electric Company, a subsidiary of PG&amp;E Corporation. 
+© 2013 Pacific Gas and Electric Company. All rights reserved. 
+These offerings are funded by California utility customers and administered by PG&amp;E under the auspices of the California Public Utilities Commission.</p>
+</div>
+</div>
+</body>
+</html>
+</apex:page>

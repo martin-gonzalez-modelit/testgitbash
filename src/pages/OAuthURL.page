@@ -1,0 +1,6 @@
+<apex:page >
+  <!-- Begin Default Content REMOVE THIS -->
+  <h1>OAuthURL</h1>
+  This is your new OAuthURL Page
+  <!-- End Default Content REMOVE THIS -->
+</apex:page>

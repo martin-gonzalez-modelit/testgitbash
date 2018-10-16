@@ -1,0 +1,1091 @@
+<apex:page controller="et4ae5.automationControl" tabstyle="ExactTargetPhoenix__tab" action="{!initialize}">
+    <apex:stylesheet value="{!URLFOR($Resource.et4ae5__uxds, 'dist/themes/default/style.min.css')}" />
+    <script>
+        var previousOnload = window.onload;
+        var buOn = '{!defaultBUisEnabled}';
+        window.onload = function ()
+        {
+            if (previousOnload)
+            {
+                previousOnload();
+                if (buOn == "false")
+                {
+                    createBuFilter();
+                }
+            }
+        }
+    </script>
+    <style>
+        #popupcontent {
+            position: fixed;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            display: none;
+            overflow: auto;
+            border: 3px solid #585858;
+            background-color: white;
+            // border: 1px solid #333;
+            z-index: 100;
+            padding: 5px;
+            line-height: 20px;
+        }
+
+        #opaque {
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            z-index: 99;
+            display: none;
+            background-color: gray;
+            filter: alpha(opacity = 80);
+            opacity: 0.8;
+            -moz-opacity: 0.8;
+            -khtml-opacity: 0.8;
+        }
+
+        * html #opaque {
+            position: absolute;
+        }
+
+        #showPopBtn {
+            border: 0 0 0 0;
+            background-image: url(/img/func_icons/util/lookup20.gif);
+            background-position: left top;
+            height: 20px;
+            width: 20px;
+        }
+
+            #showPopBtn:hover {
+                border: 0 0 0 0;
+                background-image: url(/img/func_icons/util/lookup20.gif);
+                background-position: right top;
+                height: 20px;
+                width: 20px;
+            }
+
+        #filterLogicButton {
+            border: 0 0 0 0;
+            background-image: url(/img/func_icons/util/customize20.gif);
+            background-position: left top;
+            height: 20px;
+            width: 20px;
+        }
+
+            #filterLogicButton:hover {
+                border: 0 0 0 0;
+                background-image: url(/img/func_icons/util/customize20.gif);
+                background-position: right top;
+                height: 20px;
+                width: 20px;
+            }
+
+        .pbTitle {
+            white-space: nowrap;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+
+            .alert h4 {
+                margin-top: 0;
+                color: inherit;
+            }
+
+            .alert .alert-link {
+                font-weight: bold;
+            }
+
+            .alert > p, .alert > ul {
+                margin-bottom: 0;
+            }
+
+        .alert-dismissable {
+            padding-right: 35px;
+        }
+
+            .alert-dismissable .close {
+                position: relative;
+                color: inherit;
+            }
+
+        .alert-et {
+            color: black;
+            background-color: white;
+            border-color: #ffa100;
+        }
+
+            .alert-et hr {
+                border-top-color: #f8e5be;
+            }
+
+            .alert-et .alert-link {
+                color: #a47e3c;
+            }
+
+        .bPageBlock .pbHeader {
+            background-color: white;
+        }
+
+        .alert > p + p {
+            margin-top: 5px;
+        }
+
+        .alert-dismissable .close {
+            top: -2px;
+            right: -21px;
+        }
+
+        button.close {
+            padding: 0;
+            cursor: pointer;
+            background: transparent;
+            border: 0;
+            -webkit-appearance: none;
+        }
+
+        .close {
+            float: right;
+            font-size: 15px;
+            font-weight: bold;
+            line-height: 1;
+            color: #000000;
+            text-shadow: 0 1px 0 #ffffff;
+            opacity: 0.2;
+            filter: alpha(opacity = 20);
+        }
+
+            .close:hover, .close:focus {
+                color: #000000;
+                text-decoration: none;
+                cursor: pointer;
+                opacity: 0.5;
+                filter: alpha(opacity = 50);
+            }
+    </style>
+    <div id="opaque" />
+    <apex:outputpanel id="popupOP" rendered="true">
+        <div id="popupcontent">
+            <apex:form id="form" style="background-color:#ffffff">
+                <apex:pageblock mode="edit" id="pbWhite">
+                    <table width="100%" border="0">
+                        <tr>
+                            <td colspan="2">
+                                <table width="100%" style="background-color: white;">
+                                    <tr>
+                                        <td width="5">
+                                            <img height="45" src="{!URLFOR( $Resource.ExactTargetImages, 'bumgmtautomation.png' )}" />
+                                        </td>
+                                        <td width="5" />
+                                        <td width="100%" style="vertical-align: middle; font-size: 36px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold;">
+                                            {!$label.slctBU}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="250" valign="top">
+                                <apex:pageblock title="{!$Label.et4ae5__filtercrit}" mode="edit" id="criteria">
+                                    <apex:actionfunction name="searchServer" action="{!runSearch}" rerender="results">
+                                        <apex:param name="buName" value="" />
+                                        <apex:param name="buId" value="" />
+                                    </apex:actionfunction>
+                                    <table cellpadding="2" cellspacing="2">
+                                        <tr>
+                                            <td style="font-weight: bold;">
+                                                {!$label.buName}
+                                                <br />
+                                                <apex:inputtext value="{!buSearchName}" style="width:200px">
+                                                    <apex:actionsupport event="onkeyup" action="{!runSearch}" rerender="results" />
+                                                </apex:inputtext>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight: bold;">
+                                                {!$label.buId}
+                                                <br />
+                                                <apex:inputtext value="{!buSearchId}" style="width:200px">
+                                                    <apex:actionsupport event="onkeyup" action="{!runSearch}" rerender="results" />
+                                                </apex:inputtext>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </apex:pageblock>
+                                <apex:outputpanel rendered="{!LEN(selectedBuDisp)>0}">
+                                    <button type="button" onclick="hidepopup();">
+                                        {!$Label.et4ae5__cancel}
+                                    </button>
+                                </apex:outputpanel>
+                            </td>
+                            <td valign="top">
+                                <apex:pageblock mode="edit" id="results">
+                                    <apex:pageblocktable value="{!luBu}" var="buxyz">
+                                        <apex:column >
+                                            <apex:facet name="header">
+                                                <apex:commandlink value="{!$Label.et4ae5__name}" action="javascript:toggleSort('business_unit_name__c');" rerender="results" />
+                                            </apex:facet>
+                                            <apex:outputlink value="javascript:selectLuBu('{!buxyz.id}');hidepopup();">
+                                                {!buxyz.et4ae5__Business_Unit_Name__c}
+                                            </apex:outputlink>
+                                        </apex:column>
+                                        <apex:column >
+                                            <apex:facet name="header">
+                                                <apex:commandlink value="{!$Label.et4ae5__id}" action="javascript:toggleSort('business_unit_id__c');" rerender="results" />
+                                            </apex:facet>
+                                            <apex:outputfield value="{!buxyz.et4ae5__Business_Unit_ID__c}" />
+                                        </apex:column>
+                                    </apex:pageblocktable>
+                                </apex:pageblock>
+                            </td>
+                        </tr>
+                    </table>
+                </apex:pageblock>
+            </apex:form>
+        </div>
+    </apex:outputpanel>
+    <br />
+    <br />
+    <table>
+        <tr>
+            <td>
+                <img height="45" src="{!URLFOR( $Resource.ExactTargetImages, 'automation.png' )}" />
+            </td>
+            <td width="5" />
+            <td style="font-size: 36px; color: #4f4f4f; font-family: 'Helvetica', 'Arial', sans-serif; font-weight: bold; margin: 0 0 15px 0;">
+                {!$Label.etAtmtdSnd}
+            </td>
+        </tr>
+    </table>
+    <apex:form styleclass="fieldForm">
+        <apex:actionfunction action="{!showMessage}" name="showMessage" rerender="pageMessages">
+            <apex:param name="message" assignto="{!message}" value="" />
+            <apex:param name="messageSeverity" assignto="{!messageSeverity}" value="" />
+        </apex:actionfunction>
+        <apex:actionfunction name="selectEmailJS" action="{!selectEmail}" rerender="sendbutton"
+                             status="emailStatus" immediate="true">        
+            <apex:param name="emailId" value="" />
+            <apex:param name="emailName" value="" />
+            <apex:param name="emailSubject" value="" />
+            <apex:param name="emailAssetId" value="" />
+            <apex:param name="Preheader" value="" />
+        </apex:actionfunction>
+        <apex:actionfunction name="toggleSort" action="{!toggleSort}" rerender="results">
+            <apex:param name="tsSortField" value="" />
+        </apex:actionfunction>
+        <apex:actionfunction name="selectLuBu" action="{!selectLuBu}" oncomplete="hidepopup();changeBusinessUnitId();" rerender="buildTreeJSMethod,pageMessages,sendEmailForm,scPicklist" status="wholePageBlock">
+            <apex:param name="luBuId" value="" />
+        </apex:actionfunction>
+        <apex:actionfunction name="checkSendEmailReadiness" action="{!sendEnabler}" rerender="sendbutton" />
+        <apex:actionfunction name="isSSon" action="{!isSSon}" rerender="sendbutton" />
+        <apex:actionfunction name="isSSoff" action="{!isSSoff}" rerender="sendbutton" />
+        <apex:actionfunction name="createBuFilter" action="{!createBuFilter}" oncomplete="showpopup();" status="wholePageBlock" rerender="popupOP,pageMessages" />
+        <apex:actionfunction name="refreshPopup" action="{!voidReturn}" rerender="popupOP,opaqueOP" />
+        <apex:stylesheet value="{!$Resource.et4ae5__ExactTargetStyles}" />
+        <apex:actionfunction name="addCriteria" action="{!decideCriteria}" rerender="fieldCriteria">
+            <apex:param name="criteriaIndex" value="" />
+        </apex:actionfunction>
+        <apex:actionfunction name="calculateInputType" action="{!calculateInputType}" rerender="fieldCriteria" status="fieldDependent" />
+        <apex:actionfunction name="showFilterLogic" action="{!showFilterLogic}" rerender="fieldCriteria" />
+        <apex:actionfunction name="validateSubscriberField" action="{!validateSubscriberField}" rerender="pageMessages" />
+        <apex:actionfunction name="checkForTooManyFieldsWarning" action="{!checkForTooManyFieldsWarning}" rerender="pageMessages" />
+        <apex:actionfunction name="saveAutomation" action="{!automationSave}" rerender="pageMessages, fieldCriteria">
+            <apex:param name="notificationEmails" value="" />
+            <apex:param name="DEId" assignto="{!dataextensionId}" value="" />
+            <apex:param name="DEName" assignto="{!dataextensionName}" value="" />
+        </apex:actionfunction>
+        <div align="right">
+            <apex:outputpanel >
+                <apex:commandlink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__abtests}" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"
+                                  action="{!goToABTest}" />
+                <apex:outputtext value="{!pipe}" rendered="{!showDeepLinks}" />
+                <apex:outputlink style="text-decoration:none;color:#015ba7;" value="javascript:void(0)" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" onclick="return iLoginHome('{!JSENCODE(etLink)}','{!$Api.Partner_Server_URL_140}','{!$Api.Session_ID}','{!JSENCODE($Label.et4ae5__msg0179)}');" rendered="{!showDeepLinks}">
+                    {!$Label.et4ae5__gotoet}
+                </apex:outputlink>
+                <apex:outputtext rendered="{!hasEmail}" value="{!pipe}" />
+                <apex:commandlink rendered="{!hasEmail}"
+                                  style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__emailsend}"
+                                  onmouseover="this.style.textDecoration='underline'"
+                                  onmouseout="this.style.textDecoration='none'" action="{!goToEmail}" />
+                <apex:outputtext rendered="{!hasMobile}" value="{!pipe}" />
+                <apex:commandlink rendered="{!hasMobile}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__mobilesend}" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" action="{!goToMobile}" />
+                <apex:outputtext value="{!pipe}" />
+                <apex:commandlink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__sendatmtn}" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"
+                                  action="{!goToTriggeredSends}" />
+                <apex:outputtext value="  | " />
+                <apex:commandlink style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__changemcuser}" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"
+                                  action="{!goToChangeMcUser}" />
+                <apex:outputtext rendered="{!isAdmin}" value="{!isAdminPipe}" />
+                <apex:commandlink rendered="{!isAdmin}" style="text-decoration:none;color:#015ba7;" value="{!$Label.et4ae5__configint}" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" action="{!goToSettings}" />
+                &nbsp;&nbsp;&nbsp;
+            </apex:outputpanel>
+        </div>
+        <br />
+        <apex:outputpanel id="pageMessages">
+            <c:pageMessages closableerrors="true" />
+        </apex:outputpanel>
+        <apex:outputpanel id="previewDialog">
+            <c:dynamicSendPreview />
+        </apex:outputpanel>
+        <apex:actionstatus id="wholePageBlock">
+            <apex:facet name="start">
+                <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" style="background-color:white;" />
+            </apex:facet>
+            <apex:facet name="stop">
+                <apex:pageblock mode="view">
+                    <div align="right">
+                        <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                        <b>
+                            = {!$label.reqdInfo}
+                        </b>
+                    </div>
+                    <apex:pageblocksection id="sendEmailForm" columns="1">
+                        <apex:pageblocksectionitem helptext="{!$Label.et4ae5__msg0144}">
+                            <apex:outputlabel value="{!$Label.et4ae5__name}" />
+                            <apex:outputpanel >
+                                <apex:inputtext id="inptName" value="{!send.Name}" style="width:300px;" onblur="checkOnBlur(this.value);" />
+                                <img src="/s.gif" style="width:1px;" />
+                                <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                                <img src="/s.gif" style="width:1px;" />
+                                <apex:image value="/img/msg_icons/error16.png" style="vertical-align:middle;" rendered="{!nameError}" />
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem helptext="{!$Label.et4ae5__msg0145}">
+                            <apex:outputlabel value="{!$Label.et4ae5__object}" />
+                            <apex:outputpanel id="objectSelected">
+                                <apex:selectlist size="1" value="{!send.et4ae5__Object__c}">
+                                    <apex:selectoptions value="{!objectSOs}" />
+                                    <apex:actionsupport event="onchange" oncomplete="checkForTooManyFieldsWarning();" action="{!null}" rerender="objectSelected,subscriberField,fieldCriteria,pageMessages" status="subscriberFieldStatus" />
+                                </apex:selectlist>
+                                <img src="/s.gif" style="width:1px;" />
+                                <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem helptext="{!$Label.et4ae5__msg0256}">
+                            <apex:outputlabel value="{!$Label.et4ae5__rcplkup}" />
+                            <apex:actionstatus id="subscriberFieldStatus">
+                                <apex:facet name="start">
+                                    <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" style="background-color:white;" />
+                                </apex:facet>
+                                <apex:facet name="stop">
+                                    <apex:outputpanel id="subscriberField">
+                                        <apex:selectlist value="{!send.et4ae5__Subscriber_Field__c}" size="1">
+                                            <apex:selectoptions value="{!subscriberObjFields}" />
+                                            <apex:actionsupport event="onchange" oncomplete="validateSubscriberField('{!send.et4ae5__Subscriber_Field__c}','{!send.et4ae5__Object__c}');" rerender="subscriberField" status="subscriberFieldStatus" />
+                                        </apex:selectlist>
+                                        <img src="/s.gif" style="width:1px;" />
+                                        <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                                    </apex:outputpanel>
+                                </apex:facet>
+                            </apex:actionstatus>
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem rendered="{!NOT( editFiltersOn)}" helptext="{!$Label.et4ae5__msg0146}">
+                            <apex:outputlabel value="{!$Label.et4ae5__fieldcriteria}" />
+                            <apex:actionstatus id="editCriteriaStatus">
+                                <apex:facet name="start">
+                                    <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" style="background-color:white;" />
+                                </apex:facet>
+                                <apex:facet name="stop">
+                                    <apex:outputpanel id="fieldCriteriaReadOnly">
+                                        <apex:outputlabel value="{!send.et4ae5__Filter__c}" />
+                                        <apex:commandbutton value="{!$Label.et4ae5__edit}" action="{!decodeSavedFilter}" rerender="sendEmailForm" status="editCriteriaStatus" style="margin-left:10px;" />
+                                    </apex:outputpanel>
+                                </apex:facet>
+                            </apex:actionstatus>
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem rendered="{!editFiltersOn}" helptext="{!$Label.et4ae5__msg0146}">
+                            <apex:outputlabel value="{!$Label.et4ae5__fieldcriteria}" />
+                            <apex:outputpanel id="fieldCriteria">
+                                <table style="width:90%;{!fieldCriteriaError}">
+                                    <apex:variable var="cnt" value="{!1}" />
+                                    <apex:repeat value="{!filterList}" var="f" id="filterRepeat">
+                                        <tr>
+                                            <td style="color:white;background-color:#4f4f4f;width:20px;vertical-align:middle;border:1px solid #4f4f4f;border-radius:6px;text-align:center;">
+                                                <b>
+                                                    {!cnt}
+                                                </b>
+                                            </td>
+                                            <td style="width:97%;vertical-align:middle;">
+                                                <apex:selectlist style="width:40%;" value="{!f.fieldName}" size="1">
+                                                    <apex:selectoptions value="{!objFields}" />
+                                                    <apex:actionsupport event="onchange" oncomplete="javascript:calculateInputType();" rerender="fieldCriteria" status="fieldDependent" />
+                                                </apex:selectlist>
+                                                <apex:actionstatus id="fieldDependent">
+                                                    <apex:facet name="start">
+                                                        <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" style="background-color:white;" />
+                                                    </apex:facet>
+                                                    <apex:facet name="stop">
+                                                        <apex:outputpanel >
+                                                            <img src="/s.gif" style="width:1px;" />
+                                                            <apex:selectlist style="width:10%;" value="{!f.operator}" size="1">
+                                                                <apex:selectoptions value="{!f.compOps}" />
+                                                            </apex:selectlist>
+                                                            <img src="/s.gif" style="width:1px;" />
+                                                            <apex:inputtext style="width:48%" value="{!f.value}" rendered="{!if(NOT(OR(f.inputType=2,f.inputType=3)),true,false)}" />
+                                                            <!--Dates are automatically validated via the apex:inputField component upon rerendering -->
+                                                            <apex:inputfield style="width:24%" value="{!f.auto.et4ae5__DateTime__c}" rendered="{!if(f.inputType=2,true,false)}">
+                                                                <apex:actionsupport event="onchange" rerender="fieldCriteria" status="fieldDependent" />
+                                                            </apex:inputfield>
+                                                            <apex:inputfield style="width:24%" value="{!f.auto.et4ae5__Date__c}" rendered="{!if(f.inputType=3,true,false)}">
+                                                                <apex:actionsupport event="onchange" rerender="fieldCriteria" status="fieldDependent" />
+                                                            </apex:inputfield>
+                                                            <img src="/s.gif" style="width:1px;" />
+                                                        </apex:outputpanel>
+                                                    </apex:facet>
+                                                </apex:actionstatus>
+                                            </td>
+                                            <td style="width:1%;vertical-align:middle;">
+                                                <apex:outputlink rendered="{!IF(AND(cnt=1,hidePlusBox),false,true)}" value="javascript:addCriteria({!cnt});">
+                                                    <apex:image style="vertical-align:middle;" value="{!URLFOR( $Resource.et4ae5__ExactTargetImages, IF(cnt>1,'minus','plus')+'On.jpg' )}" />
+                                                </apex:outputlink>
+                                            </td>
+                                            <td style="width:1%;">
+                                                <apex:image value="/s.gif" style="width:1px;" />
+                                                <apex:outputlink rendered="{!AND(cnt=1,displayFilterLogicPicker)}" value="javascript:showFilterLogic();">
+                                                    <img src="/s.gif" style="vertical-align:middle;" id="filterLogicButton" alt="Filter Logic" title="Filter Logic" />
+                                                </apex:outputlink>
+                                            </td>
+                                        </tr>
+                                        <apex:variable var="cnt" value="{!cnt+1}" />
+                                    </apex:repeat>
+                                    <tr>
+                                        <td colspan="2">
+                                            <table style="width:100%;padding:0 0 0 0;">
+                                                <tr>
+                                                    <td style="width:100%;padding-right:3px;{!filterLogicStyle}">
+                                                        <apex:inputtext rendered="{!AND(renderFilterLogicString,cnt>1)}" style="width:100%" value="{!filterLogicString}" />
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem id="actionPicklist" helptext="{!$Label.et4ae5__msg0147}">
+                            <apex:outputlabel value="{!$Label.et4ae5__triggersendwhen}" />
+                            <apex:outputpanel id="triggerSendWhen">
+                                <apex:selectlist size="1" value="{!send.et4ae5__Action__c}" id="sendAction" onchange="setTriggerWhenSendWarningMessage(this);">
+                                    <apex:selectoptions value="{!actFields}" />
+                                </apex:selectlist>
+                                <img src="/s.gif" style="width:1px;" />
+                                <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                                <apex:outputpanel id="existingRecordWarning" layout="block" style="margin:5px 0 0 0; width: 475px;">
+                                    <apex:outputtext id="existingRecordWarningText" style="color:#FFA100;" value="" />
+                                </apex:outputpanel>
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem rendered="{!renderBULookup}" helptext="{!$Label.et4ae5__msg0014}">
+                            <apex:outputlabel value="{!$Label.et4ae5__busunit}" />
+                            <apex:outputpanel >
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <apex:outputtext value="{!selectedBuDisp}" />
+                                        </td>
+                                        <td>
+                                            <input type="image" onclick="javascript:createBuFilter();return false;" src="/s.gif" id="showPopBtn" />
+                                        </td>
+                                        <td style="width:1px;" />
+                                        <td>
+                                            <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                                        </td>
+                                    </tr>
+                                </table>
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+                        <!-- EmailPicker Component -->
+                        <apex:pageblocksectionitem helptext="{!$Label.et4ae5__emailhelp}">
+                            <apex:outputlabel value="{!$Label.et4ae5__email}" />
+                            <apex:outputpanel layout="block">
+	                            <apex:actionstatus id="emailStatus" onstart="hideEmailInformation()" onstop="showEmailInformation()">
+	                        	       <apex:facet name="start">  
+	                                   <apex:outputpanel >
+	                                      <img class="spinnerLarge" src="{!URLFOR( $Resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+	                                    </apex:outputpanel>
+	                                </apex:facet>
+	                            </apex:actionstatus>
+                                <c:MCEmailPicker singlesend="false" businessunitid="{!businessUnitId}" deeplinks="{!showDeepLinks}" apilink="{!JSENCODE(etLink)}" emailid="{!localSend.email.id}" emailname="{!localSend.email.name}" emailsubject="{!emailSubjectLine}" emailassetid="{!emailassetid}" preheader="{!preheader}" />
+	                         </apex:outputpanel>                                                                         
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem helptext="{!$Label.et4ae5__msg0051}">
+                            <apex:outputlabel value="{!$Label.et4ae5__subject}" />
+                            <apex:inputtext style="width:350px" value="{!emailSubjectLine}" disabled="true" id="emailSubject" />
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem rendered="{!renderEmailPreview}" id="emailPreview">
+                            <apex:outputlabel value="" />
+                            <apex:outputpanel >
+                                <table style="border: 0px">
+                                    <tr>
+                                        <td>
+                                            <table style="border: 3px solid #f77f00; border-style: double solid solid double; padding: 0px;">
+                                                <tr>
+                                                    <td>
+                                                        <img src="data:image/png;base64,{!previewImage}" />
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <apex:commandlink action="{!closeEmailPreview}">
+                                                <img src="/img/search_dismiss.gif" />
+                                            </apex:commandlink>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+                    </apex:pageblocksection>
+                    <apex:pageblocksection id="bottomBlock" columns="1">
+                        <!-- Send Classification -->
+                        <apex:pageblocksectionitem id="selectedSC" helptext="{!$Label.et4ae5__msg0148}">
+                            <apex:outputlabel for="sendClassification" value="{!$Label.et4ae5__sendclass}" />
+                            <apex:outputpanel id="scPicklist">
+                                <apex:selectlist id="sendClassification" value="{!localSend.sendClassificationSelected}" size="1">
+                                    <apex:selectoptions value="{!localSend.sendClassificationOptions}" />
+                                    <apex:actionsupport event="onclick" action="{!sendEnabler}" rerender="sendbutton" />
+                                </apex:selectlist>
+                                <img src="/s.gif" style="width:1px;" />
+                                <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+
+                                <!-- From Sender Profile Override -->
+                                <br />
+                                <span style="padding-left:2px;" class="helpButton" id="msg0149-_help">
+                                    <apex:outputlabel for="from" value="{!$Label.et4ae5__ovrridsc}" style="color:#4a4a56;font-size:11px;font-weight:bold;" />
+                                    <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                </span>
+                                <br />
+                                <apex:outputpanel id="fromPicklist">
+                                    <apex:selectlist id="from" value="{!localSend.fromEmailSelected}" size="1" style="display:block;">
+                                        <apex:selectoptions value="{!localSend.fromOptions}" />
+                                        <apex:actionsupport event="onclick" action="{!sendEnabler}" rerender="sendbutton" />
+                                    </apex:selectlist>
+                                </apex:outputpanel>
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+
+                        <!-- Data Extension -->
+                        <apex:pageblocksectionitem helptext="{!$Label.et4ae5__dataextensionhelp}" rendered="{!renderDataExtensions}">
+                            <apex:outputlabel value="{!$Label.et4ae5__dataextension}" />
+                            <apex:outputpanel >
+                                <div id="dataExtensionSpinner">
+                                    <img class="spinnerLarge" src="{!URLFOR( $resource.ExactTargetImages, 'spinEMAIL.GIF' )}" />
+                                </div>
+                                <div style="overflow: auto; height:85px;">
+                                    <div id="jstree"></div>
+                                </div>
+                                <br />
+                                <input id="dataExtensionNameInput" type="text" style="width:350px" disabled="disabled" />
+                                <input type="button" value="{!$Label.DataExtensionClear}" onclick="clearDataExtension();" class="btn" />
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+
+                        <!-- Use All Subscribers List -->
+                        <apex:pageblocksectionitem helptext="{!$Label.et4ae5__msg0254}" rendered="{!NOT(send.et4ae5__Use_All_Subscribers_List__c)}">
+                            <apex:outputlabel value="{!$Label.et4ae5__addallsubstoasl}" />
+                            <apex:inputcheckbox value="{!send.et4ae5__Use_All_Subscribers_List__c}" disabled="{!NOT(enableAllSubs)}" />
+                        </apex:pageblocksectionitem>
+
+                        <!-- Disable Individual Tracking -->
+                        <apex:pageblocksectionitem rendered="{!renderDIT}" helptext="{!$Label.et4ae5__msg0007}">
+                            <apex:outputlabel value="{!$Label.et4ae5__disilt}" />
+                            <apex:inputcheckbox value="{!send.et4ae5__Individual_Tracking_Disabled__c}" />
+                        </apex:pageblocksectionitem>
+
+                        <!-- Scheduled Send Date/Time -->
+                        <apex:pageblocksectionitem id="sendDateTimeRadios" helptext="{!$Label.et4ae5__msg0150}">
+                            <apex:outputlabel for="dateBlock" value="{!$Label.et4ae5__sendtime}" />
+                            <apex:outputpanel id="dateBlock" layout="block">
+                                <apex:outputpanel layout="block">
+                                    <input type="radio" id="fromSelectorIm" name="immeSelector" onclick="swapDateSource();" status="sendButtonStatus" />
+                                    <apex:outputlabel for="imme" value="{!$Label.et4ae5__immediate}" />
+                                </apex:outputpanel>
+                                <apex:outputpanel id="sendDateTimeWrapper" layout="block" rendered="true">
+                                    <input type="radio" id="fromSelectorDT" name="immeSelector" onclick="swapDateSource();" status="sendButtonStatus" />
+                                    <apex:outputlabel for="sendDateTime" value="{!$Label.et4ae5__delayed}" />
+                                    <br />
+                                    <apex:outputpanel id="schCalendar">
+                                        <apex:inputfield id="sendDateTime" value="{!send.et4ae5__Hours_Delayed__c}" style="width:50px;" />
+                                        {!$Label.hours}
+                                        <img src="/s.gif" style="width:1px;" />
+                                        <img style="vertical-align:middle;" height="18px" src="{!URLFOR( $Resource.ExactTargetImages, 'reqEmail.png' )}" />
+                                    </apex:outputpanel>
+                                </apex:outputpanel>
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+                        <!--Error Notifications -->
+                        <apex:pageblocksectionitem >
+                            <apex:outputlabel for="errorNotifications" value="{!$Label.et4ae5__sndnotifto}" />
+                            <apex:outputpanel id="errorNotifications">
+                                <span class="helpButton" id="msg0181-_help">
+                                    <apex:inputcheckbox value="{!send.et4ae5__Notify_Running_User_On_Error__c}" />
+                                    {!$Label.whoTrigEv} ({!$Label.rnngUsr})
+                                    <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                    <script>
+
+                                        sfdcPage.setHelp('msg0181','{!JSENCODE($Label.msg0181)}');
+                                    </script>
+                                </span>
+                                <br />
+                                <span class="helpButton" id="msg0182-_help">
+                                    <apex:inputcheckbox value="{!send.et4ae5__Notify_Owner_On_Error__c}" />
+                                    {!$Label.whoOwnTrig} ({!$Label.trigSendOwner})
+                                    <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                    <script>
+
+                                        sfdcPage.setHelp('msg0182','{!JSENCODE($Label.msg0182)}');
+                                    </script>
+                                </span>
+                                <br />
+                                <br />
+                                <span class="helpButton" id="msg0183-_help">
+                                    {!$Label.addlUsersEmails}
+                                    <img src="/s.gif" alt="" class="helpOrb" style="height:15px; width:20px; vertical-align:bottom;" title="" />
+                                    <script>
+
+                                        sfdcPage.setHelp('msg0183','{!JSENCODE($Label.msg0183)}');
+                                    </script>
+                                </span>
+                                <br />
+                                <div style="margin-top:5px;">
+                                    <c:TypeAheadPillBox placeholder="{!$Label.et4ae5__entrusremls}" object="User" secondaryfield="Email" style="width:250px;font-size:12px;" existingpillstring="{!existingNotificationEmails}" stealfocus="false" />
+                                </div>
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+
+                        <!-- Certify Opt-in -->
+                        <apex:pageblocksectionitem >
+                            <apex:outputlabel value="{!$Label.et4ae5__optincrtfyf}" />
+                            <apex:inputcheckbox value="{!optIn}">
+                                <apex:actionsupport event="onclick" action="{!sendEnabler}" rerender="sendbutton" />
+                            </apex:inputcheckbox>
+                        </apex:pageblocksectionitem>
+
+                    </apex:pageblocksection>
+                    <apex:pageblocksection id="sendbutton">
+
+                        <!-- Send Button -->
+                        <apex:pageblocksectionitem rendered="{!optIn}">
+                            <apex:outputlabel value="" />
+                            <apex:outputpanel >
+                                <input type="button" value="{!$Label.et4ae5__save}" onclick="saveAutomationRecord();" ondblclick="saveAutomationRecord();" style="background:#ff993f;color:white" class="btn" />
+                                <apex:commandbutton value="{!$Label.et4ae5__cancel}" action="{!cancel}" />
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+                        <apex:pageblocksectionitem rendered="{!NOT( optIn )}">
+                            <apex:outputlabel value="" />
+                            <apex:outputpanel >
+                                <apex:commandbutton value="{!$Label.et4ae5__save}" disabled="true" />
+                                <apex:commandbutton value="{!$Label.et4ae5__cancel}" action="{!cancel}" />
+                            </apex:outputpanel>
+                        </apex:pageblocksectionitem>
+
+                    </apex:pageblocksection>
+                </apex:pageblock>
+            </apex:facet>
+        </apex:actionstatus>
+    </apex:form>
+    <apex:includescript value="{!$Resource.et4ae5__MciLogin}" />
+    <apex:includescript value="{!URLFOR($Resource.et4ae5__jQuery)}" />
+    <apex:includescript value="{!URLFOR($Resource.et4ae5__uxds, 'dist/jstree.min.js')}" />
+    <apex:includescript value="{!URLFOR($Resource.et4ae5__bootstrap, 'dist/js/bootstrap.js')}" />
+    <apex:includescript value="{!URLFOR($Resource.et4ae5__bootstrap, 'dist/js/bootstrap.min.js')}" />
+
+    <apex:outputpanel id="buildTreeJSMethod">
+
+        <script type="text/javascript">
+
+            // These 2 methods are rerendered when the user changes Business Units
+            // This is done so the new Business Unit Id can be used by the Javascript
+
+            function changeBusinessUnitId(){
+                var sBusinessUnitId = '{!businessUnitId}';
+                if('{!renderDataExtensions}')
+                  rebuildTree(sBusinessUnitId);
+            }
+
+            function getBusinessUnitId() {
+                var sBusinessUnitId = '{!businessUnitId}';
+                if('{!renderDataExtensions}')
+                 buildTree(sBusinessUnitId);
+            }
+
+        </script>
+
+    </apex:outputpanel>
+
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+
+        // Array used to store ids of folders that have been open.
+        var lRetrievedFolders = [];
+
+        // Data Extension Id loaded from the controller
+        var DataExtensionId = '{!JSENCODE(dataextensionId)}';
+
+        // Data Extension Name loaded from controller
+        var DataExtensionName = '{!JSENCODE(dataextensionName)}';
+
+        // Wait till DOM has loaded
+        j$(document).ready(function() {
+            checkForTooManyFieldsWarning();
+            var sendActionTag = j$("select[id$=sendAction]");
+            setTriggerWhenSendWarningMessage(sendActionTag);
+
+            // Get the Business Unit that was loaded from Controller
+            getBusinessUnitId();
+
+            // Set the disabled input field with the Data Extension Name set earlier
+            $('#dataExtensionNameInput').val(DataExtensionName);
+        });
+
+        // Rebuilds tree after Business Unit has changed
+        function rebuildTree(sBusinessUnitId){
+
+            // Destroy the current tree
+            j$("#jstree").jstree("destroy");
+
+            // Show spinner while new tree is being created
+            j$('#dataExtensionSpinner').show();
+
+            // Reset variables
+            lRetrievedFolders = [];
+            DataExtensionId = null;
+            DataExtensionName = null;
+
+            // Build tree
+            buildTree(sBusinessUnitId);
+        }
+
+        // This methods uses a SalesForce Remote Action to call to marketing cloud and retrieve the Data Extension Folers.
+        // This is called after the DOM has been loaded
+        function buildTree(sBusinessUnitId){
+
+            // Call the Remote Action
+            Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.automationControl.getDataExtentionFolders}', sBusinessUnitId,
+                function(result, event){
+                    if (event.status) {
+                        if (!result.hasError) {
+
+                            if(result.count > 0) {
+
+                                // Add the jstree UI to the jstree DIV
+                                j$('#jstree').jstree({
+                                    'core' : {
+                                        check_callback : true
+                                    }
+                                });
+
+                                // Get the Folders in the response
+                                var lDataExtensionFolders = result.items;
+
+                                // Loop through folders and add them to the jstree
+                                for (i = 0; i < lDataExtensionFolders.length; i++) {
+
+                                    // Get the folder
+                                    var oDataExtensionFolder = lDataExtensionFolders[i];
+
+                                    // Create the JSON used by jtree to create the folder node
+                                    var NewRootNodeJSON = { id:oDataExtensionFolder.id, text:oDataExtensionFolder.name };
+
+                                    // Check to see if the folder should be a root node (parent #)
+                                    if(oDataExtensionFolder.parentId == 0 || (oDataExtensionFolder.name === 'Shared Data Extensions' && oDataExtensionFolder.editable == 0)){
+                                        j$('#jstree').jstree('create_node', '#', NewRootNodeJSON, 'last');
+                                    }else{
+                                        j$('#jstree').jstree('create_node', oDataExtensionFolder.parentId, NewRootNodeJSON, 'last');
+                                    }
+                                }
+
+                                // Listen for the open node event
+                                j$('#jstree').on("open_node.jstree", function (e, data) {
+
+                                    // Get the node
+                                    var node = data.instance.get_node(data.node);
+
+                                    // Call another Remote Action to retrieve folder contents
+                                    getDataExtensions(node, sBusinessUnitId);
+
+                                });
+
+                                // Listen for event when node is clicked on
+                                j$('#jstree').on("changed.jstree", function (e, data) {
+                                    if(data.selected.length > 0) {
+
+                                        // Get the node
+                                        var node = data.instance.get_node(data.selected[0]);
+
+                                        // Check to see if node has jstree-file icon, that means its a Data Extension
+                                        if(node.icon != 'jstree-file') {
+                                            DataExtensionId = '';
+                                            DataExtensionName = '';
+                                            data.instance.deselect_node(data.node);
+                                            getDataExtensions(node, sBusinessUnitId);
+                                        }else{
+
+                                            // Check to see if the node has already been selected
+                                            if(DataExtensionId != node.id){
+
+                                                // set variables with selected node information
+                                                DataExtensionId = node.id;
+                                                DataExtensionName = node.text;
+                                                DataExtensionName = DataExtensionName.replace(/&#39;/g, "\'");
+                                                $('#dataExtensionNameInput').val(DataExtensionName);
+
+                                            }else{
+
+                                                // Deselect node if user clicks on it twice
+                                                DataExtensionId = '';
+                                                DataExtensionName = '';
+                                                data.instance.deselect_node(data.node);
+                                                $('#dataExtensionNameInput').val(DataExtensionName);
+
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                        } else {
+                            showMessage(result.message, 'error');
+                        }
+                    } else if (event.type === 'exception') {
+                        showMessage(event.message + ' ' + event.where, 'error');
+                    } else {
+                        showMessage(event.message, 'error');
+                    }
+                    j$('#dataExtensionSpinner').hide();
+                },
+                {escape: true}
+            );
+        }
+
+        // Method ran when user clicks Clear Data Extension Button
+        function clearDataExtension() {
+
+            // Clear Data Extension Variabls and deselect all nodes
+            DataExtensionId = '';
+            DataExtensionName = '';
+            j$('#jstree').jstree("deselect_all");
+            j$('#dataExtensionNameInput').val(DataExtensionName);
+        }
+
+        // This method uses an action function to retrieve folder contents from Marketing Cloud
+        // This is ran when user opens or clicks node in tree
+        function getDataExtensions(node, sBusinessUnitId){
+
+            // check to see if node has jstree-file icon.
+            // This means its not a folder and do nothing
+            if(node.icon != 'jstree-file') {
+
+                // Get the node id (which is also Marketing Cloud folder Id)
+                var iDataExtensionFolderId = node.id;
+
+                // Make sure the folder hasn't already been clicked on. Folders are only
+                // loaded one time.
+                if(j$.inArray(iDataExtensionFolderId, lRetrievedFolders) == -1){
+
+                    // Close the node while the code adds more contents
+                    j$("#jstree").jstree("close_node", node);
+
+                    // show the spinner
+                    j$('#jstree').jstree(true).get_node(node, true).addClass("jstree-loading");
+
+                    // Use a Remote Action to retrieve the folders contents from Marketing Cloud
+                    Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.automationControl.getDataExtentionFolderContents}', iDataExtensionFolderId, sBusinessUnitId,
+                        function(result, event){
+                            if (event.status) {
+                                if (!result.hasError) {
+
+                                    // Add the folders Id to array so it will not fire another call out
+                                    lRetrievedFolders.push(iDataExtensionFolderId);
+
+                                    if(result.count > 0){
+
+                                        // Get the contents of the folder
+                                        var lDataExtensions = result.items;
+
+                                        // Loop through the contents
+                                        for (i = 0; i < lDataExtensions.length; i++) {
+
+                                            var oDataExtension = lDataExtensions[i];
+
+                                            // Make sure to only add TriggeredSendDataExtension children to the folder
+                                            if(oDataExtension.customObjectTemplateName === 'TriggeredSendDataExtension'){
+
+                                                // jstree JSON to create new node. Use the jstree icon
+                                                var NewNodeJSON = { id:oDataExtension.id, text:oDataExtension.name, icon:"jstree-file"};
+
+                                                // Add node to tree
+                                                j$('#jstree').jstree('create_node', node, NewNodeJSON, 'last');
+                                            }
+                                        }
+                                    }
+
+                                    // Stop the spinner and open the node to show the contents added
+                                    j$('#jstree').jstree(true).get_node(node, true).removeClass("jstree-loading");
+                                    j$("#jstree").jstree("open_node", node);
+
+                                } else {
+                                    j$('#jstree').jstree(true).get_node(node, true).removeClass("jstree-loading");
+                                    showMessage(result.message, 'error');
+                                }
+                            } else if (event.type === 'exception') {
+                                j$('#jstree').jstree(true).get_node(node, true).removeClass("jstree-loading");
+                                showMessage(event.message + ' ' + event.where, 'error');
+                            } else {
+                                j$('#jstree').jstree(true).get_node(node, true).removeClass("jstree-loading");
+                                showMessage(event.message, 'error');
+                            }
+                        },
+                        {escape: true}
+                    );
+                }
+            }
+        }
+
+        // Method fires when the Name field uses focus
+        function checkOnBlur(f) {
+            if(containsInvalidChars(f)){
+                showMessage("{!JSENCODE($Label.specialcharerror)}", 'error');
+            }
+        }
+
+        // Check to see if value contains special characters.
+        function containsInvalidChars(str){
+            return /[~`!#$%\^&*+=\-\[\]\\';,/{}|\\":<>\?]/g.test(str);
+        }
+
+        function setTriggerWhenSendWarningMessage(sendActionTag) {
+            var sendActionVal = j$(sendActionTag).val();
+            var criteriaMet = sendActionVal == "{!JSENCODE(UpdateActionValue)}" || sendActionVal == "{!JSENCODE(EitherActionValue)}";
+            if (Boolean(criteriaMet))
+                j$("span[id$=existingRecordWarningText]").html("{!JSENCODE($Label.asTriggerSendWhenExistingRecordUpdated)}");
+            else
+                j$("span[id$=existingRecordWarningText]").html("");
+        }
+
+        // Identify triggerable elements.
+        var fsEmail = jQuery( '[id$=fromSelectorEmail]' );
+        var fsImme = jQuery( '[id$=fromSelectorIm]' );
+        var fsDaTi = jQuery( '[id$=fromSelectorDT]' );
+
+        // Assign event actions.
+        fsImme.onclick = swapDateSource;
+        fsDaTi.onclick = swapDateSource;
+
+        var sendBtnEnabled = true;
+        sfdcPage.setHelp('msg0149','{!JSENCODE($Label.msg0149)}');
+        function submitSend()
+        {
+            if (sendBtnEnabled)
+            {
+                sendBtnEnabled = false;
+                return true;
+            }
+            return false;
+        }
+
+        // Initial swap execution.
+        if (jQuery( '[id$=sendDateTime]' ).val() != null && jQuery( '[id$=sendDateTime]' ).val() > 0)
+        {
+            jQuery( '[id$=fromSelectorDT]' ).attr("checked","checked");
+        }
+        else
+        {
+            swapDateSource();
+        }
+
+        function swapDateSource()
+        {
+            j$ = jQuery.noConflict();
+            fsImme = jQuery( '[id$=fromSelectorIm]' );
+            fsDaTi = jQuery( '[id$=fromSelectorDT]' );
+            // Identify picklists.
+            var SDT = jQuery( '[id$=schCalendar]' );
+            var calChoice = jQuery( '[id$=sendDateTime]' );
+
+            // Disable both picklists.
+            SDT.hide();
+
+            if (jQuery( '[id$=fromSelectorDT]' ).is(':checked') == true )
+                fsDaTi.attr("checked","checked");
+            if (jQuery( '[id$=fromSelectorDT]' ).is(':checked') == false &&  jQuery( '[id$=fromSelectorIm]' ).is(':checked') == false){
+                fsImme.attr("checked","checked");
+            }
+            if( fsDaTi.is(":checked") == true )
+            {
+                SDT.show();
+                isSSon();
+            }
+            else
+            {
+                calChoice.val(null);
+                isSSoff();
+            }
+
+            checkSendEmailReadiness();
+        }
+
+        function showpopup()
+        {
+            fsEmail.attr("checked","checked");
+            fsImme.attr("checked","checked");
+            var scOP = jQuery( '[id$=scPicklist]' );
+            scOP.hide();
+            document.getElementById('opaque').style.display='block';
+            var popUp = document.getElementById("popupcontent");
+            popUp.style.display = "block";
+        }
+
+        function hidepopup()
+        {
+            fsEmail.attr("checked","checked");
+            fsImme.attr("checked","checked");
+            var popUp = document.getElementById("popupcontent");
+            popUp.style.display = "none";
+            document.getElementById('opaque').style.display='none';
+                if (jQuery( '[id$=sendDateTime]' ).val() != null && jQuery( '[id$=sendDateTime]' ).val() > 0)
+                {
+                    jQuery( '[id$=fromSelectorDT]' ).attr("checked","checked");
+                }
+                else
+                {
+                    swapDateSource();
+                }
+        }
+
+        function saveAutomationRecord () {
+            if(containsInvalidChars(j$('[id$=inptName]').val())){
+                showMessage("{!JSENCODE($Label.specialcharerror)}", 'error');
+            }else{
+                if (typeof DataExtensionId != 'undefined' && DataExtensionId && 0 != DataExtensionId.length) {
+                    saveAutomation(convertPillBoxSelectionsToString(), DataExtensionId, DataExtensionName);
+                }else{
+                    saveAutomation(convertPillBoxSelectionsToString(), '', '');
+                }
+            }
+        }      
+
+	    function htmlUnescape(subject) {
+	    	var textArea = document.createElement('textarea');
+	    	textArea.innerHTML = subject;
+	    	return textArea.value;
+	    }
+
+        // This method is called from the Email Picker Component when the user clicks on a Email within the Tree
+        function updateSelectedEmail(sSelectedEmailId, sSelectedEmailName, sSelectedEmailSubject, sSelectedEmailAssetId, sSelectedEmailType, sSelectedEmailPreheader) {
+            jQuery('[id$=emailSubject]').val(htmlUnescape(sSelectedEmailSubject));
+            jQuery('[id$=emailPreheader]').val(htmlUnescape(sSelectedEmailPreheader));
+            selectEmailJS(sSelectedEmailId, encodeURIComponent(sSelectedEmailName), encodeURIComponent(sSelectedEmailSubject), sSelectedEmailAssetId, encodeURIComponent(sSelectedEmailPreheader));
+        }
+
+    </script>
+</apex:page>

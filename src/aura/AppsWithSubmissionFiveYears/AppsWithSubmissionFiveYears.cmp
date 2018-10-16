@@ -1,0 +1,11 @@
+<aura:component controller="AppsWithSubmissionFiveYearsController" implements="flexipage:availableForAllPageTypes,force:hasRecordId" access="global">
+	<aura:attribute name="charType" type="String" default="bar"/>
+    <aura:attribute name="appsWithSubmissionByYear" type="Map" default=""/>
+    <aura:attribute name="recordId" type="Id" />
+    
+    <ltng:require scripts="{!$Resource.ChartJS23}" afterScriptsLoaded="{!c.doInit}"/>
+    <aura:registerEvent name="chartEvent" type="c:ChartEvent"/>
+    <div class="slds-box">
+    	<canvas aura:id="graph" height="350"></canvas>
+    </div>
+</aura:component>

@@ -1,0 +1,72 @@
+<apex:component >
+    <style>
+        .panelContainer {
+            border: 1px solid #e5e5e5;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 13px;
+            margin: 20px 0;
+            padding: 12px 10px;
+        }
+        .panelContainer .control-label {
+            font-size: 14px;
+            margin-bottom: 0;
+            width: auto;
+            padding-top: 0;
+        }
+        .panelContainer div.controls {
+            margin-left: 5px !important;
+            display: inline-block;
+            float: none;
+        }
+        .display-inline-block {
+            display: inline-block;
+        }
+        .mr25 {
+            margin-right: 25px;
+        }
+        .font-weight-normal {
+            font-weight: normal;
+        }
+        .float-right {
+            float: right;
+        }
+    </style>
+    <!-- Attribute Definitions -->
+    <apex:attribute name="application" description="Application record" type="Application__c" required="true"/>
+    <apex:attribute name="controllerAhu" description="AHU controller" type="BIGPortalAdvancedHUAppController" required="false"/>
+    <apex:attribute name="phase" description="pre or post phase" type="String" required="false"/>
+
+    <apex:outputPanel styleClass="panelContainer" rendered="{!NOT(ISBLANK(application.Id))}" layout="block">
+        <div class="display-inline-block mr25">
+            <label class="control-label display-inline-block">Application:</label>
+            <div class="controls">
+                <div class="input">
+                    {!application.Name}
+                </div>
+            </div>
+        </div>
+        <div class="display-inline-block mr25">
+            <label class="control-label display-inline-block">Status:</label>
+            <div class="controls">
+                <div class="input">
+                    {!application.Status__c}
+                </div>
+            </div>
+        </div>
+        
+        <!-- ahu post -->
+        <apex:outputPanel id="preAppRedirect" layout="none" rendered="{!phase == 'pre'}">
+           <div class="float-right">
+               <a href="{!$Site.Prefix}/BIGPortalAdvancedHUApplication?action=view&id={!application.Id}&ispre=true" class="font-weight-normal">View Pre-Installation Application</a>
+           </div>
+        </apex:outputPanel>
+        
+        <!-- ahu pre -->
+        <apex:outputPanel id="postAppRedirect" layout="none" rendered="{!phase == 'post' && controllerAhu.postAppTabEnabled}">
+            <div class="float-right">
+                <a href="{!$Site.Prefix}/BIGPortalAdvancedHUApplication?action=view&id={!application.Id}" class="font-weight-normal">View Post-Installation Application</a>
+            </div>
+        </apex:outputPanel>
+    </apex:outputPanel>
+</apex:component>

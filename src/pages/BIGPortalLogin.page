@@ -1,0 +1,123 @@
+<apex:page controller="SiteLoginController" showheader="false" sidebar="false" cache="false" applyhtmltag="false"
+    standardstylesheets="false">
+<html>
+<head>
+    <title>PG&amp;E Portal</title>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bigutopia.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-cookie/jquery.cookie.js')}"/> 
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+
+    <style type="text/css">
+        body {
+            padding-top: 40px;
+            padding-bottom: 40px;
+            background-color: #f5f5f5;
+        }
+
+        .form-signin {
+            max-width: 300px;
+            padding: 19px 29px 29px;
+            margin: 0 auto 20px;
+            background-color: #fff;
+            border: 1px solid #e5e5e5;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            border-radius: 5px;
+            -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+            -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+            box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        }
+        .form-signin .form-signin-heading,
+        .form-signin .checkbox {
+            margin-bottom: 10px;
+        }
+        .form-signin input[type="text"],
+        .form-signin input[type="password"] {
+            font-size: 16px;
+            height: auto;
+            margin-bottom: 15px;
+            padding: 7px 9px;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function() {
+            // Set placeholders to login form inputs
+            $('input[type=text]').attr('placeholder','Username').tooltip({title:'Type your Username',placement:'left'});
+            $('input[type=password]').attr('placeholder','Password').tooltip({title:'Type your Password',placement:'left'});
+            // Add Style to error massage
+            $('.message').addClass('alert');
+            $('.message').addClass('alert-error');
+            // Remove ERROR word on error message
+            $('.messageText').find('h4').remove();
+            // Load username from cookie if exists
+            var usrName = $.cookie('big_portal_usr');
+            if (typeof(usrName) != 'undefined') {
+                $('input[name*="username"]').val(usrName);
+                // Check remember username checkbox
+                $('#rememberUsr').attr('checked', true);
+                // Focus on password field
+                $('input[name*="password"]').focus();
+            }
+        });
+        // If remember username is checked creates the cookie
+        // and saves the username
+        function rememberUserName(form) {
+            if ($('#rememberUsr').is(':checked')) {
+                // Read username from cookie
+                usrName = $.cookie('big_portal_usr');
+                // Get typed username
+                var typedUsrName = $('input[name*="username"]').val();
+                
+                if (typeof(usrName) == 'undefined') {
+                	// Define the cookie if not defined
+                    if (typedUsrName != '') {
+                        $.cookie('big_portal_usr', typedUsrName, { expires: 30 });
+                    }
+                } else {
+                	// Overwrite cookie value
+                	$.cookie('big_portal_usr', typedUsrName);
+                }
+            } else {
+                // Delete the cookie
+                if (typedUsrName != '') {
+                	$.removeCookie('big_portal_usr');
+                }
+            }
+            form.submit();
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <apex:form id="bigloginFrm" styleclass="form-signin" forceSSL="true" onsubmit="rememberUserName(this)">
+
+            <img style="padding-bottom:10px" src="{!URLFOR($Resource.bigutopia, '/img/pge_euc_logo.jpg')}"/>
+            <apex:pageMessages />
+            <apex:inputText styleClass="input-block-level" id="username" value="{!username}"/>
+            <apex:inputSecret styleClass="input-block-level" id="password" value="{!password}"/>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input id="rememberUsr" type="checkbox"/> Remember Username
+                    </label>
+                </div>
+            </div>
+            <a href="{!$Site.Prefix}/BIGPortalForgotPassword">Forget your password?</a>
+            <br /><br />
+            <apex:commandButton id="loginButton" styleclass="btn btn-large btn-primary" action="{!login}"
+                value="Sign In" />
+        </apex:form>
+    </div>
+    <div id="footer" style="background-color:#f5f5f5;min-height:60px;padding-top:400px;font-size:11px;color:#5a5a5a;">
+        <div class="container">
+            <c:BIGPortalFooter />
+        </div>
+    </div>
+</body>
+</html>
+</apex:page>

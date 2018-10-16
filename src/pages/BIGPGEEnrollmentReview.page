@@ -1,0 +1,1750 @@
+<apex:page sidebar="false" title="Review Application Enrollment Form"
+    standardController="Application_Enrollment__c"
+    extensions="BIGPGEEnrollmentReviewController"
+    docType="html-5.0"
+    action="{!validateStatus}">
+
+    <apex:stylesheet value="{!URLFOR($Resource.PGEEnrollmentReviewResources, '/css/styles.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/cupertino/cupertino_styles.min.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.PGEEnrollmentReviewResources, '/js/main.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PGEEnrollmentReviewResources, '/js/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.PGEEnrollmentReviewResources, '/js/jquery-ui.js')}"/>
+    <script>
+        var appId = '{!appEnrollment.Id}';
+        var assetsURL = '{!URLFOR($Resource.PGEEnrollmentReviewResources)}';
+    </script>
+
+    <apex:outputLink styleClass="cl-blk" value="/{!Application_Enrollment__c.Id}">&lt;&lt; Back to Application Enrollment</apex:outputLink>
+
+    <apex:outputPanel rendered="{!NOT(userCanEdit)}">
+        <h1 class="no-edit">This Enrollment Application is checked out by another user.</h1>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="outer-panel">
+        <apex:outputPanel layout="block" styleClass="left-pane" rendered="{!userCanEdit}">
+            <apex:form id="review-form">
+                <apex:pageMessages id="showmsg"></apex:pageMessages>
+                <apex:variable var="reviewIndexCount" value="{!0}" />
+                <apex:variable var="reviewIndexSubCount" value="{!0}" />
+                <apex:variable var="currentStaffIndex" value="{!0}" />
+                <script>
+                    // Define variables to store session values for Approval Status
+                    var sessionApprovalStatusCompanyInfo;
+                    var approvalStatusCompanyInfo = '{!companyInformationReview.appReview.Approval_Status__c}';
+                    var reviewItems = {!reviewItems};
+                </script>
+    <!-- ----------------- COMPANY INFORMATION STEP ------------------------>
+                <apex:outputPanel html-data-stepIndex="{!reviewIndexCount}" rendered="{!companyInformationReview != null}" layout="block" styleClass="{!IF(appEnrollment != null, appEnrollment.Company_Info_Status__c, '')} wizard-sidebar top company">
+                    <apex:outputPanel styleClass="reviewStep panel l1 clearfix {!companyInformationReview.appReview.Approval_Status__c}">
+                        <apex:outputPanel layout="inline" styleClass="step step1-active">A</apex:outputPanel>
+                        <apex:outputPanel layout="inline" styleClass="review-step-label">Company Information</apex:outputPanel>
+                        <apex:outputPanel layout="inline" rendered="{!companyInformationReview.appReview.Approval_Status__c != 'Unread'}" styleClass="review-status main company-info {!companyInformationReview.appReview.Approval_Status__c}" />
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wizard-sidebar inner">
+
+    <!---------------------------  ACCOUNT INFORMATION STEP-------------- -->
+                        <apex:outputPanel styleClass="reviewStep panel clearfix {!companyInformationReview.appReview.Account_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">A1</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Account Information</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!companyInformationReview.appReview.Account_Status__c != 'Unread'}" styleClass="review-status {!companyInformationReview.appReview.Account_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="panel-body {!companyInformationReview.appReview.Account_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. W-9 Form</h3>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    All tax information is valid
+                                    <br /><br />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!companyInformationReview.docTypeToAttachment['W-9 Form'].Id}" />
+                                    <apex:selectRadio styleClass="parentInput"  layout="lineDirection" value="{!companyInformationReview.appReview.Tax_EIN_or_SSN_matches__c}">
+                                        <apex:selectOption itemValue="Yes" itemLabel="Yes"/>
+                                        <apex:selectOption itemValue="No" itemLabel="No"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!companyInformationReview.appReview.Tax_EIN_or_SSN_matches_Override__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="Company Type: " />
+                                        <apex:inputField value="{!companyInformationReview.appReview.Company_Type__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="tax-update childField-wrapper Yes">
+                                        <apex:outputLabel value="Tax ID Number: " />
+                                        <apex:inputField styleClass="check-original" html-data-original-lnumber="{!appEnrollment.EIN_or_SSN__c}" value="{!companyInformationReview.appReview.Tax_ID_Number__c}" />
+                                        <apex:commandButton rerender="review-form" oncomplete="setActivePanel()" action="{!updateTaxID}" value="Update" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="Tax Status: " />
+                                        <apex:inputField styleClass="check-tax-status" html-data-status-ltext="{!appEnrollment.Tax_Status__c}" value="{!companyInformationReview.appReview.Tax_Status__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!accountMatchingOptions != null}" styleClass="field-wrapper matching-step">
+                                    <h3>2. Does the account information match an existing record in Sales Force?</h3>
+                                    <apex:selectRadio styleClass="record-link" layout="pageDirection" value="{!companyInformationReview.appReview.Match_Account__c}">
+                                        <apex:selectOptions value="{!accountMatchingOptions}"/>
+                                    </apex:selectRadio>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!accountMatchingOptions == null}">
+                                    <h3>No matching account found. A new record will be created. </h3>
+                                </apex:outputPanel>
+                                    <!-- MESSAGE TABS -->
+                                    <apex:outputPanel layout="block" styleClass="css-tabs">
+                                        <apex:outputPanel layout="block" styleClass="css-tab active">
+                                            <label>Message to Applicant</label>
+                                            <apex:outputPanel layout="block" styleClass="tab-content">
+                                                <apex:inputField value="{!companyInformationReview.appReview.Account_External_Message__c}" />
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="block" styleClass="css-tab">
+                                            <label>Internal Message</label>
+                                            <apex:outputPanel layout="block" styleClass="tab-content">
+                                                <apex:inputField value="{!companyInformationReview.appReview.Account_Internal_Message__c}" />
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <!--  ACTION BUTTONS -->
+                                    <apex:outputPanel styleClass="action-buttons fixed">
+                                        <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                        <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  INSURANCE STEP-------------- -->
+                        <apex:outputPanel styleClass="reviewStep panel clearfix {!companyInformationReview.appReview.Insurance_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">A2</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Insurance</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!companyInformationReview.appReview.Insurance_Status__c != 'Unread'}" styleClass="review-status {!companyInformationReview.appReview.Insurance_Status__c}"/>
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="panel-body {!companyInformationReview.appReview.Insurance_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. Certificates of Insurance</h3>
+                                <br />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Worker's Compensation Insurance or Waiver present
+                                    <br /><br />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!companyInformationReview.docTypeToAttachment['Worker\'s Compensation Insurance'].Id}" />
+                                    <br />
+                                    <apex:outputPanel layout="block">
+                                        <apex:outputLabel styleClass="labelStyle" value="Worker's Compensation Type: " />
+                                        <apex:inputField styleClass="check-workers-type" html-data-type-ltext="{!appEnrollment.Workers_Compensation_Type__c}" value="{!companyInformationReview.appReview.Workers_Compensation_Type__c}" />
+                                    </apex:outputPanel>
+                                    <apex:selectRadio styleClass="parentInput worker-compensation-option" layout="lineDirection" value="{!companyInformationReview.appReview.Workers_Compensation__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="worker-compensation-option childField-wrapper Override">
+                                        <apex:inputField value="{!companyInformationReview.appReview.Workers_Compensation_Override__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="worker-compensation-option childField-wrapper Yes">
+                                        <apex:outputLabel value="Policy Number: " />
+                                        <apex:inputField value="{!companyInformationReview.appReview.Workers_Compensation_Policy_Number__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="worker-compensation-option childField-wrapper Yes">
+                                        <apex:outputLabel value="Expiration Date: " />
+                                        <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!companyInformationReview.appReview.Workers_Compensation_expiration_Date__c}"/>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    General Liability Insurance present
+                                    <br /><br />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!companyInformationReview.docTypeToAttachment['General Liability Insurance'].Id}" />
+                                    <apex:selectRadio styleClass="parentInput check-option"  layout="lineDirection" value="{!companyInformationReview.appReview.General_Liability_Insurance__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Override">
+                                        <apex:inputField value="{!companyInformationReview.appReview.General_Liability_Insurance_Override__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Yes">
+                                        <apex:outputLabel value="Policy Number: " />
+                                        <apex:inputField value="{!companyInformationReview.appReview.General_Liability_Policy_Number__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Yes">
+                                        <apex:outputLabel value="Expiration Date: " />
+                                        <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!companyInformationReview.appReview.General_Liability_Expiration_Date__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Auto Liability Insurance
+                                    <br /><br />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!companyInformationReview.docTypeToAttachment['Auto Liability Insurance'].Id}" />
+                                    <apex:selectRadio styleClass="parentInput check-option" layout="lineDirection" value="{!companyInformationReview.appReview.Auto_Liability__c}">
+                                        <apex:selectOptions rendered="{!appEnrollment.Auto_Liability_Insurance__c}" value="{!selectOptions}"/>
+                                        <apex:selectOptions rendered="{!!appEnrollment.Auto_Liability_Insurance__c}" value="{!selectOptionsYesDisabled}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Override">
+                                        <apex:inputField value="{!companyInformationReview.appReview.Auto_Liability_Override__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Yes">
+                                        <apex:outputLabel value="Policy Number: " />
+                                        <apex:inputField value="{!companyInformationReview.appReview.Auto_Liability_Policy_Number__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Yes">
+                                        <apex:outputLabel value="Expiration Date: " />
+                                        <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!companyInformationReview.appReview.Auto_Liability_Expiration_Date__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!appEnrollment.Type__c == 'Contractor'}" styleClass="field-wrapper hasChilds bonding">
+                                    Bonding Document
+                                    <br /><br />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!companyInformationReview.docTypeToAttachment['Bonding Document'].Id}" />
+                                    <apex:selectRadio styleClass="parentInput check-option"  layout="lineDirection" value="{!companyInformationReview.appReview.Bonding_Document__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Override">
+                                        <apex:inputField value="{!companyInformationReview.appReview.Bonding_Document_Override__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Yes">
+                                        <apex:outputLabel value="Policy Number: " />
+                                        <apex:inputField value="{!companyInformationReview.appReview.Bonding_Document_Policy_Number__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="check-option childField-wrapper Yes">
+                                        <apex:outputLabel value="Expiration Date: " />
+                                        <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!companyInformationReview.appReview.Bonding_Number_Expiration_Date__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!companyInformationReview.appReview.Insurance_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!companyInformationReview.appReview.Insurance_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!--------------------------- CONTACTS (STAFF) STEP-------------- -->
+                        <apex:outputPanel styleClass="reviewStep panel clearfix {!companyInformationReview.appReview.Contacts_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">A3</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Contacts</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!companyInformationReview.appReview.Contacts_Status__c != 'Unread'}" styleClass="review-status {!companyInformationReview.appReview.Contacts_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="panel-body {!companyInformationReview.appReview.Contacts_Status__c}">
+                            <apex:outputPanel rendered="{!companyInformationReview.appReview.Account_Status__c != 'Unread'}" styleClass="panel panel-comment fixed">
+                                <apex:variable var="staffCount" value="{!1}" />
+                                <apex:repeat var="staffItem" value="{!companyContactStaffList}">
+                                    <apex:outputPanel layout="block" styleClass="accordion-wrapper">
+                                        <apex:outputPanel layout="block" styleClass="title">
+                                            Staff Person {!staffCount}: {!staffItem.staff.Staff__r.First_Name__c} {!staffItem.staff.Staff__r.Last_Name__c}
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="block" styleClass="body">
+                                            <apex:outputPanel >
+                                                <apex:outputLink styleClass="pdml" target="_blank" value="/{!staffItem.staff.Staff__r.Id}">
+                                                     View Staff
+                                                </apex:outputLink>
+                                            </apex:outputPanel>
+                                            <br /> <br />
+                                            <i>Roles:
+                                               {!IF(AND(CONTAINS(staffItem.staff.Role__c, "Primary"),
+                                                       CONTAINS(staffItem.staff.Role__c, "Owner")),
+                                                       "Owner;Primary Program Contact",
+                                                       IF(CONTAINS(staffItem.staff.Role__c, "Primary"),
+                                                           "Primary Program Contact", "Owner"))}
+                                            </i>
+                                            <br /><br />
+                                            <h4>Already exists in Salesforce?</h4>
+                                            <apex:outputPanel layout="inline" rendered="{!staffItem.selectOptions == null || staffItem.selectOptions.size == 0}">
+                                                <br /><br />
+                                                Staff was already matched or no close matches were found by the system.
+                                            </apex:outputPanel>
+                                            <br />
+                                            <apex:selectRadio styleClass="record-link matching-step" rendered="{!staffItem.selectOptions != null && staffItem.selectOptions.size > 0}" layout="pageDirection" value="{!staffItem.staffReview.Matching_Staff__c}">
+                                                <apex:selectOptions value="{!staffItem.selectOptions}" />
+                                            </apex:selectRadio>
+                                            <br />
+                                            <apex:outputLink rendered="{!staffCount < companyContactStaffList.size}" value="#" styleClass="next-staff">Next staff</apex:outputLink>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:variable var="staffCount" value="{!staffCount + 1}" />
+                                </apex:repeat>
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!companyInformationReview.appReview.Contacts_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!companyInformationReview.appReview.Contacts_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, {!currentStaffIndex})" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="currentStaffIndex" value="{!currentStaffIndex+1}" />
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  APPROVAL STEP-------------- -->
+                        <apex:outputPanel styleClass="reviewStep panel clearfix {!companyInformationReview.appReview.Approval_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">A4</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Approval</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!companyInformationReview.appReview.Approval_Status__c != 'Unread'}" styleClass="review-status {!companyInformationReview.appReview.Approval_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!companyInformationReview.appReview.Contacts_Status__c != 'Unread' && companyInformationReview.appReview.Insurance_Status__c != 'Unread' && companyInformationReview.appReview.Account_Status__c != 'Unread'}" layout="block" styleClass="panel-body {!companyInformationReview.appReview.Approval_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. Set Approval Status</h3>
+                                <apex:outputPanel styleClass="field-wrapper approval company">
+                                    <apex:selectRadio styleClass="parentInput" layout="pageDirection" value="{!companyInformationReview.appReview.Approval_Status__c}">
+                                        <apex:selectOption itemDisabled="{!companyInformationReview.appReview.Contacts_Status__c == 'Rejected' || companyInformationReview.appReview.Insurance_Status__c == 'Rejected' || companyInformationReview.appReview.Tax_EIN_or_SSN_matches__c == 'No'}" itemValue="Approved" itemLabel="Approved"/>
+                                        <apex:selectOption itemValue="Rejected" itemLabel="Rejected"/>
+                                        <apex:selectOption itemValue="Request More Info" itemLabel="Request more info"/>
+                                    </apex:selectRadio>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!companyInformationReview.appReview.Approval_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!companyInformationReview.appReview.Approval_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <!-- SET COUNTER VARIABLE FOR NEXT STEP -->
+                    <apex:variable var="reviewIndexCount" value="{!reviewIndexCount + 1}" />
+                    <apex:variable var="reviewIndexSubCount" value="{!0}" />
+                </apex:outputPanel>
+
+    <!-- ----------------- ACQC STEP ------------------------>
+                <script>
+                    // Define variables to store session values for Approval Status
+                    var sessionApprovalStatusACQC;
+                    var approvalStatusACQC = '{!acqcReview.programReview.Approval_Status__c}';
+                </script>
+                <apex:outputPanel html-data-stepIndex="{!reviewIndexCount}" rendered="{!acqcReview != null}" layout="block" styleClass="{!IF(acqcEnrollment != null, acqcEnrollment.Status__c, '')} wizard-sidebar top acqc">
+                    <apex:outputPanel styleClass="reviewStep panel l1 clearfix {!acqcReview.programReview.Approval_Status__c} skip-enabled" onclick="switchToStep({!reviewIndexCount})">
+                        <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}</apex:outputPanel>
+                        <apex:outputPanel layout="inline" styleClass="review-step-label">AC Quality Care</apex:outputPanel>
+                        <apex:outputPanel layout="inline" rendered="{!acqcReview.programReview.Approval_Status__c != 'Unread'}" styleClass="review-status main {!acqcReview.programReview.Approval_Status__c}" />
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wizard-sidebar inner">
+
+                        <apex:outputPanel rendered="{!acqcReview.appProgramEnrollment.Status__c == 'Already Enrolled'}" layout="block" styleClass="panel-body AlreadyEnrolled in">
+                            <apex:outputPanel styleClass="panel panel-comment fixed not-eligible in">
+                                The company that you matched to this application is already enrolled as in the AC Quality Care program and cannot enroll again.
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="panel panel-comment fixed in">
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, 4, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, 0" value="< Back" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+
+    <!--------------------------- STAFF STEP-------------- -->
+                        <apex:outputPanel rendered="{!acqcReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!acqcReview.programReview.Staff_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}1</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Staff</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!acqcReview.programReview.Staff_Status__c != 'Unread'}" styleClass="review-status {!acqcReview.programReview.Staff_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!companyInformationReview.appReview.Approval_Status__c != 'Unread' && acqcReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!acqcReview.programReview.Staff_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <apex:variable var="staffCount" value="{!1}" />
+                                <apex:repeat var="staffItem" value="{!acqcStaffList}">
+                                    <apex:outputPanel layout="block" styleClass="accordion-wrapper">
+                                        <apex:outputPanel layout="block" styleClass="title">
+                                            Staff Person {!staffCount}: {!staffItem.staff.Staff__r.First_Name__c} {!staffItem.staff.Staff__r.Last_Name__c}
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="block" styleClass="body">
+                                            <apex:outputPanel >
+                                                <apex:outputLink styleClass="pdml" target="_blank" value="/{!staffItem.staff.Staff__r.Id}">
+                                                     View Staff
+                                                </apex:outputLink>
+                                            </apex:outputPanel>
+                                            <br /> <br />
+                                            <i>Roles: {!staffItem.staff.Role__c}</i>
+                                            <br /><br />
+                                            <h4>Already exists in Salesforce?</h4>
+                                            <apex:outputPanel layout="inline" rendered="{!staffItem.selectOptions == null || staffItem.selectOptions.size == 0}">
+                                                <br /><br />
+                                                Staff was already matched or no close matches were found by the system.
+                                            </apex:outputPanel>
+                                            <br />
+                                            <apex:selectRadio styleClass="record-link matching-step" rendered="{!staffItem.selectOptions != null && staffItem.selectOptions.size > 0}" layout="pageDirection" value="{!staffItem.staffReview.Matching_Staff__c}">
+                                                <apex:selectOptions value="{!staffItem.selectOptions}" />
+                                            </apex:selectRadio>
+                                            <br />
+                                            <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block" rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'BPI Certified Professional')}">
+                                                <br />
+                                                <h3>BPI Certification Information</h3><br />
+                                                Certification is active?
+                                                <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.BPI_Certification_Active__c}">
+                                                    <apex:selectOptions value="{!selectOptions}"/>
+                                                </apex:selectRadio>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <label>Certification Number:</label>
+                                                    <apex:inputField value="{!staffItem.staffReview.BPI_Certification_Number__c}" />
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <apex:outputLabel value="Expiration Date: " />
+                                                    <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!staffItem.staffReview.BPI_Certification_Exp_Date__c}" />
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                    <apex:inputField value="{!staffItem.staffReview.BPI_Certification_Active_Override__c}" />
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'HVAC Technician')}">
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        <br />
+                                                        <h3>HVAC Information</h3><br />
+                                                        Has at least 2 years HVAC Experience?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_Experience__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_Experience_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        Holds either a Universal or Class II EPA license?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_EPA_License__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_EPA_License_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        Has completed an HVAC vocational school or training program?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_School_or_Training__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_School_or_Training_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block" rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'HERS II')}">
+                                                <apex:outputPanel styleClass="hasChilds">
+                                                    <br />
+                                                    <h3>HERS II Certification Information</h3><br />
+                                                    Certification is active?
+                                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HERS_II_Certification_Active__c}">
+                                                        <apex:selectOptions value="{!selectOptions}"/>
+                                                    </apex:selectRadio>
+                                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                        <label>Certification Number:</label>
+                                                        <apex:inputField value="{!staffItem.staffReview.HERS_II_Certification_Number__c}" />
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                        <apex:outputLabel value="Expiration Date: " />
+                                                        <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!staffItem.staffReview.HERS_II_Certification_Exp_Date__c}" />
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                        <apex:inputField value="{!staffItem.staffReview.HERS_II_Certification_Active_Override__c}" />
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputLink rendered="{!staffCount < acqcStaffList.size}" value="#" styleClass="next-staff">Next staff</apex:outputLink>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:variable var="staffCount" value="{!staffCount + 1}" />
+                                </apex:repeat>
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!acqcReview.programReview.Staff_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!acqcReview.programReview.Staff_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, {!currentStaffIndex})" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, {!currentStaffIndex})" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="currentStaffIndex" value="{!currentStaffIndex+1}" />
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  CREDENTIALS STEP  -------------- -->
+                        <apex:outputPanel rendered="{!acqcReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!acqcReview.programReview.Credentials_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}2</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Credentials</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!acqcReview.programReview.Credentials_Status__c != 'Unread'}" styleClass="review-status {!acqcReview.programReview.Credentials_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!acqcReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!acqcReview.programReview.Credentials_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. C-20 License is active?</h3>
+                                <br />
+                                <apex:outputPanel styleClass="pdml" >
+                                    <a href="https://www2.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx" target="_BLANK">Go to Contractors State License Board</a>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!acqcReview.programReview.C20_License_Active__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="License Number: " />
+                                        <apex:inputField styleClass="session-field" html-data-group="licensenumber" html-data-status="{!acqcReview.programReview.Credentials_Status__c}" value="{!acqcReview.programReview.C20_License_Number__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="Expiration Date: " />
+                                        <apex:inputField showDatePicker="false" styleClass="datepicker session-field" html-data-group="expdate" value="{!acqcReview.programReview.C20_Expiration_Date__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!acqcReview.programReview.C20_License_Active_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <h3>2. Proof that company has been operating for at least two years?</h3>
+                                <br />
+                                <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!acqcReview.docTypeToAttachment['Proof Financial Records'].Id}"
+                                                                       showFileNotFound="false"
+                                                                       linkTitle="Proof Financial Records"/>
+                                <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!acqcReview.docTypeToAttachment['Professional Reference 1'].Id}"
+                                                                       showFileNotFound="false"
+                                                                       linkTitle="Professional Reference 1"/>
+                                <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!acqcReview.docTypeToAttachment['Professional Reference 2'].Id}"
+                                                                       showFileNotFound="false"
+                                                                       linkTitle="Professional Reference 2" />
+                                <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!acqcReview.docTypeToAttachment['Copy of BPI Accreditation'].Id}"
+                                                                       showFileNotFound="false" />
+                                <apex:outputPanel styleClass="pdml" rendered="{!AND(acqcReview.docTypeToAttachment['Proof Financial Records'].Id == null,
+                                                                                    acqcReview.docTypeToAttachment['Professional Reference 1'].Id == null,
+                                                                                    acqcReview.docTypeToAttachment['Professional Reference 2'].Id == null,
+                                                                                    acqcReview.docTypeToAttachment['Copy of BPI Accreditation'].Id == null)}">
+                                    No File Found
+                                </apex:outputPanel>
+                                <br />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!acqcReview.programReview.Company_Operation_Proof__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!acqcReview.programReview.Company_Operation_Proof_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!acqcReview.programReview.Credentials_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!acqcReview.programReview.Credentials_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  AGREEMENTS STEP -------------- -->
+                        <apex:outputPanel rendered="{!acqcReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!acqcReview.programReview.Agreements_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}3</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Agreements</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!acqcReview.programReview.Agreements_Status__c != 'Unread'}" styleClass="review-status {!acqcReview.programReview.Agreements_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!acqcReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!acqcReview.programReview.Agreements_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. Contractor Participation Agreement</h3>
+                                <br />
+                                <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!acqcReview.docTypeToAttachment['ACQC Agreement'].Id}" />
+                                <br /><br />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Contractor name and address on pg. 1
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!acqcReview.programReview.Contractor_Name_Address_pg1__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!acqcReview.programReview.Contractor_Name_Address_pg1_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    License number pg. 2
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!acqcReview.programReview.License_Number_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!acqcReview.programReview.License_Number_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Signed pg. 2
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!acqcReview.programReview.Signed_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!acqcReview.programReview.Signed_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Dated pg. 2
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!acqcReview.programReview.Dated_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!acqcReview.programReview.Dated_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!acqcReview.programReview.Agreements_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!acqcReview.programReview.Agreements_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  APPROVAL STEP---------------->
+                        <apex:outputPanel rendered="{!acqcReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!acqcReview.programReview.Approval_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}4</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Approval</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!acqcReview.programReview.Approval_Status__c != 'Unread'}" styleClass="review-status {!acqcReview.programReview.Approval_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!acqcReview.programReview.Agreements_Status__c != 'Unread' && acqcReview.programReview.Credentials_Status__c != 'Unread' && acqcReview.programReview.Staff_Status__c != 'Unread'}" layout="block" styleClass="panel-body {!acqcReview.programReview.Approval_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. Set Approval Status</h3>
+                                <apex:outputPanel styleClass="field-wrapper field-wrapper approval acqc">
+                                    <apex:selectRadio styleClass="parentInput" layout="pageDirection" value="{!acqcReview.programReview.Approval_Status__c}">
+                                        <apex:selectOption itemDisabled="{!acqcReview.programReview.Credentials_Status__c == 'Rejected' || acqcReview.programReview.Agreements_Status__c == 'Rejected' || acqcReview.programReview.Staff_Status__c == 'Rejected'}" itemValue="Approved" itemLabel="Approved"/>
+                                        <apex:selectOption itemValue="Rejected" itemLabel="Rejected"/>
+                                        <apex:selectOption itemValue="Request More Info" itemLabel="Request more info"/>
+                                    </apex:selectRadio>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!acqcReview.programReview.Approval_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!acqcReview.programReview.Approval_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <!-- SET COUNTER VARIABLE FOR NEXT STEP -->
+                    <apex:variable var="reviewIndexCount" value="{!reviewIndexCount + 1}" />
+                    <apex:variable var="reviewIndexSubCount" value="{!0}" />
+                </apex:outputPanel>
+
+    <!------------------- AHU STEP ------------------------>
+                <script>
+                    // Define variables to store session values for Approval Status
+                    var sessionApprovalStatusAHU;
+                    var approvalStatusAHU = '{!ahuReview.programReview.Approval_Status__c}';
+                </script>
+                <apex:outputPanel html-data-stepIndex="{!reviewIndexCount}" rendered="{!ahuReview != null}" layout="block" styleClass="{!IF(ahuEnrollment != null, ahuEnrollment.Status__c, '')} wizard-sidebar top ahu">
+                    <apex:outputPanel styleClass="reviewStep panel l1 clearfix {!ahuReview.programReview.Approval_Status__c} skip-enabled" onclick="switchToStep({!reviewIndexCount})">
+                        <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}</apex:outputPanel>
+                        <apex:outputPanel layout="inline" styleClass="review-step-label">Advanced Home Upgrade &amp; Home Upgrade</apex:outputPanel>
+                        <apex:outputPanel layout="inline" rendered="{!ahuReview.programReview.Approval_Status__c != 'Unread'}" styleClass="review-status main {!ahuReview.programReview.Approval_Status__c}" />
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wizard-sidebar inner">
+
+                    <apex:outputPanel rendered="{!ahuReview.appProgramEnrollment.Status__c == 'Already Enrolled'}" layout="block" styleClass="panel-body AlreadyEnrolled in">
+                            <apex:outputPanel styleClass="panel panel-comment fixed not-eligible in">
+                                The company that you matched to this application is already enrolled as in the Advanced Home Upgrade &amp; Home Upgrade programs and cannot enroll again.
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="panel panel-comment fixed in">
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, 4, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, 0" value="< Back" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+
+    <!--------------------------- STAFF STEP-------------- -->
+                        <apex:outputPanel rendered="{!ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!ahuReview.programReview.Staff_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}1</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Staff</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!ahuReview.programReview.Staff_Status__c != 'Unread'}" styleClass="review-status {!ahuReview.programReview.Staff_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!companyInformationReview.appReview.Approval_Status__c != 'Unread' && ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!ahuReview.programReview.Staff_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <apex:variable var="staffCount" value="{!1}" />
+                                <apex:repeat var="staffItem" value="{!ahuStaffList}">
+                                    <apex:outputPanel layout="block" styleClass="accordion-wrapper">
+                                        <apex:outputPanel layout="block" styleClass="title">
+                                            Staff Person {!staffCount}: {!staffItem.staff.Staff__r.First_Name__c} {!staffItem.staff.Staff__r.Last_Name__c}
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="block" styleClass="body">
+                                            <apex:outputPanel >
+                                                <apex:outputLink styleClass="pdml" target="_blank" value="/{!staffItem.staff.Staff__r.Id}">
+                                                     View Staff
+                                                </apex:outputLink>
+                                            </apex:outputPanel>
+                                            <br /> <br />
+                                            <i>Roles: {!staffItem.staff.Role__c}</i>
+                                            <br /><br />
+                                            <h4>Already exists in Salesforce?</h4>
+                                            <apex:outputPanel layout="inline" rendered="{!staffItem.selectOptions == null || staffItem.selectOptions.size == 0}">
+                                                <br /><br />
+                                                Staff was already matched or no close matches were found by the system.
+                                            </apex:outputPanel>
+                                            <br />
+                                            <apex:selectRadio styleClass="record-link matching-step" rendered="{!staffItem.selectOptions != null && staffItem.selectOptions.size > 0}" layout="pageDirection" value="{!staffItem.staffReview.Matching_Staff__c}">
+                                                <apex:selectOptions value="{!staffItem.selectOptions}" />
+                                            </apex:selectRadio>
+                                            <br />
+                                            <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block" rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'BPI Certified Professional')}">
+                                                <br />
+                                                <h3>BPI Certification Information</h3><br />
+                                                Certification is active?
+                                                <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.BPI_Certification_Active__c}">
+                                                    <apex:selectOptions value="{!selectOptions}"/>
+                                                </apex:selectRadio>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <label>Certification Number:</label>
+                                                    <apex:inputField value="{!staffItem.staffReview.BPI_Certification_Number__c}" />
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <apex:outputLabel value="Expiration Date: " />
+                                                    <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!staffItem.staffReview.BPI_Certification_Exp_Date__c}" />
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                    <apex:inputField value="{!staffItem.staffReview.BPI_Certification_Active_Override__c}" />
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+
+                                            <apex:outputPanel rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'HVAC Technician')}">
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        <br />
+                                                        <h3>HVAC Information</h3><br />
+                                                        Has at least 2 years HVAC Experience?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_Experience__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_Experience_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        Holds either a Universal or Class II EPA license?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_EPA_License__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_EPA_License_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        Has completed an HVAC vocational school or training program?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_School_or_Training__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_School_or_Training_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block" rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'HERS II')}">
+                                                <br />
+                                                <h3>HERS II Certification Information</h3><br />
+                                                Certification is active?
+                                                <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HERS_II_Certification_Active__c}">
+                                                    <apex:selectOptions value="{!selectOptions}"/>
+                                                </apex:selectRadio>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <label>Certification Number:</label>
+                                                    <apex:inputField value="{!staffItem.staffReview.HERS_II_Certification_Number__c}" />
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <apex:outputLabel value="Expiration Date: " />
+                                                    <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!staffItem.staffReview.HERS_II_Certification_Exp_Date__c}" />
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                    <apex:inputField value="{!staffItem.staffReview.HERS_II_Certification_Active_Override__c}" />
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputLink rendered="{!staffCount < ahuStaffList.size}" value="#" styleClass="next-staff">Next staff</apex:outputLink>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:variable var="staffCount" value="{!staffCount + 1}" />
+                                </apex:repeat>
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Staff_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Staff_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, {!currentStaffIndex})" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, {!currentStaffIndex})" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="currentStaffIndex" value="{!currentStaffIndex+1}" />
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  CREDENTIALS STEP -------------- -->
+                        <apex:outputPanel rendered="{!ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!ahuReview.programReview.Credentials_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}2</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Credentials</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!ahuReview.programReview.Credentials_Status__c != 'Unread'}" styleClass="review-status {!ahuReview.programReview.Credentials_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!appEnrollment.Type__c == 'Rater Company' && ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!ahuReview.programReview.Credentials_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <apex:variable var="substepFieldCount" value="{!1}" />
+                                <h3>{!substepFieldCount}. BPI Accreditation is active?</h3>
+                                <br />
+                                <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!ahuReview.docTypeToAttachment['Copy of BPI Accreditation'].Id}" />
+                                <br />
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.BPI_Accreditation_Active__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="Accreditation Number: " />
+                                        <apex:inputField styleClass="session-field" html-data-group="licensenumber" html-data-status="{!ahuReview.programReview.Credentials_Status__c}" value="{!ahuReview.programReview.BPI_Accreditation_Number__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="Expiration Date: " />
+                                        <apex:inputField showDatePicker="false" styleClass="datepicker session-field" html-data-group="expdate" value="{!ahuReview.programReview.BPI_Accreditation_Exp_Date__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.BPI_Accreditation_Active_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <h3>{!substepFieldCount}. Owner or another contact has attended Participation workshop?</h3>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.Attended_Participation_Workshop__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.Attended_Participation_Workshop_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <h3>{!substepFieldCount}. At least one BPI professional has advanced technical training?</h3>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.BPI_Professional_AHU_Training__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.BPI_Professional_AHU_Training_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Credentials_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Credentials_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!(appEnrollment.Type__c == 'Individual Rater' && experienceAlreadyProven == false) && ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!ahuReview.programReview.Credentials_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <apex:variable var="substepFieldCount" value="{!1}" />
+                                <h3>{!substepFieldCount}. Owner/Individual-Rater has attended Participation workshop?</h3>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                   <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.Attended_Participation_Workshop__c}">
+                                       <apex:selectOptions value="{!selectOptions}"/>
+                                   </apex:selectRadio>
+                                   <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                       <apex:inputField value="{!ahuReview.programReview.Attended_Participation_Workshop_Override__c}" />
+                                   </apex:outputPanel>
+                               </apex:outputPanel>
+                               <h3>{!substepFieldCount}. At least one BPI professional has advanced technical training?</h3>
+                               <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                               <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                   <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.BPI_Professional_AHU_Training__c}">
+                                       <apex:selectOptions value="{!selectOptions}"/>
+                                   </apex:selectRadio>
+                                   <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                       <apex:inputField value="{!ahuReview.programReview.BPI_Professional_AHU_Training_Override__c}" />
+                                   </apex:outputPanel>
+                               </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Credentials_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Credentials_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!appEnrollment.Type__c == 'Contractor' && ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!ahuReview.programReview.Credentials_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <apex:variable var="substepFieldCount" value="{!1}" />
+                                <h3>{!substepFieldCount}. B License is active?</h3>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <br />
+                                <apex:outputPanel styleClass="pdml">
+                                    <a href="https://www2.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx" target="_BLANK">Go to Contractors State License Board</a>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.B_License_Active__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="License Number: " />
+                                        <apex:inputField styleClass="session-field" html-data-group="licensenumber" html-data-status="{!ahuReview.programReview.Credentials_Status__c}" value="{!ahuReview.programReview.B_License_Number__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="Expiration Date: " />
+                                        <apex:inputField showDatePicker="false" styleClass="datepicker session-field" html-data-group="expdate" value="{!ahuReview.programReview.B_License_Exp_Date__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.B_License_Active_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!experienceAlreadyProven == false}">
+                                    <h3>{!substepFieldCount}. Proof that company has been operating for at least two years?</h3>
+                                    <br />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!ahuReview.docTypeToAttachment['Proof Financial Records'].Id}"
+                                                                           showFileNotFound="false"
+                                                                           linkTitle="Proof Financial Records" />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!ahuReview.docTypeToAttachment['Professional Reference 1'].Id}"
+                                                                           showFileNotFound="false"
+                                                                           linkTitle="Professional Reference 1"/>
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!ahuReview.docTypeToAttachment['Professional Reference 2'].Id}"
+                                                                           showFileNotFound="false"
+                                                                           linkTitle="Professional Reference 2" />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!ahuReview.docTypeToAttachment['Copy of BPI Accreditation'].Id}"
+                                                                           showFileNotFound="false"/>
+                                    <apex:outputPanel styleClass="pdml" rendered="{!AND(ahuReview.docTypeToAttachment['Proof Financial Records'].Id == null,
+                                                                                        ahuReview.docTypeToAttachment['Professional Reference 1'].Id == null,
+                                                                                        ahuReview.docTypeToAttachment['Professional Reference 2'].Id == null,
+                                                                                        ahuReview.docTypeToAttachment['Copy of BPI Accreditation'].Id == null)}">
+                                        No File Found
+                                    </apex:outputPanel>
+                                    <br />
+                                    <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                    <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.Company_Operation_Proof__c}">
+                                            <apex:selectOptions value="{!selectOptions}"/>
+                                        </apex:selectRadio>
+                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                            <apex:inputField value="{!ahuReview.programReview.Company_Operation_Proof_Override__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <h3>{!substepFieldCount}. Owner or another contact has attended Participation workshop?</h3>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.Attended_Participation_Workshop__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.Attended_Participation_Workshop_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <h3>{!substepFieldCount}. At least one BPI professional has Advanced Home Upgrade training?</h3>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.BPI_Professional_AHU_Training__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.BPI_Professional_AHU_Training_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Credentials_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Credentials_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  AGREEMENTS STEP -------------- -->
+                        <apex:outputPanel rendered="{!ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!ahuReview.programReview.Agreements_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}3</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Agreements</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!ahuReview.programReview.Agreements_Status__c != 'Unread'}" styleClass="review-status {!ahuReview.programReview.Agreements_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!ahuReview.programReview.Agreements_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. {!appEnrollment.Type__c} Participation Agreement</h3>
+                                <br />
+                                <apex:outputPanel rendered="{!appEnrollment.Type__c == 'Contractor'}">
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!ahuReview.docTypeToAttachment['Contractor Agreement'].Id}"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!OR(appEnrollment.Type__c == 'Individual Rater', appEnrollment.Type__c == 'Rater Company')}">
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!ahuReview.docTypeToAttachment['Rater Agreement'].Id}"/>
+                                </apex:outputPanel>
+                                <br />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    {!appEnrollment.Type__c} name and address
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.Contractor_Name_Address_pg1__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.Contractor_Name_Address_pg1_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    License number
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.License_Number_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.License_Number_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Signed
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.Signed_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.Signed_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Dated
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!ahuReview.programReview.Dated_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!ahuReview.programReview.Dated_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <br />
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Agreements_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Agreements_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  APPROVAL STEP---------------->
+                        <apex:outputPanel rendered="{!ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!ahuReview.programReview.Approval_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}4</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Approval</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!ahuReview.programReview.Approval_Status__c != 'Unread'}" styleClass="review-status {!ahuReview.programReview.Approval_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!ahuReview.programReview.Agreements_Status__c != 'Unread' && ahuReview.programReview.Credentials_Status__c != 'Unread' && ahuReview.programReview.Staff_Status__c != 'Unread' && ahuReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!ahuReview.programReview.Approval_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. Set Approval Status</h3>
+                                <apex:outputPanel styleClass="field-wrapper field-wrapper approval ahu">
+                                    <apex:selectRadio styleClass="parentInput" layout="pageDirection" value="{!ahuReview.programReview.Approval_Status__c}">
+                                        <apex:selectOption itemDisabled="{!ahuReview.programReview.Credentials_Status__c == 'Rejected' || ahuReview.programReview.Agreements_Status__c == 'Rejected' || ahuReview.programReview.Staff_Status__c == 'Rejected'}" itemValue="Approved" itemLabel="Approved"/>
+                                        <apex:selectOption itemValue="Rejected" itemLabel="Rejected"/>
+                                        <apex:selectOption itemValue="Request More Info" itemLabel="Request more info"/>
+                                    </apex:selectRadio>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Approval_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!ahuReview.programReview.Approval_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <!-- SET COUNTER VARIABLE FOR NEXT STEP -->
+                    <apex:variable var="reviewIndexCount" value="{!reviewIndexCount + 1}" />
+                    <apex:variable var="reviewIndexSubCount" value="{!0}" />
+                </apex:outputPanel>
+
+    <!------------------- HU STEP ------------------------>
+                <script>
+                    // Define variables to store session values for Approval Status
+                    var sessionApprovalStatusHU;
+                    var approvalStatusHU = '{!huReview.programReview.Approval_Status__c}';
+                </script>
+                <apex:outputPanel html-data-stepIndex="{!reviewIndexCount}" rendered="{!huReview != null}" layout="block" styleClass="{!IF(huEnrollment != null, huEnrollment.Status__c, '')} wizard-sidebar top hu">
+                    <apex:outputPanel styleClass="reviewStep panel l1 clearfix {!huReview.programReview.Approval_Status__c} skip-enabled" onclick="switchToStep({!reviewIndexCount})">
+                        <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}</apex:outputPanel>
+                        <apex:outputPanel layout="inline" styleClass="review-step-label">Home Upgrade</apex:outputPanel>
+                        <apex:outputPanel layout="inline" rendered="{!huReview.programReview.Approval_Status__c != 'Unread'}" styleClass="review-status main {!huReview.programReview.Approval_Status__c}" />
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wizard-sidebar inner {!IF(huReview.appProgramEnrollment.Status__c == 'Already Enrolled', 'no-header', '')}">
+
+                        <apex:outputPanel rendered="{!huReview.appProgramEnrollment.Status__c == 'Already Enrolled'}" layout="block" styleClass="panel-body AlreadyEnrolled in">
+                            <apex:outputPanel styleClass="panel panel-comment fixed not-eligible in">
+                                The company that you matched to this application is already enrolled as in the Home Upgrade program and cannot enroll again.
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="panel panel-comment fixed in">
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, 4, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, 0" value="< Back" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+
+    <!--------------------------- STAFF STEP-------------- -->
+                        <apex:outputPanel rendered="{!huReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!huReview.programReview.Staff_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}1</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Staff</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!huReview.programReview.Staff_Status__c != 'Unread'}" styleClass="review-status {!huReview.programReview.Staff_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!companyInformationReview.appReview.Approval_Status__c != 'Unread' && huReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!huReview.programReview.Staff_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <apex:variable var="staffCount" value="{!1}" />
+                                <apex:repeat var="staffItem" value="{!huStaffList}">
+                                    <apex:outputPanel layout="block" styleClass="accordion-wrapper">
+                                        <apex:outputPanel layout="block" styleClass="title">
+                                            Staff Person {!staffCount}: {!staffItem.staff.Staff__r.First_Name__c} {!staffItem.staff.Staff__r.Last_Name__c}
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="block" styleClass="body">
+                                            <apex:outputPanel >
+                                                <apex:outputLink styleClass="pdml" target="_blank" value="/{!staffItem.staff.Staff__r.Id}">
+                                                     View Staff
+                                                </apex:outputLink>
+                                            </apex:outputPanel>
+                                            <br /> <br />
+                                            <i>Roles: {!staffItem.staff.Role__c}</i>
+                                            <br /><br />
+                                            <h4>Already exists in Salesforce?</h4>
+                                            <apex:outputPanel layout="inline" rendered="{!staffItem.selectOptions == null || staffItem.selectOptions.size == 0}">
+                                                <br /><br />
+                                                Staff was already matched or no close matches were found by the system.
+                                            </apex:outputPanel>
+                                            <br />
+                                            <apex:selectRadio styleClass="record-link matching-step" rendered="{!staffItem.selectOptions != null && staffItem.selectOptions.size > 0}" layout="pageDirection" value="{!staffItem.staffReview.Matching_Staff__c}">
+                                                <apex:selectOptions value="{!staffItem.selectOptions}" />
+                                            </apex:selectRadio>
+                                            <br />
+                                            <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block" rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'BPI Certified Professional')}">
+                                                <br />
+                                                <h3>BPI Certification Information</h3><br />
+                                                Certification is active?
+                                                <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.BPI_Certification_Active__c}">
+                                                    <apex:selectOptions value="{!selectOptions}"/>
+                                                </apex:selectRadio>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <label>Certification Number:</label>
+                                                    <apex:inputField value="{!staffItem.staffReview.BPI_Certification_Number__c}" />
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <apex:outputLabel value="Expiration Date: " />
+                                                    <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!staffItem.staffReview.BPI_Certification_Exp_Date__c}"/>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                    <apex:inputField value="{!staffItem.staffReview.BPI_Certification_Active_Override__c}" />
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'HVAC Technician')}">
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        <br />
+                                                        <h3>HVAC Information</h3><br />
+                                                        Has at least 2 years HVAC Experience?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_Experience__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_Experience_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        Holds either a Universal or Class II EPA license?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_EPA_License__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_EPA_License_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block">
+                                                    <apex:outputPanel styleClass="hasChilds">
+                                                        Has completed an HVAC vocational school or training program?
+                                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HVAC_School_or_Training__c}">
+                                                            <apex:selectOptions value="{!selectOptions}"/>
+                                                        </apex:selectRadio>
+                                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                            <apex:inputField value="{!staffItem.staffReview.HVAC_School_or_Training_Override__c}" />
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel styleClass="field-wrapper hasChilds" layout="block" rendered="{!CONTAINS(NULLVALUE(staffItem.staff.Role__c, 'none'), 'HERS II')}">
+                                                <br />
+                                                <h3>HERS II Certification Information</h3><br />
+                                                Certification is active?
+                                                <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!staffItem.staffReview.HERS_II_Certification_Active__c}">
+                                                    <apex:selectOptions value="{!selectOptions}"/>
+                                                </apex:selectRadio>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <label>Certification Number:</label>
+                                                    <apex:inputField value="{!staffItem.staffReview.HERS_II_Certification_Number__c}" />
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                                    <apex:outputLabel value="Expiration Date: " />
+                                                    <apex:inputField showDatePicker="false" styleClass="datepicker" value="{!staffItem.staffReview.HERS_II_Certification_Exp_Date__c}"/>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                                    <apex:inputField value="{!staffItem.staffReview.HERS_II_Certification_Active_Override__c}" />
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputLink rendered="{!staffCount < huStaffList.size}" value="#" styleClass="next-staff">Next staff</apex:outputLink>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:variable var="staffCount" value="{!staffCount + 1}" />
+                                </apex:repeat>
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!huReview.programReview.Staff_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!huReview.programReview.Staff_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, {!currentStaffIndex})" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, {!currentStaffIndex})" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="currentStaffIndex" value="{!currentStaffIndex+1}" />
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  CREDENTIALS STEP -------------- -->
+                        <apex:outputPanel rendered="{!(appEnrollment.Type__c != 'Individual Rater' || experienceAlreadyProven == false) && huReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!huReview.programReview.Credentials_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}2</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Credentials</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!huReview.programReview.Credentials_Status__c != 'Unread'}" styleClass="review-status {!huReview.programReview.Credentials_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!appEnrollment.Type__c == 'Contractor' && huReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!huReview.programReview.Credentials_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <apex:variable var="substepFieldCount" value="{!1}" />
+                                    <h3>{!substepFieldCount}. License is active?</h3>
+                                    <br />
+                                    <apex:outputPanel styleClass="pdml">
+                                        <a href="https://www2.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx" target="_BLANK">Go to Contractors State License Board</a>
+                                    </apex:outputPanel>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!huReview.programReview.License_Number_Active__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="License Number: " />
+                                        <apex:inputField styleClass="session-field" html-data-group="licensenumber" html-data-status="{!huReview.programReview.Credentials_Status__c}" value="{!huReview.programReview.License_Number__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Yes">
+                                        <apex:outputLabel value="Expiration Date: " />
+                                        <apex:inputField showDatePicker="false" styleClass="datepicker session-field" html-data-group="expdate" value="{!huReview.programReview.License_Exp_Date__c}" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!huReview.programReview.License_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!experienceAlreadyProven == false}">
+                                    <h3>{!substepFieldCount}. Proof that company has been operating for at least two years?</h3>
+                                    <br />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!huReview.docTypeToAttachment['Proof Financial Records'].Id}"
+                                                                           showFileNotFound="false"
+                                                                           linkTitle="Proof Financial Records"/>
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!huReview.docTypeToAttachment['Professional Reference 1'].Id}"
+                                                                           showFileNotFound="false"
+                                                                           linkTitle="Professional Reference 1"/>
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!huReview.docTypeToAttachment['Professional Reference 2'].Id}"
+                                                                           showFileNotFound="false"
+                                                                           linkTitle="Professional Reference 2" />
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!huReview.docTypeToAttachment['Copy of BPI Accreditation'].Id}"
+                                                                           showFileNotFound="false"/>
+                                    <apex:outputPanel styleClass="pdml" rendered="{!AND(huReview.docTypeToAttachment['Proof Financial Records'].Id == null,
+                                                                                        huReview.docTypeToAttachment['Professional Reference 1'].Id == null,
+                                                                                        huReview.docTypeToAttachment['Professional Reference 2'].Id == null,
+                                                                                        huReview.docTypeToAttachment['Copy of BPI Accreditation'].Id == null)}">
+                                        No File Found
+                                    </apex:outputPanel>
+                                    <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                    <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                        <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!huReview.programReview.Company_Operation_Proof__c}">
+                                            <apex:selectOptions value="{!selectOptions}"/>
+                                        </apex:selectRadio>
+                                        <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                            <apex:inputField value="{!huReview.programReview.Company_Operation_Proof_Override__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <h3>{!substepFieldCount}. Owner or another contact has attended Participation workshop?</h3>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!huReview.programReview.Attended_Participation_Workshop__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!huReview.programReview.Attended_Participation_Workshop_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <h3>{!substepFieldCount}. Owner or another contact has attended Core Training?</h3>
+                                <apex:variable var="substepFieldCount" value="{!substepFieldCount + 1}" />
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!huReview.programReview.Attended_Core_Training__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!huReview.programReview.Attended_Core_Training_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!huReview.programReview.Credentials_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!huReview.programReview.Credentials_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  AGREEMENTS STEP -------------- -->
+                        <apex:outputPanel rendered="{!huReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!huReview.programReview.Agreements_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}3</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Agreements</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!huReview.programReview.Agreements_Status__c != 'Unread'}" styleClass="review-status {!huReview.programReview.Agreements_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!huReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!huReview.programReview.Agreements_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. {!appEnrollment.Type__c} Participation Agreement</h3>
+                                <br />
+                                <apex:outputPanel rendered="{!appEnrollment.Type__c == 'Contractor'}">
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!huReview.docTypeToAttachment['Contractor Agreement'].Id}"/>
+                                </apex:outputPanel>
+                                <br />
+                                <apex:outputPanel rendered="{!OR(appEnrollment.Type__c == 'Individual Rater', appEnrollment.Type__c == 'Rater Company')}">
+                                    <c:BIGPGEEnrollmentReviewFileComponent attachmentId="{!huReview.docTypeToAttachment['Rater Agreement'].Id}"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    {!appEnrollment.Type__c} name and address
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!huReview.programReview.Contractor_Name_Address_pg1__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!huReview.programReview.Contractor_Name_Address_pg1_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    License number
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!huReview.programReview.License_Number_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!huReview.programReview.License_Number_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Signed
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!huReview.programReview.Signed_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!huReview.programReview.Signed_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleClass="field-wrapper hasChilds">
+                                    Dated
+                                    <apex:selectRadio styleClass="parentInput" layout="lineDirection" value="{!huReview.programReview.Dated_pg2__c}">
+                                        <apex:selectOptions value="{!selectOptions}"/>
+                                    </apex:selectRadio>
+                                    <apex:outputPanel layout="block" styleClass="childField-wrapper Override">
+                                        <apex:inputField value="{!huReview.programReview.Dated_pg2_Override__c}" />
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!huReview.programReview.Agreements_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!huReview.programReview.Agreements_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:variable var="reviewIndexSubCount" value="{!reviewIndexSubCount + 1}" />
+
+    <!---------------------------  APPROVAL STEP---------------->
+                        <apex:outputPanel rendered="{!huReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" styleClass="reviewStep panel clearfix {!huReview.programReview.Approval_Status__c}">
+                            <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}4</apex:outputPanel>
+                            <apex:outputPanel layout="inline" styleClass="review-step-label">Approval</apex:outputPanel>
+                            <apex:outputPanel layout="inline" rendered="{!huReview.programReview.Approval_Status__c != 'Unread'}" styleClass="review-status {!huReview.programReview.Approval_Status__c}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!huReview.programReview.Agreements_Status__c != 'Unread' && huReview.appProgramEnrollment.Status__c != 'Already Enrolled'}" layout="block" styleClass="panel-body {!huReview.programReview.Approval_Status__c}">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <h3>1. Set Approval Status</h3>
+                                <apex:outputPanel styleClass="field-wrapper field-wrapper approval hu">
+                                    <apex:selectRadio styleClass="parentInput" layout="pageDirection" value="{!huReview.programReview.Approval_Status__c}">
+                                        <apex:selectOption itemDisabled="{!huReview.programReview.Credentials_Status__c == 'Rejected' || huReview.programReview.Agreements_Status__c == 'Rejected' || huReview.programReview.Staff_Status__c == 'Rejected'}" itemValue="Approved" itemLabel="Approved"/>
+                                        <apex:selectOption itemValue="Rejected" itemLabel="Rejected"/>
+                                        <apex:selectOption itemValue="Request More Info" itemLabel="Request more info"/>
+                                    </apex:selectRadio>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!huReview.programReview.Approval_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!huReview.programReview.Approval_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn btn-primary validate" onclick="submitForm(this, true, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Next >" />
+                                    <input type="button" class="btn btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn btn validate" onclick="submitForm(this, false, {!reviewIndexCount}, {!reviewIndexSubCount}, null)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <!-- SET COUNTER VARIABLE FOR NEXT STEP -->
+
+                    <apex:variable var="reviewIndexCount" value="{!reviewIndexCount + 1}" />
+                    <apex:variable var="reviewIndexSubCount" value="{!0}" />
+                </apex:outputPanel>
+
+    <!------------------- FINISH REVIEW ------------------------>
+                <apex:outputPanel html-data-stepIndex="{!reviewIndexCount}" layout="block" styleClass="wizard-sidebar top">
+                    <apex:outputPanel styleClass="reviewStep panel l1 clearfix Unread skip-enabled" onclick="switchToStep({!reviewIndexCount})">
+                        <apex:outputPanel layout="inline" styleClass="step step1-active">{!STEP_LETTERS[reviewIndexCount]}</apex:outputPanel>
+                        <apex:outputPanel layout="inline" styleClass="review-step-label">Finish Review</apex:outputPanel>
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wizard-sidebar inner no-header">
+                        <apex:outputPanel layout="block" styleClass="panel-body Unread in">
+                            <apex:outputPanel styleClass="panel panel-comment fixed">
+                                <apex:outputPanel layout="block" styleClass="review-complete-wrapper">
+                                    <apex:outputPanel layout="block" styleClass="review-complete-status" rendered="{!companyInformationReview != null}">
+                                        <apex:outputPanel layout="inline" styleClass="label">
+                                            Company Information
+                                        </apex:outputPanel>
+                                        <apex:outputPanel styleClass="text {!companyInformationReview.appReview.Approval_Status__c}" layout="inline">
+                                            {!SUBSTITUTE(companyInformationReview.appReview.Approval_Status__c, 'RequestInfo', 'Request More Info')}
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="review-complete-status" rendered="{!acqcReview != null}">
+                                        <apex:outputPanel layout="inline" styleClass="label">
+                                            AC Quality Care
+                                        </apex:outputPanel>
+                                        <apex:outputPanel styleClass="text {!acqcReview.programReview.Approval_Status__c}" layout="inline">
+                                            {!acqcReview.programReview.Approval_Status__c}
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="review-complete-status" rendered="{!ahuReview != null}">
+                                        <apex:outputPanel layout="inline" styleClass="label">
+                                            AHU
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!ahuReview != null}" styleClass="text {!ahuReview.programReview.Approval_Status__c}" layout="inline">
+                                            {!ahuReview.programReview.Approval_Status__c}
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="review-complete-status" rendered="{!huReview != null}">
+                                        <apex:outputPanel layout="inline" styleClass="label">
+                                            HU
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!huReview != null}" styleClass="text {!huReview.programReview.Approval_Status__c}" layout="inline">
+                                            {!huReview.programReview.Approval_Status__c}
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!-- MESSAGE TABS -->
+                                <apex:outputPanel layout="block" styleClass="css-tabs">
+                                    <apex:outputPanel layout="block" styleClass="css-tab active">
+                                        <label>Message to Applicant</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!companyInformationReview.appReview.Finish_Review_External_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="css-tab">
+                                        <label>Internal Message</label>
+                                        <apex:outputPanel layout="block" styleClass="tab-content">
+                                            <apex:inputField value="{!companyInformationReview.appReview.Finish_Review_Internal_Message__c}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <!--  ACTION BUTTONS -->
+                                <apex:outputPanel styleClass="action-buttons fixed">
+                                    <input type="button" class="btn btn-primary validate finish" onclick="submitFinish(this)" value="Finish" />
+                                    <input type="button" class="btn btn-primary" onclick="goBack(this, {!reviewIndexCount}, {!reviewIndexSubCount})" value="< Back" />
+                                    <input type="button" class="btn validate" onclick="submitFinish(this)" value="Save" />
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+
+                <apex:actionFunction oncomplete="setActivePanel('{!currentReviewIndex}', '{!currentReviewSubIndex}')" action="{!saveReview}" name="saveReview" reRender="outer-panel">
+                    <apex:param value="" name="moveNext" assignTo="{!moveNext}"/>
+                    <apex:param value="" name="reviewIndex" assignTo="{!currentReviewIndex}"/>
+                    <apex:param value="" name="reviewSubIndex" assignTo="{!currentReviewSubIndex}"/>
+                    <apex:param value="" name="reviewStaffIndex" assignTo="{!currentStaffIndex}"/>
+                </apex:actionFunction>
+
+                <apex:actionFunction oncomplete="setActivePanel()" action="{!goBack}" name="goToPreviousStep" reRender="outer-panel">
+                    <apex:param value="" name="reviewIndex" assignTo="{!currentReviewIndex}"/>
+                    <apex:param value="" name="reviewSubIndex" assignTo="{!currentReviewSubIndex}"/>
+                </apex:actionFunction>
+
+                <apex:actionFunction oncomplete="setActivePanel()" action="{!skipToStep}" name="skipToStep" reRender="outer-panel">
+                    <apex:param value="" name="targetReviewIndex" assignTo="{!targetReviewIndex}" />
+                </apex:actionFunction>
+
+                <apex:actionFunction oncomplete="setActivePanel()" action="{!finishReview}" name="finishReview" reRender="outer-panel" />
+
+            </apex:form>
+        </apex:outputPanel>
+
+        <apex:outputPanel layout="block" styleClass="right-pane"  rendered="{!userCanEdit}">
+            <!-- NEED TO DEFINE INTERACTION WITH BACKEND (LOADING DIFFERENT RECORD DETAILS, ETC -->
+            <apex:detail rendered="{!NOT(hasReviewFinished)}" id="detail_view" />
+            <apex:outputPanel layout="block" rendered="{!hasReviewFinished}" styleClass="bPageBlock brandSecondaryBrd bDetailBlock secondaryPalette">
+                <c:BIGPGEEnrollmentReviewResultComponent applicationId="{!appEnrollment.Id}" internalMessages="true"/>
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </apex:outputPanel>
+</apex:page>

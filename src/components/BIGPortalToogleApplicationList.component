@@ -1,0 +1,105 @@
+<apex:component id="toogleAppListComponent" controller="BIGPortalToogleApplicationListController" layout="block">
+    <apex:attribute name="colNames" description="Column names of the application list." type="String" required="true" assignTo="{!columnNames}"/>
+    <apex:attribute name="colIndexes" description="Column indexes of the application list." type="String" required="true" assignTo="{!columnIndexes}"/>
+    <apex:attribute name="hiddenColumns" description="Indexes of the hidden columns at the first look." type="String" required="false"/>
+    <apex:attribute name="hasAdvanceHU" description="Has advanced HU Program." type="Boolean" required="false"/>
+    <style>
+        .toggleOff {
+            color: #999;
+        }
+
+        .toggle-vis {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #toggleList {
+            float: left;
+            margin-top: 10px;
+            width: 100%;
+        }
+        #toogleList a {
+            display: inline-block;
+        }
+        ul.unstyled li {
+            display: inline;
+            margin-right: 15px;
+        }
+        /*ul.unstyled li:after {
+            content: "|";
+        }*/
+        /*ul.unstyled li:last-child:after {
+            content: "";
+        }*/
+    </style>
+    <script>
+        $(document).ready(function() {
+            //debugger;
+            var hiddenCols = '{!hiddenColumns}';
+
+            if (hiddenCols) {
+                hiddenCols = hiddenCols.split(",");
+                for (var i = 0; i < hiddenCols.length; i++) {
+                    $(".toggle-vis[data-column=" + hiddenCols[i] +"]").addClass("toggleOff");
+                }
+            }
+
+            var $selector = $("#homeUpgrade").hasClass("active") ? $('#homeUpgrade .toggle-vis') : $('#advancedHomeUpgrade .toggle-vis');
+
+            $('.tab-pane.active .toggle-vis').off('click').on('click', function(e) {
+                //debugger;
+                var program = {!hasAdvanceHU};
+                var $tableNode = $('#applications');
+                var table = $tableNode.dataTable();
+                var filters = $tableNode.find("thead tr td :input");
+
+                if (program) {
+                    var huTabActive = $("#homeUpgrade").hasClass("active");
+
+                    if (!huTabActive) {
+                        $tableNode = $('#advancedApplications');
+                        table = $tableNode.dataTable();
+                        filters = $tableNode.find("thead tr td :input");
+                    }
+                }
+
+                var indexColumn = $(this).attr("data-column");
+                var input = $(filters)[indexColumn];
+                var bVis = table.fnSettings().aoColumns[indexColumn].bVisible;
+
+                (bVis) ? $(this).addClass("toggleOff") : $(this).removeClass("toggleOff")
+                console.log(input);
+                showHideInput(input, !bVis);
+                table.fnSetColumnVis(indexColumn, !bVis);
+                $tableNode.css("width", "100%");
+            });
+        });
+
+        function showHideInput(elements, show) {
+            $(elements).each(function(index, element) {
+                var isSelect = $(element).is('select');
+
+                if (show) {
+                    if (isSelect) {
+                        $(element).parent().show();
+                    } else {
+                        $(element).parent().parent().show();
+                    }
+                } else {
+                    if (isSelect) {
+                        $(element).parent().hide();
+                    } else {
+                        $(element).parent().parent().hide();
+                    }
+                }
+            });
+        }
+    </script>
+    <div id="toggleList">
+        <ul class="unstyled">
+        <apex:repeat value="{!ToogleOptions}" var="colName" id="appListColumns">
+            <li><a class="toggle-vis" data-column="{!colName[1]}">{!colName[0]}</a></li>
+        </apex:repeat>
+        </ul>
+    </div>
+</apex:component>

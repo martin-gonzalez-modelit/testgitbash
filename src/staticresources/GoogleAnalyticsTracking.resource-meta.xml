@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+    <cacheControl>Public</cacheControl>
+    <contentType>application/octet-stream</contentType>
+    <description>It provides default tracking for the interactions most people care about, and it provides several convenience features (e.g. declarative event tracking). See https://github.com/googleanalytics/autotrack for more information.</description>
+</StaticResource>

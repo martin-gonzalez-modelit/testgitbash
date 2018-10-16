@@ -1,0 +1,31 @@
+<apex:page standardController="et4ae5__SendDefinition__c">
+<!-- Begin Default Content REMOVE THIS -->
+
+<div id="send" style="display:none;">Sending Request...</div>
+<div id="sent" style="display:none;">Request Sent.</div>
+<script type='text/javascript' src='/canvas/sdk/js/publisher.js'/> 
+<script type="text/javascript" src="../../soap/ajax/19.0/connection.js" />
+<script type="text/javascript" src="../../soap/ajax/15.0/apex.js" />
+<script type="text/javascript">
+window.onload=function()
+	{
+		var sending=document.getElementById("send");
+		sending.style.display="block";
+		sforce.connection.sessionId = "{!$Api.Session_ID}";
+		var responder = sforce.apex.execute("et4ae5/trackingWebServices","buttonResponse", {sendDefId:"{!CASESAFEID( et4ae5__SendDefinition__c.Id )}"});
+		sforce.apex.execute("et4ae5/trackingWebServices","requestImmediateTracking", {sendDefId:"{!CASESAFEID( et4ae5__SendDefinition__c.Id )}"});
+		alert(responder);
+		sending.style.display="none";
+		redirect('{!SendDefinition__c}');
+	}
+	function redirect(sendDef)
+	{
+		var sent=document.getElementById("sent");
+		sent.style.display="block";
+			if(typeof sforce!=='undefined' && sforce.one)
+        {
+        	Sfdc.canvas.publisher.publish({name: "publisher.close", payload:{ refresh:"true"}});
+		}
+	}
+</script>
+</apex:page>

@@ -1,0 +1,22 @@
+<apex:page standardStylesheets="false" controller="et4ae5.TrackingDataCleanupController" action="{!initialize}">
+    <apex:includeLightning />
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        #lightningComponent {width: 100%;}
+    </style>
+
+    <div id="content">
+        <div id="lightningComponent" />
+    </div>
+
+    <script>
+        $Lightning.use("et4ae5:TrackingDataCleanupApp", function() {
+            $Lightning.createComponent("et4ae5:TrackingDataCleanupParent", null, "lightningComponent");
+        });
+    </script>
+
+</apex:page>

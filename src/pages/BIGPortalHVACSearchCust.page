@@ -1,0 +1,213 @@
+<apex:page showheader="false" sidebar="false" cache="false" standardstylesheets="false" doctype="html-5.0"
+        applyHtmlTag="false" controller="BIGPortalHVACSearchCustController">
+<html>
+<head>
+    <title>PG&amp;E EUC Portal - Search Customer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/bootstrap.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/datatables.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/moment/moment.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.acqccontractor, '/js/jquery.dataTables.min.js')}"/>
+    <style>
+        body {
+            background: #fff;
+        }
+
+        .container {
+            -webkit-box-shadow: 0 0 0 0 rgba(0, 0, 0, .0);
+            box-shadow: 0 0 0 0 rgba(0, 0, 0, .0);
+        }
+
+        table.dataTable thead tr td input {
+            width: 75%;
+            height: 15px;
+            font-size: 95%;
+            margin: 5px;
+        }
+    </style>
+    <script>
+        function copySite(row){
+            var siteName = 'site_' + row;
+            var unitName = 'unitName_' + row;
+            var unitId = 'unitId_' + row;
+            var address = 'address_' + row;
+            var city = 'city_' + row;
+            var state = 'state_' + row;
+            var zip = 'zip_' + row;
+            var phone = 'phone_' + row;
+            var stickerNumber = 'stickerNumber_' + row;
+            var fdsi = 'unitFdsi_' + row;
+                    
+            var thisSiteName = document.getElementById(siteName).value;    
+            var thisUnitName = document.getElementById(unitName).value;
+            var thisUnitId = document.getElementById(unitId).value;
+            var thisFdsi = document.getElementById(fdsi).value;
+            var thisAddress = document.getElementById(address).value;   
+            var thisCity = document.getElementById(city).value;   
+            var thisState = document.getElementById(state).value;   
+            var thisZip = document.getElementById(zip).value;   
+            var thisPhone = document.getElementById(phone).value;
+            var thisStickerNumber = document.getElementById(stickerNumber).value;  
+            var thisNewPhone = thisPhone.replace(/\D/g,'');
+
+            //set variable in main page
+            window.opener.document.getElementById('inputName').value = thisSiteName;
+            window.opener.document.getElementById('inputCustomerName').value = thisSiteName;
+            window.opener.document.getElementById('inputUnit').value = thisUnitName;
+            window.opener.document.getElementById('j_id0:inputAddress').value = thisAddress;
+            window.opener.document.getElementById('j_id0:inputCity').value = thisCity;    
+            window.opener.document.getElementById('inputState').value = thisState;
+            window.opener.document.getElementById('j_id0:inputZip').value = thisZip;    
+            window.opener.document.getElementById('inputPhone').value = thisNewPhone;
+            window.opener.document.getElementById('unitId').value = thisUnitId;
+            window.opener.document.getElementById('fdsi').value = thisFdsi;
+            window.opener.document.getElementById('inputStickerNumber').value = thisStickerNumber;
+            window.opener.document.getElementById('inputName').style.width="170px";
+
+            window.opener.maskInput();
+            window.opener.callValidation();
+            
+            // Send all rebate types to salesforce, let the backend handles the logic.
+            var rebatesByName = new Object();
+
+            $(window.opener.document.querySelectorAll("input[xxx]")).each(function(index, element) {
+                rebatesByName[$(element).attr("xxx")] = $(element).attr("value");
+            });
+            window.opener.setRefrigerantSystemServices(thisUnitId, rebatesByName);
+
+            window.close();
+        }
+
+        $(document).ready(function() {
+            var oTable = $("#rebate").dataTable({
+                    "bSort": true,
+                    "bAutoWidth": false,
+                    "sPaginationType": "full_numbers",
+                    "aaSorting": [[ 0, "asc" ]],
+                    "sPaginationType": "full_numbers",
+                    "aaData": {!jsonUnits},
+                    "aoColumns": [
+                    {"mData": "Site__r", 
+                        "mRender": function ( data, type, full ) {
+                            if(data) {
+                                return '<a href="#" onclick="copySite(\''+full.Id+'\');">'+data.Name+'</a>';
+                            } 
+                            return "";
+                        }
+                    },
+                    { "mData": "Name",
+                        "mRender": function ( data, type, full ) {
+                            var result = data;
+                            var id = full.Id;
+                            var fdsi = full.FDSI_ID__c;
+                            result += "<input type='hidden' name='site_"+id+"' id='site_"+id+"' value='"+full.Site__r.Name+"'/>";
+                            result += "<input type='hidden' name='unitName_"+id+"' id='unitName_"+id+"' value='"+full.Name+"'/>";
+                            result += "<input type='hidden' name='unitId_"+id+"' id='unitId_"+id+"' value='"+id+"'/>";
+                            result += "<input type='hidden' name='unitFdsi_"+id+"' id='unitFdsi_"+id+"' value='"+fdsi+"'/>";
+                            result += "<input type='hidden' name='address_"+id+"' id='address_"+id+"' value='"+(full.Site__r.Address_1__c?full.Site__r.Address_1__c:"")+"'/>";
+                            result += "<input type='hidden' name='city_"+id+"' id='city_"+id+"' value='"+(full.Site__r.City__c?full.Site__r.City__c:"")+"'/>";
+                            result += "<input type='hidden' name='state_"+id+"' id='state_"+id+"' value='"+(full.Site__r.State__c?full.Site__r.State__c:"")+"'/>";
+                            result += "<input type='hidden' name='zip_"+id+"' id='zip_"+id+"' value='"+(full.Site__r.Zip__c?full.Site__r.Zip__c:"")+"'/>";
+                            result += "<input type='hidden' name='phone_"+id+"' id='phone_"+id+"' value='"+(full.Site__r.Phone__c?full.Site__r.Phone__c:"")+"'/>";
+                            result += "<input type='hidden' name='stickerNumber_"+id+"' id='stickerNumber_"+id+"' value='"+(full.Sticker_Number__c?full.Sticker_Number__c:"")+"'/>";
+                            return result;
+                        }
+                    },
+                    { "mData": "Sticker_Number__c",
+                        "mRender": function ( data, type, full ) {
+                            var result = "";
+                            if (full.Sticker_Number__c != null && full.Sticker_Number__c != "") {
+                                result = full.Sticker_Number__c;
+                            }
+                            return result;
+                        },
+                        "sDefaultContent": ""
+                    },
+                    { "mData": "Make__c",
+                        "mRender": function ( data, type, full ) {
+                            var result = "";
+                            var separator = "/";
+                            
+                            if (full.Make__c && full.Model__c) {
+                                result = full.Make__c + " " + separator + " " + full.Model__c;
+                            } else {
+                                if (full.Make__c) {
+                                    result = full.Make__c + " " + separator;
+                                }
+                                if (full.Model__c) {
+                                    result = separator + " " + full.Model__c;
+                                }
+                            }
+                            return result;
+                        },
+                        "sDefaultContent": ""
+                    },
+                    { "mData": "Site__r",
+                        "mRender": function ( data, type, full ) {
+                            var result = data.Address_1__c ? data.Address_1__c : '';
+
+                            if (data.Address_2__c) {
+                                var address2 = result !== '' ? (' ' + data.Address_2__c) : data.Address_2__c;
+                                result += address2;
+                            }
+                            if (data.City__c) {
+                                var city = result !== '' ? (', ' + data.City__c) : data.City__c;
+                                result += city;
+                            }
+                            // Zip code must exist since we are filtering by this field.
+                            var zip = result !== '' ? (' ' + data.Zip__c) : data.Zip__c;
+                            result += zip;
+
+                            return result;
+                        }
+                    },
+                    { "mData": "CreatedDate",
+                        "mRender": function ( data, type, full ) {
+                            var d = moment(data);
+                            return (d.isValid() ? d.format('MM/DD/YYYY') : '');
+                        }
+                    }
+                ]
+            });
+
+            $("#rebate thead").append("<tr><td><input type='text' placeholder='Search'></td>"
+                    + "<td><input type='text' placeholder='Search'></td>"
+                    + "<td><input type='text' placeholder='Search'></td>"
+                    + "<td><input type='text' placeholder='Search'></td>"
+                    + "<td><input type='text' placeholder='Search'></td>"
+                    + "<td><input type='text' placeholder='Search'></td></tr>");
+
+            $("#rebate thead tr td input").keyup(function() {
+                /* Filter on the column (the index) of this element */
+                oTable.fnFilter( this.value, $("#rebate thead tr td input").index(this) );
+            });
+        });
+    </script>
+</head>
+<body>
+    <div id="main-container" class="container main" style="width:800px;">
+        <apex:pageMessages id="error" />
+
+        <legend>Find Customer unit</legend>
+        <table id="rebate" class="table table-striped">
+            <thead>
+                <tr>
+                    <th width="16%">Customer / Site</th>
+                    <th width="15%">Unit</th>
+                    <th width="13%">Sticker No.</th>
+                    <th width="20%">Make / Model</th>
+                    <th width="22%">Address</th>
+                    <th width="13%">Created On</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+</apex:page>

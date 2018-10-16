@@ -1,0 +1,68 @@
+<apex:page cache="false" showHeader="false" standardStyleSheets="false" controller="RaterDirectoryController" readOnly="true">
+
+<apex:stylesheet value="https://www.builditgreenutility.org/sites/default/files/css/css_64c968b646b36ba0b45646d0a5714854.css" />
+
+<style>
+.AccountList { 
+    list-style-type: none;
+    margin-left: 0px;
+    padding-left: 0px;
+}
+
+.raterTable {
+    width:640px;
+    background-color:white;
+}
+.raterTh {
+   font-size: small; 
+   vertical-align: top;
+}
+.raterTd { 
+   font-size: small;
+   vertical-align: top;
+}
+</style>  
+    
+<body style="background-image:none;background-color:#f1f5f7;"  class="section-rater-directory">
+
+<apex:dataList var="a" value="{!raters}" id="list" styleClass="AccountList"> 
+    <table class="raterTable">
+        <tr>
+            <th colspan="4" style="background-color: #E0ECFA;">{!a.name}</th>
+        </tr> 
+        <tr>
+            <th class="raterTh" style="width:120px;">Description of Service</th>
+            <td class="raterTd" style="width:300px;">{!a.Description_of_Services__c}</td>
+            <th class="raterTh" style="width:40px;">Email</th>
+            <td class="raterTd" style="width:180px;"><a href="mailto:{!a.Email__c}">{!a.Email__c}</a></td>
+        </tr>
+        <tr>
+            <th class="raterTh">Credentials</th>
+            <td class="raterTd">
+                <apex:outputPanel rendered="{!NOT(ISBLANK(a.Company_Licenses__c))}">{!a.Company_Licenses__c}</apex:outputPanel>
+                <apex:outputPanel rendered="{!NOT(ISBLANK(a.Company_Licenses2__c))}">, {!a.Company_Licenses2__c}</apex:outputPanel>
+                <apex:outputPanel rendered="{!NOT(ISBLANK(a.Company_Licenses3__c))}">, {!a.Company_Licenses3__c}</apex:outputPanel>
+                <apex:outputPanel rendered="{!NOT(ISBLANK(a.Company_Licenses4__c))}">, {!a.Company_Licenses4__c}</apex:outputPanel>
+            </td>
+            <th class="raterTh">Phone</th>
+            <td class="raterTd">{!a.phone}&nbsp;</td>
+        </tr> 
+         <tr>
+            <th class="raterTh">Additional Services</th>
+            <td class="raterTd">{!a.additional_services__c}&nbsp;</td>
+            <th class="raterTh">Address</th>
+            <td class="raterTd">{!a.BillingStreet}&nbsp;<br/>
+                {!a.BillingCity} {!a.BillingState} {!a.BillingPostalCode}&nbsp;</td> 
+        </tr>
+        <tr>
+            <th class="raterTh">Languages Spoken</th>
+            <td class="raterTd">{!a.language_spoken__c}&nbsp;</td>
+            <th class="raterTh" colspan="2">
+                <apex:outputPanel rendered="{!NOT(ISBLANK(a.website))}"><a target="_" href="http://{!a.website}">Visit Website</a></apex:outputPanel>&nbsp;
+            </th>
+        </tr>
+    </table>
+</apex:dataList>
+    
+</body>
+</apex:page>

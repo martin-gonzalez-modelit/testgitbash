@@ -1,0 +1,20 @@
+.THIS .helpText {
+    position: absolute;
+}
+.THIS .slds-button {
+    display: inline-block;
+    margin-top: -10px;
+    -webkit-margin-after: 1.5px;
+}
+@media (min-width: 320px) {
+    .THIS .slds-nubbin_left {
+        left: 35px;
+        top: -15px;
+    }
+}
+@media (min-width:1024px) {
+    .THIS .slds-nubbin_left {
+        left: 35px;
+        top: -8px;
+    }
+}

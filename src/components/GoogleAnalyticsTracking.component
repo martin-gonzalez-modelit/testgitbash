@@ -1,0 +1,14 @@
+<apex:component >
+    <apex:attribute type="String" required="false" name="trackingID"
+            description="The property ID (also called the 'tracking ID') of the Google Analytics
+                         property you wish to track. Notice the string should have the following format 'UA-XXXXX-Y'.
+                         Please provide a value when using this component out of the site context."/>
+    <script>
+        window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+        ga('create', '{!IF(NOT(ISBLANK($Site.AnalyticsTrackingCode)), $Site.AnalyticsTrackingCode, trackingID)}', 'auto');
+        ga('require', 'autotrack');
+        ga('send', 'pageview');
+    </script>
+    <script async="true" src="https://www.google-analytics.com/analytics.js"></script>
+    <script async="true" src="{!URLFOR($Resource.GoogleAnalyticsTracking, 'autotrack.js')}"></script>
+</apex:component>

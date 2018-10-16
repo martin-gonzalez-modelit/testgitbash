@@ -1,0 +1,165 @@
+<apex:page showheader="false" sidebar="false" cache="false" standardstylesheets="false" applyhtmltag="false"
+    controller="BIGPortalHelpController" action="{!checkUserHUorAHUAccess}">
+<head>
+    <title>PG&amp;E Portal - Building</title>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/style.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <style>
+        body {
+            background-color: #CCFFFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <c:BIGPortalHeader />
+        <div id="mainContent">
+            <div class="cushion">
+                <h1 class="page-header">Contact Us</h1>
+                <div class="clearfix">
+                    <p>Please feel free to contact the Build it Green team if you have any questions about the program or require assistance with your rebate applications.</p>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style="width:100px">Phone:</td>
+                                <td>(510) 285-6222</td>
+                            </tr>
+                            <tr>
+                                <td>Email:</td>
+                                <td><a href="mailto:jobs@homeupgrade.org">jobs@homeupgrade.org</a></td>
+                            </tr>
+                            <tr>
+                                <td>Website:</td>
+                                <td><a href="http://www.homeupgrade.org/">http://www.homeupgrade.org</a></td>
+                            </tr>
+                            <tr>
+                                <td>Document Library:</td>
+                                <td><a href="http://www.homeupgrade.org/resources/documents/">http://www.homeupgrade.org/resources/documents</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+          <div class="cushion">
+                <h1 class="page-header">PG&amp;E Home Upgrade Portal FAQs</h1>
+                <div class="clearfix">
+
+
+                <p>
+                <div class="sub-title"><strong>What is new with this portal?</strong></div> The primary goal of this portal is to make it
+                easier and more efficient for contractors and raters to submit and process jobs. We have worked on a number of improvements to
+                make the website more user friendly, and we will continue to streamline and improve this website in the future.
+                </p>
+
+
+                <p>
+                <div class="sub-title"><strong> Where can I find information about performing and submitting Home Upgrades?</strong></div>
+                We have many resources to help you get acquainted with Energy Upgrade California&#174; Home Upgrade and Advanced Home Upgrade that can
+                help you learn how to submit applications. Please visit the <a href="http://www.homeupgrade.org/resources/documents/">Document Library</a> on <a href="http://www.homeupgrade.org/">homeupgrade.org</a>.
+                </p>
+
+
+                <p>
+                <div class="sub-title"><strong> What is the difference between Home Upgrade and Advanced Home Upgrade?</strong></div>
+                Home Upgrade focuses on the building shell to minimize loss of the energy consumed to maintain a warmer or cooler indoor environment.
+                Improvements may include attic, wall and floor insulation, duct sealing, furnace and AC replacements, and more. Customers can earn rebates of up to $2,500.
+                </p>
+                <p>
+                Advanced Home Upgrade typically starts by improving on the building shell but makes use of &#39;energy-modeling&#39; software to estimate the effectiveness of
+                a customized work-scope. Installed measures can include new systems (heating, cooling, and water heaters), replacing ductwork, upgrading to dual-pane windows,
+                and more. Customers can earn rebates of up to $6,500.
+                </p>
+
+
+                <p>
+                <div class="sub-title"><strong> How long does it take to process a rebate application?</strong></div>
+                The average processing time varies by program. It takes on average between 2 to 3 business days to review an application after
+                initially submitted. If all details and documents pass review and the application is approved, it can take another 6 to 8 weeks to
+                process either the Home Upgrade or Advanced Home Upgrade application through to mailing of a check by PG&amp;E. This is due to the rigorous
+                Quality Control sampling and review that occurs for approximately 5% of all applications. However, these are rough averages and actual
+                processing times will vary depending on factors such as the completeness of your application, how quickly you submit additional
+                information if it is needed, etc.
+                </p>
+
+                <p>
+                <div class="sub-title"><strong> Can I submit a job as both Home Upgrade and Advanced Home Upgrade?</strong></div>
+                No. You cannot submit a Home Upgrade rebate application and an Advanced Home Upgrade rebate application at the same time.
+                PG&amp;E will not pay a customer twice for the same upgrade measures. A customer may participate more than once in either Home Upgrade or
+                Advanced Home Upgrade pathways, but must form work-scopes that include different measures than were rebated in the past.
+                </p>
+
+
+                <p>
+                <div class="sub-title"><strong> How do I know if I have to take action on any of my rebate applications?</strong></div>
+                For Home Upgrade applications, a &#34;Correction Required&#34; status means that you will have to correct and/or clarify some 
+                parts of your application and/or you will have to submit additional information or documents. An email will automatically be sent to
+                the portal user that submitted the application when returned for correction.
+                </p>
+                <p>
+                For Advanced Home Upgrade applications, a &#34;Pre-Install Correction Required&#34; or &#34;Post-Install Correction Required&#34; status means that
+                you have to correct and/or clarify some part(s) of your application and/or submit additional information or documents. A &#34;Pre-Install Approved&#34;
+                status means that your pre-installation application has been approved and you may complete the job and submit a post-installation
+                application. An email will automatically be sent to the portal user that submitted the application when an application status changes to any of those status mentioned above.
+                </p>
+
+                <p>
+                <div class="sub-title"><strong>Where can I see a list of all my customers?</strong></div>
+                You can see a list of your customers under the &#34;Buildings&#34; tab in the main site navigation. Please note that it is possible
+                to have multiple buildings for one owner and each building will be a separate record in the listing.
+                </p>
+
+                <p>
+                <div class="sub-title"><strong>Why can’t I see all of my old jobs?</strong></div>
+                If you have applications that you created in Green Energy Compass, they will be migrated to this new portal
+                in early 2015. During the transition, you will not be able to log in to Green Energy Compass to manage or view your jobs.
+                However, you will be able to view your old applications in this new portal in the future. Open, active applications that are unable to
+                reach &#34;Full-Application Submitted&#34; status in Green Energy Compass by December 12, 2014 must be migrated to the new portal by the participating portal user.
+                </p>
+
+                <p>
+                <div class="sub-title"><strong>What documents do I need to provide with my rebate application?</strong></div>
+                The documents that you need to provide vary somewhat by program. Below are lists of the typical documents that you&#39;ll need to upload for each program.
+                </p>
+
+                 <p>Home Upgrade:</p>
+                    <ul>
+                        <li>Rebate Assignment Form (optional - Contractor or Tenant/Landlord)</li>
+                        <li>Test-In Measurements (CAS) Form</li>
+                        <li>Test-Out Measurements (CAS) Form</li>
+                        <li>Safety &amp; Quality Acknowledgment (SQA) Form</li>
+                        <li>Building Permit (If required for scope of work)</li>
+                    </ul>
+
+
+               <p>Advanced Home Upgrade:</p>
+                   <ul>
+                        <li>Contract/Proposal/SOW  (customer signed version for Post-Installation application)</li>
+                        <li>Energy Model Output (HPXML)</li>
+                        <li>Energy Model</li>
+                        <li>Test-In Measurements (CAS) Form </li>
+                        <li>Test-Out Measurements (CAS) Form (for the post-installation application)</li>
+                        <li>Additional Documents (optional or as required by QA review)</li>
+                        <li>Building Permit (If required for scope of work)</li>
+                        <li>Payment Release Authorization (optional- Contractor or Tenant/Landlord)</li>
+                    </ul>
+
+               <p>
+                    <div class="sub-title"><strong>How long does it take to process a rebate?</strong></div>
+                    The average processing time varies by program. For Home Upgrade, it can take between x and y weeks.
+                    For Advanced Home Upgrade, it can take between x and y weeks. However, these are rough averages and
+                    actual processing times will vary depending on factors such as the completeness of your application,
+                    how quickly you submit additional information if it is needed, etc.
+                    </p>
+
+           </div>
+           </div>
+        <c:BIGPortalFooter />
+        <c:BIGPortalAHUSurvey />
+    </div>
+</body>
+</apex:page>

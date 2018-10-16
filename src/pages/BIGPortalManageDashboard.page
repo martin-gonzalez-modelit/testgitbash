@@ -1,0 +1,537 @@
+<apex:page showheader="false" sidebar="false" cache="false" applyhtmltag="false"
+    standardstylesheets="false" controller="BIGPortalManageDashboardController" action="{!checkUserAccess}">
+<head>
+    <title>PG&amp;E Portal - Dashboard</title>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/datatables.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/css/bigutopia.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bigutopia, '/js/custom/dashboard/bigdashboardplugin.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-ui/jquery-ui.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery-validate/jquery.validate.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.acqccontractor, '/js/jquery.dataTables.min.js')}"/>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <style>
+        body {
+            background-color: #CCFFFF;
+        }
+        .dashboard-container {
+            width:860px;
+            min-height: 400px;
+            float:left;
+            padding:10px;
+            background-color:white;
+            border-radius:10px;
+            -moz-border-radius:10px;
+            box-shadow:inset 2px 2px 0 rgba(256,255,255,.6), 0px 0px 2px rgba(0,0,0,.6);
+        }
+
+        .dashboard-panel {
+            width:410px;
+            height: 247px;
+            float:left;
+            padding:10px;
+            background-color:white;
+            border-radius:6px;
+            -moz-border-radius:6px;
+            box-shadow:inset 2px 2px 0 rgba(256,255,255,.6), 0px 0px 2px rgba(0,0,0,.6);
+            overflow:hidden;
+            position:relative;
+        }
+
+        .panel-content {
+            height: 225px;
+            overflow-y: auto;
+        }
+
+        .dashboard-header {
+            width:840px;
+            padding:10px;
+            margin:0 auto;
+            background-color:#e7e7e7;
+            border-radius:6px;
+            -moz-border-radius:6px;
+        }
+
+        .dash-header {
+            font-size: 1.2em;
+            line-height: 20px;
+            margin: 10px 0 10px 10px;
+        }
+        .panel-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #0b6796!important;
+            margin-bottom: 5px;
+            margin-top: 10px;
+            line-height: 40px;
+        }
+
+        div.chart-widest {
+            width: 430px;
+            height: 270px;
+        }
+
+        .chart-legend {
+            margin-left: 5px;
+            padding-bottom: 50px;
+        }
+
+        .span4 {
+            width: 370px;
+        }
+
+        .span5 {
+            width: 410px;
+        }
+
+        .span3 {
+            width: 260px;
+            margin-left: 20px;
+        }
+
+        .big-margin {
+            margin-left: 50px;
+        }
+
+        .mid-margin {
+            margin-left: 40px;
+        }
+
+        .small-margin {
+            margin-left: 15px;
+        }
+
+        .big-text {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .legend {
+            width: 16px;
+            height: 16px;
+            border-radius: 5px;
+            -moz-border-radius: 5px;
+        }
+
+        .cell-right {
+            width: 70px;
+            text-align: right;
+        }
+
+        div.announcement {
+            padding-right: 10px;
+        }
+
+        a.uline:hover {
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .smaller {
+            font-size: 87%;
+        }
+
+        .view-all {
+            width: 60px;
+            margin: 0 0 5px 0;
+            top: 242px;
+            left: 360px;
+            text-align: right;
+            position: absolute;
+
+        }
+
+        .row {
+            width: 960px;
+            min-width: 960px;
+            max-width: 960px;
+            display: inline-block;
+        }
+        .tab-pane {
+            overflow:hidden;
+        }
+
+        .table-condensed caption{
+            text-align: left;
+            font-weight: bold;
+        }
+    </style>
+
+    <script>
+        var chart;
+        var dataTable;
+        var advanceDataTable;
+        var chartAdvance;
+
+        // Load the Visualization API and the piechart package.
+        google.load('visualization', '1.0', {'packages':['corechart']});
+
+        // Set a callback to run when the Google Visualization API is loaded.
+        google.setOnLoadCallback(drawChart);
+
+        // Callback that creates and populates a data table,
+        // instantiates the pie chart, passes in the data and
+        // draws it.
+        function drawChart() {
+            checkDonutPie();
+        }
+
+        // Draw Chart for Home Upgrade Applications
+        function drawNumberOfApplicationsByStatus() {
+            // Create the data table.
+            dataTable = new google.visualization.DataTable();
+            dataTable.addColumn('string', 'Status');
+            dataTable.addColumn('number', 'Number of apps.');
+            dataTable.addRows([
+                <apex:repeat value="{!applicationsByStatus}" var="m">
+                    ['{!m}', {!applicationsByStatus[m].numofApps}],
+                </apex:repeat>
+            ]);
+
+            var options = {
+                title: 'No. of Applications by Status',
+                pieHole: 0.5,
+                chartArea: {left:0, width:"100%", height:"90%"},
+                legend: {position: 'none'},
+                colors: [<apex:repeat value="{!applicationsByStatus}" var="m">'{!applicationsByStatus[m].color}',</apex:repeat>],
+                pieSliceText: 'value',
+                height: 270,
+                width: 430
+            };
+
+            // Instantiate and draw our chart, passing in some options.
+            chart = new google.visualization.PieChart(document.getElementById('numberOfApplicationsByStatus'));
+            chart.draw(dataTable, options);
+            google.visualization.events.addListener(chart, 'select', selectHandler);
+        }
+
+        // Draw Chart for Advance Home Upgrade Applications
+        function drawNumberOfAHUApplicationsByStatus() {
+            // Create the data table.
+            advanceDataTable = new google.visualization.DataTable();
+            advanceDataTable.addColumn('string', 'Status');
+            advanceDataTable.addColumn('number', 'Number of apps.');
+            advanceDataTable.addRows([
+                <apex:repeat value="{!advanceApplicationsByStatus}" var="m">
+                    ['{!m}', {!advanceApplicationsByStatus[m].numofApps}],
+                </apex:repeat>
+            ]);
+
+            var options = {
+                title: 'No. of Applications by Status',
+                pieHole: 0.5,
+                chartArea: {left:0, width:"100%", height:"90%"},
+                legend: {position: 'none'},
+                colors: [<apex:repeat value="{!advanceApplicationsByStatus}" var="m">'{!advanceApplicationsByStatus[m].color}',</apex:repeat>],
+                pieSliceText: 'value',
+                height: 270,
+                width: 430
+            };
+
+            // Instantiate and draw our chart, passing in some options.
+            chartAdvance = new google.visualization.PieChart(document.getElementById('numberOfAdvanceApplicationsByStatus'));
+            chartAdvance.draw(advanceDataTable, options);
+            google.visualization.events.addListener(chartAdvance, 'select', chartAdvanceSelectHandler);
+        }
+
+        // Draw empty chart for home upgrade applications
+        function drawEmptyChart(){
+            var dataTable = new google.visualization.DataTable();
+            dataTable.addColumn('string', 'Task');
+            dataTable.addColumn('number', 'Hours per Day');
+            dataTable.addRows([['Application Submitted', 100]]);
+
+            var options = {
+                title: 'No. of Applications by Status',
+                pieHole: 0.5,
+                chartArea: {left:0, width:"100%", height:"90%"},
+                legend: {position: 'none'},
+                colors: ['#ccc'],
+                pieSliceText: 'value',
+                tooltip : {trigger: 'none'},
+                height: 270,
+                width: 430
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('numberOfApplicationsByStatus'));
+            chart.draw(dataTable, options);
+        }
+
+        // Draw empty chart for advance home upgrade applications
+        function drawEmptyAHUChart(){
+            var dataTable = new google.visualization.DataTable();
+            dataTable.addColumn('string', 'Task');
+            dataTable.addColumn('number', 'Hours per Day');
+            dataTable.addRows([['Post-Install Submitted', 100]]);
+
+            var options = {
+                title: 'No. of Applications by Status',
+                pieHole: 0.5,
+                chartArea: {left:0, width:"100%", height:"90%"},
+                legend: {position: 'none'},
+                colors: ['#ccc'],
+                pieSliceText: 'value',
+                tooltip : {trigger: 'none'},
+                height: 270,
+                width: 430
+            };
+
+            var chartAdvance = new google.visualization.PieChart(document.getElementById('numberOfAdvanceApplicationsByStatus'));
+            chartAdvance.draw(dataTable, options);
+        }
+
+        function selectHandler(e) {
+            window.location = 'BIGPortalManageApplication?filterby=' + dataTable.getValue(chart.getSelection()[0].row, 0);
+            chart.setSelection();
+        }
+
+        function chartAdvanceSelectHandler() {
+            window.location = 'BIGPortalManageApplication?filterby=' + advanceDataTable.getValue(chartAdvance.getSelection()[0].row, 0);
+            chartAdvance.setSelection();
+        }
+
+        function checkDonutPie() {
+            if ({!applicationsSize} == 0) {
+                drawEmptyChart();
+            } else {
+                drawNumberOfApplicationsByStatus();
+            }
+            if ({!advanceApplicationsSize}) {
+                drawNumberOfAHUApplicationsByStatus();
+            } else {
+                drawEmptyAHUChart();
+            }
+        }
+
+        $(function() {
+            if ({!hasAdvanceHUProgram}) {
+                // If there are no advance applications we don't need render a tab.
+                var tabSelected = '{!programTabSelection}' !== '' ? '{!programTabSelection}' : 'Home Upgrade';
+
+                $('[data-name="'+tabSelected+'"]').tab('show');
+
+                $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    saveProgramTabSelectionJs($(e.target).data('name'));
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="main-container" class="container main">
+        <c:BIGPortalHeader />
+        <div id="mainContent">
+            <div class="cushion">
+                <div class="span6 no-margin">
+                    <div class="panel-header">Your Home Upgrade Rebate Application Dashboard</div>
+                    <!--  h2 class="panel-header">Your Home Upgrade Rebate Application Dashboard</h2 -->
+                </div>
+                <div class="clearfix">
+                <div class="dashboard-container" style="padding-bottom:0;">
+                    <apex:outputPanel rendered="{!hasAdvanceHUProgram}" layout="none">
+                        <ul class="nav nav-tabs">
+                            <li class=""><a href="#homeUpgrade" data-name="Home Upgrade" data-toggle="tab">Home Upgrade</a></li>
+                            <li class=""><a href="#advancedHomeUpgrade" data-name="Advanced Home Upgrade" data-toggle="tab">Advanced Home Upgrade</a></li>
+                        </ul>
+                    </apex:outputPanel>
+                    <div class="tab-content">
+                            <!-- HOME UPGRADE TAB -->
+                            <div class="tab-pane active" id="homeUpgrade">
+                                <a href="{!$Site.Prefix}/BIGPortalManageApplication?action=new" class="btn btn-primary {!IF(isHUSuspended || isHUTerminated,'disabled','')}" tabindex="{!IF(isHUSuspended || IsHUTerminated,'-1','')}">
+                                    <i class="icon-plus icon-white" style="margin-top:3px;"></i>
+                                    Start an Application
+                                </a>
+                                <!-- h2 class="small-margin" style="line-height: 20px; margin-top: 12px;">APPLICATION STATUS</h2 -->
+                                <div class="small-margin" style="line-height: 20px; margin-top: 12px;font-weight:bold;">APPLICATION STATUS</div>
+                                <div class="row">
+                                    <div class="span6">
+                                        <div id="numberOfApplicationsByStatus" class="chart-widest"></div>
+                                    </div>
+                                    <div class="span4 chart-legend">
+                                        <table class="table-condensed">
+                                            <apex:repeat value="{!HUPApplicationsByStatus}" var="s">
+                                                <tr>
+                                                    <td><div class="legend" style="background-color:{!s.color};"></div></td>
+                                                    <td>
+                                                        <apex:outputLink value="BIGPortalManageApplication?filterby={!s.status}">{!s.status}</apex:outputLink>
+                                                    </td>
+                                                    <td class="cell-right"><strong>{!s.numofApps}</strong></td>
+                                                </tr>
+                                            </apex:repeat>
+                                         </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <apex:outputPanel rendered="{!hasAdvanceHUProgram}" layout="none">
+                                <!-- ADVANCED HOME UPGRADE TAB -->
+                                <div class="tab-pane" id="advancedHomeUpgrade">
+                                    <a href="{!$Site.Prefix}/BIGPortalAdvancedHUApplication?action=new" class="btn btn-primary {!IF(isAHUSuspended,'disabled','')}" tabindex="{!IF(isAHUSuspended,'-1','')}">
+                                        <i class="icon-plus icon-white" style="margin-top:3px;"></i>
+                                        Start an Application
+                                    </a>
+                                     <c:BIGPortalDashboard HUPcontroller="{!controller}"/>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                        <apex:form >
+                            <apex:actionFunction action="{!saveProgramTabSelection}" rerender="" oncomplete="measureTime();" name="saveProgramTabSelectionJs">
+                                <apex:param name="programTabSelected" assignTo="{!programTabSelected}" value="" />
+                            </apex:actionFunction>
+                        </apex:form>
+                </div>
+                </div>
+                <br/>
+            <div class="row">
+                <div class="span5">
+                    <!-- h2 class="panel-header">Program Announcements</h2 -->
+                    <div class="panel-header">Program Announcements</div>
+                </div>
+                <div class="span5 mid-margin">
+                    <!-- h2 class="panel-header">Future Trainings &amp; Events</h2 -->
+                    <div class="panel-header">Upcoming Field QC Inspections</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="span5">
+                    <div class="dashboard-panel">
+                        <div class="panel-content">
+                            <apex:variable var="counter" value="{!ProgramAnnouncements.size}"/>
+                            <apex:variable var="thisCounter" value="{!1}"/>
+                            <apex:outputPanel rendered="{!counter != 0}">
+                                <apex:repeat value="{!ProgramAnnouncements}" var="p">
+                                <apex:outputPanel rendered="{!thisCounter < 4}">
+                                    <apex:outputPanel rendered="{!thisCounter != 1}"><br/></apex:outputPanel>
+                                    <apex:variable var="thisCounter" value="{!thisCounter+1}"/>
+                                    <div class="announcement">
+                                        <strong>{!p.Name}</strong><br/>
+                                        <span class="smaller"><apex:outputField value="{!p.Announcement__c}"/></span>
+                                        <apex:outputPanel rendered="{!p.URL__c != ''}">
+                                        <br/>
+                                        <a href="{!IF(OR(CONTAINS(p.URL__c,'http://'),CONTAINS(p.URL__c,'https://')), p.URL__c, 'http://' + p.URL__c)}" target="_blank" class="uline smaller">More Information</a>
+                                        </apex:outputPanel>
+                                    </div>
+                                </apex:outputPanel>
+                                </apex:repeat>
+                                <div class="view-all" style="display:{!IF(counter>3, 'block', 'none')}">
+                                <a href="BIGPortalDashboardDetail?q=PA">View All</a>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!counter == 0}">
+                                There are no Program Announcements at this time
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <div class="span5 mid-margin">
+                    <div class="dashboard-panel">
+                        <div class="panel-content">
+                            <apex:variable var="counter4" value="{!Inspections.size}"/>
+                            <apex:variable var="thisCounter4" value="{!1}"/>
+                            <apex:outputPanel rendered="{!counter4 != 0}">
+                                <apex:repeat value="{!Inspections}" var="p">
+                                <apex:outputPanel rendered="{!thisCounter4 < 6}">
+                                <apex:outputPanel rendered="{!thisCounter4 != 1}"><!-- <hr class="slim-margin"/> --><p/></apex:outputPanel>
+                                <apex:variable var="thisCounter4" value="{!thisCounter4+1}"/>
+                                <div class="event">
+                                    <strong><apex:outputField value="{!p.Field_QC_Date_Time__c}"/></strong><br/>
+                                    <span class="smaller">{!p.Building_Street_Address__c}, {!p.Building_City__c}</span>&nbsp;&nbsp;
+                                    <a href="{!IF(p.recordType.name == 'HUP', 'BIGPortalManageApplication?action=detail&id=' + p.Id, 'BIGPortalAdvancedHUApplication?action=view&id='+ p.Id)}" class="smaller">View Application</a>
+                                </div>
+                                </apex:outputPanel>
+                                </apex:repeat>
+                                <div class="view-all" style="display:{!IF(Inspections.size>5, 'block', 'none')}">
+                                    <a href="BIGPortalDashboardDetail?q=FQC">View All</a>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!Inspections.size == 0}">
+                                There are no QC Inspections scheduled at this time
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="span5">
+                    <!-- h2 class="panel-header">Quick Reference</h2 -->
+                    <div class="panel-header">Future Trainings &amp; Events</div>
+                </div>
+                <div class="span5 mid-margin">
+                    <!-- h2 class="panel-header">Upcoming Field QC Inspections</h2 -->
+                    <div class="panel-header">Quick Reference</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="span5">
+                    <div class="dashboard-panel">
+                        <div class="panel-content">
+                            <apex:variable var="counter2" value="{!Events.size}"/>
+                            <apex:variable var="thisCounter2" value="{!1}"/>
+                            <apex:outputPanel rendered="{!counter2 != 0}">
+                                <apex:repeat value="{!Events}" var="p">
+                                <apex:outputPanel rendered="{!thisCounter2 < 4}">
+                                    <apex:outputPanel rendered="{!thisCounter2 != 1}"><br/></apex:outputPanel>
+                                    <apex:variable var="thisCounter2" value="{!thisCounter2+1}"/>
+                                    <div class="event">
+                                        <strong>{!p.Name} (<apex:outputField value="{!p.Activity_Date__c}"/>)</strong><br/>
+                                        <span class="smaller"><apex:outputField value="{!p.Announcement__c}"/></span>
+                                        <apex:outputPanel rendered="{!p.URL__c != ''}">
+                                        <br/>
+                                        <a href="{!IF(OR(CONTAINS(p.URL__c,'http://'),CONTAINS(p.URL__c,'https://')), p.URL__c, 'http://' + p.URL__c)}" target="_blank" class="uline smaller">More Information &amp; Registration</a>
+                                        </apex:outputPanel>
+                                    </div>
+                                </apex:outputPanel>
+                                </apex:repeat>
+                                <div class="view-all" style="display:{!IF(counter2>3, 'block', 'none')}">
+                                <a href="BIGPortalDashboardDetail?q=FTE">View All</a>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!counter2 == 0}">
+                                There are no Trainings &amp; Events in the future
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <div class="span5 mid-margin">
+                    <div class="dashboard-panel">
+                        <div class="panel-content">
+                            <apex:variable var="counter3" value="{!QuickReferences.size}"/>
+                            <apex:variable var="thisCounter3" value="{!1}"/>
+                            <apex:outputPanel rendered="{!counter3 != 0}">
+                                <apex:repeat value="{!QuickReferences}" var="p">
+                                <apex:outputPanel rendered="{!thisCounter3 < 7}">
+                                <apex:outputPanel rendered="{!thisCounter3 != 1}"><br/></apex:outputPanel>
+                                    <apex:variable var="thisCounter3" value="{!thisCounter3+1}"/>
+                                    <div class="announcement">
+                                        <apex:outputPanel rendered="{!p.New_window__c == false}">
+                                            <a href="{!IF(OR(CONTAINS(p.URL__c,'http://'),CONTAINS(p.URL__c,'https://')), p.URL__c, 'http://' + p.URL__c)}" class="uline">{!p.Title__c}</a>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!p.New_window__c != false}">
+                                            <a href="{!IF(OR(CONTAINS(p.URL__c,'http://'),CONTAINS(p.URL__c,'https://')), p.URL__c, 'http://' + p.URL__c)}" target="_blank" class="uline">{!p.Title__c}</a>
+                                        </apex:outputPanel>
+                                    </div>
+                                </apex:outputPanel>
+                                </apex:repeat>
+                                <div class="view-all" style="display:{!IF(counter3>6, 'block', 'none')}">
+                                <a href="BIGPortalDashboardDetail?q=QR">View All</a>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!counter3 == 0}">
+                                There are no Quick References
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        <c:BIGPortalFooter />
+        <c:BIGPortalAHUSurvey />
+    </div>
+</body>
+</apex:page>

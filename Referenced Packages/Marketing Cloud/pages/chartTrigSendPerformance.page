@@ -1,0 +1,713 @@
+<apex:page standardController="et4ae5__Automated_Send__c"
+    extensions="et4ae5.chartTrigSendController" action="{!initialize}" showHeader="false">
+    <style type="text/css">
+body {
+    margin: 0;
+    padding: 0;
+    
+    font-size: 11px;
+}
+
+#popupcontent {
+    box-sizing: border-box;
+    position: fixed;
+    display: none;
+    top: 3%;
+    left: 3%;
+    width: 94%;
+    height: 94%;
+    border: 3px solid #e0e3e5;
+    padding: 5px;
+    z-index: 100;
+    
+    background-color: #f0f0f0;
+    
+    overflow: auto;
+}
+
+/* Needed to move help text bubbles down in line with the titles */
+img.helpOrb {
+    vertical-align: bottom;
+}
+
+/* Used to do the grid layout */
+.row {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.row.center {
+    text-align: center;
+}
+
+/* Make sure there is no whitespace between cells */
+.cell {
+    display: inline-block;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    
+    vertical-align: top;
+}
+
+.cell.whole {
+    width: 100%;
+}
+
+.cell.one-third {
+    width: 33.333333333%;
+}
+
+.cell.two-third {
+    width: 66.666666666%;
+}
+
+.cell.half {
+    width: 49.5%;
+}
+
+/* Link color */
+a:link {color:blue;}
+
+
+/* Widget styles */
+.widget {
+    margin: 5px;
+    border: 1px solid #e0e3e5;
+    padding: 7px;
+    min-height: 166px;
+    
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}
+
+.widget .header {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Form styles */
+.form {
+	float:right;
+}
+
+.form > table > tbody > tr > .label {
+    width: 50%;
+    padding-right: 1em;
+    
+    text-align: right;
+    font-weight: bold;
+    width:34%;
+}
+.form > table > tbody > tr > .value {
+    text-align: left;
+    
+}
+
+.data > table {
+}
+.data > table > tbody > tr > .label {
+    text-align: right;
+    font-weight: bold;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width:34%;
+}
+.data > table > tbody > tr > .value {
+    text-align: right;
+    width:33%;
+}
+.data > table > tbody > tr > .box{
+    text-align: right;
+    width: 33%;
+}
+.legend {
+    display: inline-block;
+    float: right;
+    height: 1em;
+    width: 1em;
+    margin: 0;
+    margin-right: 2px;
+    border: 1px solid #e0e3e5; 
+    padding: 0;
+    
+    vertical-align: text-bottom;
+}
+.legend.blue {
+    background-color: hsl(200, 50%, 60%);
+}
+.legend.green {
+    background-color: hsl(76, 73%, 50%);
+}
+.legend.orange {
+    background-color: hsl(33, 85%, 57%);
+}
+.photo{
+	text-align:left;
+}
+.link{
+	padding-right:10px;
+}
+
+/* Mobile styles */
+@media only screen and (max-width: 500px) {
+    body: {
+        font-size: 16px;
+    }
+    .container {
+        padding: 0 8px 0 8px;
+    }
+    .cell.mobile {
+        display: block;
+        width: 100%;
+    }
+    .cell.one-third.mofit{
+        width: 52%;
+    }
+    .cell.two-third.mofit{
+        width: 48%;
+    }
+    .widget {
+        background-color: hsl(0, 0%, 100%);
+    }
+    .links {
+    
+    }
+    .links a {
+        padding-right: 8px;
+        
+        font-size: 16px;
+        text-align: left;
+        line-height: 24px;
+    }
+    .helpOrb,
+    .hide-mobile {
+        /* Hide help orb icon on mobile */
+        display: none;
+    }
+    .data > table{
+    width:90%;
+    }
+    .data > table > tbody > .mini{
+    font-size:8px;
+    }
+}
+@media only screen and (min-width: 501px) and (max-width: 1024px) {
+    .cell.mobile{
+    display: inline-block;
+    }
+    body: {
+        font-size: 16px;
+    }
+    .container {
+        padding: 0 8px 0 8px;
+    }
+    .widget {
+        background-color: hsl(0, 0%, 100%);
+    }
+    .links {
+    
+    }
+    .links a {
+        padding-right: 8px;
+        
+        font-size: 16px;
+        text-align: left;
+        line-height: 24px;
+    }
+    .helpOrb,
+    .hide-mobile {
+        /* Hide help orb icon on mobile */
+        display: none;
+    }
+    .data > table{
+    width:90%;
+    }
+    .data > table > tbody > .mini{
+    font-size:8px;
+    }
+    .row.performance {
+    display:block;
+    }
+    .cell.half.mobile.performance{
+    width:100%;
+    }
+}
+
+</style>
+	<apex:stylesheet value="{!URLFOR($Resource.et4ae5__Tooltips)}"/>
+    <apex:outputPanel rendered="{!NOT(renderCSP)}">
+        <br />
+        {!$Label.trkWait}
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!renderCSP}">
+        <div id="popupcontent" align="center">
+            <input type="image" onclick="closepopup();return false;"
+                style="height: 100%;" src="data:image/png;base64,{!thumbnail}"/>
+        </div>
+        <div class="container">
+            <div class="row center">
+                <div class="cell whole mobile">
+                    <div class="widget">
+                        <div class="row">
+                            <div class="cell half mobile" id="recordInfo">
+                                <div class="form">
+                                    <table>
+                                        <tr>
+                                            <td class="label">{!$label.name_c}</td>
+                                            <td class="value">{!sd.emailName__c}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label">{!$label.subj_c}</td>
+                                            <td class="value">{!subjectLine}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label">{!$label.totSent_c}</td>
+                                            <td class="value">
+                                                <apex:outputText value="{0, number, ###,###,##0}">
+                                                    <apex:param value="{!sd.et4ae5__NumberSent__c}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label">
+                                                {!if(sd.Individual_Tracking_Disabled__c,$label.indTrk_c,'')}
+                                            </td>
+                                            <td class="value">
+                                                {!if(sd.Individual_Tracking_Disabled__c,$label.disThisSd,'')}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="cell half mobile">
+                                <div class="photo" id="imgThumb">
+                                    <input type="image" onclick="showpopup();return false;"
+                                        src="data:image/png;base64,{!thumbnail}"
+                                        style=" max-height: 200px;"/>
+                                </div>
+                                <div class="body" style="display:none;font-weight:normal;" id="noThumb">
+                                    <br/>
+                                    <span>The email thumbnail could not be retrieved</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="cell one-third mobile">
+                    <div class="row">
+                        <div class="cell whole">
+                            <div class="widget">
+                                <div class="header">
+                                    <span class="helpButton">
+                                    	<span class="tooltip">
+	                                    	<span class="tooltip-text tooltip-right tooltip-below">{!JSENCODE($Label.msg0088)}</span>
+	                                        <img src="/s.gif" class="helpOrb" alt="" title="" />
+                                    	</span>
+                                        {!$label.sendPerf}
+                                    </span>
+                                </div>
+                                <div class="row performance">
+                                <div class="cell half mobile performance">
+                                <div class="chart">
+                                    <apex:chart animate="true" height="150" width="100%"
+                                        colorSet="#E93,#6AC,#AD2" data="{!sendPerformanceData}">
+                                        <apex:pieSeries tips="true" highlight="false" dataField="data"
+                                            rendererFn="pieRenderer" >
+                                            <apex:chartTips height="20" width="110"/>
+                                        </apex:pieSeries>
+                                    </apex:chart>
+                                </div>
+                                </div>
+                                <div class="cell half mobile performance">
+                                <div class="data">
+                                    <table>
+                                        <tr style="font-size:medium;">
+                                            <td class="box"></td>
+                                            <td class="label">{!$Label.delRate_c}</td>
+                                            <td class="value">{!sd.Deliverability_Rate__c}%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="box"><span class="legend blue"></span><span class="legend green"></span></td>
+                                            <td class="label">{!$Label.totBncs_c}</td>
+                                            <td class="value">
+                                                <apex:outputText value="{0, number, ###,###,##0}">
+                                                    <apex:param value="{!sd.et4ae5__Number_Bounced__c}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="box"><span class="legend blue"></span></td>
+                                            <td class="label">{!$Label.hrdBnc_c}</td>
+                                            <td class="value">
+                                                <apex:outputText value="{0, number, ###,###,##0}">
+                                                    <apex:param value="{!sd.et4ae5__NumberofHardBounces__c}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="box"><span class="legend green"></span></td>
+                                            <td class="label">{!$Label.sftBnc_c}</td>
+                                            <td class="value">
+                                                <apex:outputText value="{0, number, ###,###,##0}">
+                                                    <apex:param value="{!sd.et4ae5__NumberofSoftBounces__c}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="box"><span class="legend orange"></span></td>
+                                            <td class="label">{!$Label.totDel_c}</td>
+                                            <td class="value">
+                                                <apex:outputText value="{0, number, ###,###,##0}">
+                                                    <apex:param value="{!sd.et4ae5__Number_Delivered__c}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="cell whole">
+                            <div class="widget">
+                                <div class="header">
+                                    <span class="helpButton">
+                                    	<span class="tooltip">
+                                    		<span class="tooltip-text tooltip-right tooltip-below">{!JSENCODE($Label.msg0089)}</span>
+                                        	<img src="/s.gif" class="helpOrb" alt="" />
+                                    	</span>
+                                        {!$label.openPerf}
+                                    </span>
+                                </div>
+                                <div class="row performance">
+                                <div class="cell half mobile performance">
+                                <div class="chart">
+                                    <apex:chart height="150" width="100%"
+                                        data="{!openPerformanceData}">
+                                        <apex:axis rendered="true" grid="true" type="Numeric"
+                                            position="left" fields="data1,data2,data3" minimum="0"
+                                            steps="{!openSteps}" />
+                                        <apex:axis rendered="false" grid="true" type="Category"
+                                            position="bottom" fields="name" />
+                                        <apex:barSeries colorSet="#6AC" orientation="vertical"
+                                            axis="left" xField="name" yField="data1" >
+                                            <apex:chartTips height="20" width="110"/>
+                                        </apex:barSeries>
+                                        <apex:barSeries colorSet="#E93" orientation="vertical"
+                                            axis="left" xField="name" yField="data2" >
+                                            <apex:chartTips height="20" width="110"/>
+                                        </apex:barSeries>    
+                                        <apex:barSeries colorSet="#AD2" orientation="vertical"
+                                            axis="left" xField="name" yField="data3" >
+                                            <apex:chartTips height="20" width="110"/>
+                                        </apex:barSeries>    
+                                    </apex:chart>
+                                </div>
+                                </div>
+                                <div class="cell half mobile performance">
+                                <div class="data">
+                                    <table>
+                                        <tr style="font-size:medium;">
+                                            <td class="box"></td>
+                                            <td class="label">{!$Label.openRate_c}</td>
+                                            <td class="value">{!sd.Open_Rate__c}%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="box"><span class="legend blue"></span></td>
+                                            <td class="label">{!$Label.delivered_c}</td>
+                                            <td class="value">
+                                                <apex:outputText value="{0, number, ###,###,##0}">
+                                                    <apex:param value="{!sd.et4ae5__Number_Delivered__c}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="box"><span class="legend orange"></span></td>
+                                            <td class="label">{!$Label.totOpens_c}</td>
+                                            <td class="value">
+                                                <apex:outputText value="{0, number, ###,###,##0}">
+                                                    <apex:param value="{!sd.et4ae5__NumberofTotalOpens__c}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="box"><span class="legend green"></span></td>
+                                            <td class="label">{!$Label.unqOpens_c}</td>
+                                            <td class="value">
+                                                <apex:outputText value="{0, number, ###,###,##0}">
+                                                    <apex:param value="{!sd.et4ae5__NumberofUniqueOpens__c}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><div class="cell two-third mobile">
+                    <div class="row">
+                        <div class="cell whole">
+                            <div class="widget">
+                                <div class="header">
+                                    <span class="helpButton">
+                                    	<span class="tooltip">
+                                    		<span class="tooltip-text tooltip-left tooltip-below">{!JSENCODE($Label.msg0090)}</span>
+		                                    <img src="/s.gif" class="helpOrb" alt="" />
+                                    	</span> 
+	                                    {!$label.activity}
+                                    </span>
+                                </div>
+                                <div class="row">
+                                    <div class="cell one-third mofit">
+                                        <div class="data" style="margin-top: 2em;">
+                                            <table style="width: 100%;">
+                                                <tr class="mini">
+                                                    <td class="label"></td>
+                                                    <td class="label">{!$label.total}</td>
+                                                    <td class="label">{!$label.unique}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label">{!$label.opens}</td>
+                                                    <td class="value">
+                                                        <apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__NumberofTotalOpens__c}" />
+                                                        </apex:outputText>
+                                                    </td>
+                                                    <td class="value">
+                                                        <apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__NumberofUniqueOpens__c}" />
+                                                        </apex:outputText>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label">{!$Label.et4ae5__clicks}</td>
+                                                    <td class="value">
+                                                        <apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__NumberofTotalClicks__c}" />
+                                                        </apex:outputText>
+                                                    </td>
+                                                    <td class="value">
+                                                        <apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__NumberofUniqueClicks__c}" />
+                                                        </apex:outputText>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label">{!$Label.et4ae5__forwards}</td>
+                                                    <td class="value">-</td>
+                                                    <td class="value"><apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__NumberofSubscribersForwardingEmail__c}" />
+                                                        </apex:outputText></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label">{!$Label.et4ae5__unsubbed}</td>
+                                                    <td class="value">-</td>
+                                                    <td class="value"><apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__NumberUnsubscribed__c}" />
+                                                        </apex:outputText></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label">{!$Label.et4ae5__totdel}</td>
+                                                    <td class="value">-</td>
+                                                    <td class="value"><apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__Number_Delivered__c}" />
+                                                        </apex:outputText></td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div><div class="cell two-third mofit">
+                                        <div class="chart">
+                                            <apex:chart height="146" width="100%" data="{!activityData}" >
+                                                <apex:axis rendered="true" grid="true" type="Numeric"
+                                                    position="top" fields="data1" minimum="0"
+                                                    steps="{!activSteps}" />
+                                                <apex:axis rendered="false" grid="true" type="Category"
+                                                    position="left" fields="name" />
+                                                <apex:barSeries colorSet="#6AC" orientation="horizontal"
+                                                    axis="top" xField="data1" yField="name" >
+                                                    <apex:chartTips height="20" width="110"/>
+                                                </apex:barSeries>
+                                            </apex:chart>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="cell whole">
+                            <div class="widget">
+                                <div class="header">
+                                    <span class="helpButton">
+                                    	<span class="tooltip">
+                                    		<span class="tooltip-text tooltip-left tooltip-below">{!JSENCODE($Label.msg0091)}</span>
+	                                        <img src="/s.gif" class="helpOrb" alt="" />
+                                    	</span>
+                                        {!$Label.unengagSub}
+                                    </span>
+                                </div>
+                                <div class="row">
+                                    <div class="cell one-third mofit">
+                                        <div class="data">
+                                            <table style="margin-top: 2em; width: 100%;">
+                                                <tr>
+                                                    <td class="label"></td>
+                                                    <td class="label"></td>
+                                                    <td class="label">{!$label.unique}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label">{!$label.didntClick}</td>
+                                                    <td class="value"></td>
+                                                    <td class="value">
+                                                        <apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__NumberNotClicked__c}" />
+                                                        </apex:outputText>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label">{!$Label.didntOpen}</td>
+                                                    <td class="value"></td>
+                                                    <td class="value">
+                                                        <apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__Number_Not_Opened__c}" />
+                                                        </apex:outputText>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label">{!$Label.delivered}</td>
+                                                    <td class="value"></td>
+                                                    <td class="value">
+                                                        <apex:outputText value="{0, number, ###,###,##0}">
+                                                            <apex:param value="{!sd.et4ae5__Number_Delivered__c}" />
+                                                        </apex:outputText>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div><div class="cell two-third mofit">
+                                        <div class="chart">
+                                            <apex:chart height="112" width="100%" data="{!unengagedData}">
+                                                <apex:axis rendered="true" grid="true" type="Numeric"
+                                                    position="top" fields="data1" minimum="0"
+                                                    steps="{!activSteps}" />
+                                                <apex:axis rendered="false" grid="true" type="Category"
+                                                    position="left" fields="name" />
+                                                <apex:barSeries colorSet="#AD2" orientation="horizontal"
+                                                    axis="top" xField="data1" yField="name" >
+                                                    <apex:chartTips height="20" width="110"/>
+                                                </apex:barSeries>   
+                                            </apex:chart>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+	            <div class="row center hide-mobile">
+	                <div class="cell whole mobile">
+	                    <div class="widget" style="min-height:30px;">
+	                        <div class="header">
+	                            <span class="helpButton">
+                                    <span class="tooltip">
+                                        <span class="tooltip-text tooltip-right tooltip-above">{!JSENCODE($Label.msg0092)}</span>
+	                                    <img src="/s.gif" class="helpOrb" alt="" />
+                                    </span>
+                                    {!$label.relIerRep}
+	                            </span>
+	                        </div>
+							<apex:outputPanel rendered="{!reportsAvailable}">
+		                        <div class="links">
+		                            <a href="{!ReportSent}?pv0={!JSENCODE(sd.name)}" target="_blank" class="link">{!$label.sent}</a>
+		                            <a href="{!ReportOpened}?pv0={!JSENCODE(sd.name)}" target="_blank" class="link">{!$label.opened}</a>
+		                            <a href="{!ReportClicked}?pv0={!JSENCODE(sd.name)}" target="_blank" class="link">{!$label.clicked}</a>
+		                            <a href="{!ReportHardBounced}?pv0={!JSENCODE(sd.name)}" target="_blank" class="link">{!$label.hrdBncd}</a>
+		                            <a href="{!ReportDelivered}?pv0={!JSENCODE(sd.name)}" target="_blank" class="link">{!$label.delivered}</a>
+		                            <a href="{!ReportDidNotOpen}?pv0={!JSENCODE(sd.name)}" target="_blank" class="link">{!$label.didntOpen}</a>
+		                            <a href="{!ReportDidNotClick}?pv0={!JSENCODE(sd.name)}" target="_blank" class="link">{!$label.didntClick}</a>
+		                            <a href="{!ReportSoftBounced}?pv0={!JSENCODE(sd.name)}" target="_blank" class="link">{!$label.sftBncd}</a>                            
+		                        </div>
+							</apex:outputPanel>
+							<apex:outputPanel layout="block" rendered="{! (!reportsAvailable)}">
+							{!$Label.et4ae5__reportsunavailabletouser}
+							</apex:outputPanel>
+	                    </div>
+	                </div>
+	            </div>
+        </div>
+
+    </apex:outputPanel>
+    <script type="text/javascript">
+        function showpopup()
+        {
+            //if using salesforce1 ensure link is sf1 valid
+            if(typeof sforce!=='undefined' && sforce.one)
+            {
+            	sforce.one.navigateToURL('/apex/emailThumbnailMobile?sd={!JSENCODE(sd.id)}');
+            }
+            else
+            {
+	            var popUp = document.getElementById("popupcontent");
+	            popUp.style.display = "block";
+            }
+        }
+        
+        function closepopup()
+        {
+            var popUp = document.getElementById("popupcontent");
+            popUp.style.display = "none";
+        }
+        
+        function pieRenderer(klass, item, e, f, g, h)
+        {
+            //overwrite the label rendering to be blank
+            this.label.renderer = new function() { return ''; };
+        }
+        		  
+		function addLoadEvent(func) { 
+		  var oldonload = window.onload; 
+		  if (typeof window.onload != 'function') 
+		  { 
+		     window.onload = func; 
+		  } 
+		  else 
+		  { 
+		      window.onload = function()  
+		      { 
+		        if (oldonload) 
+		        { 
+		           oldonload(); 
+		        } 
+		        func(); 
+		      } 
+		   } 
+		}   
+		
+		addLoadEvent(displayThumbnail);
+        
+        function displayThumbnail() {
+			if ({!thumbnailMissing}) {
+                document.getElementById('imgThumb').style.display = "none";
+                if(typeof sforce!=='undefined' && sforce.one) {
+                    document.getElementById('noThumb').style.display="block";
+                }
+                else {
+                    document.getElementById('noThumb').style.display="inline-block";
+                }
+            }            
+        }
+    </script>
+</apex:page>

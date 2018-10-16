@@ -1,0 +1,46 @@
+<apex:page showheader="false" sidebar="false" cache="false" standardstylesheets="false"
+    controller="BIGPortalHelpController" action="{!checkUserACQCAccess}">
+<html>
+<head>
+    <title>PG&amp;E Portal - Customer Rebate Application</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" href="{!URLFOR($Resource.bigutopia, 'img/favicon.ico')}" type="image/x-icon"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/bootstrap.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.acqccontractor, '/css/style.css')}"/>
+    <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/jquery/jquery.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bigutopia, '/js/vendor/bootstrap/bootstrap.min.js')}"/>
+</head>
+<body>
+    <div class="container">
+        <c:BIGACQCHeader />
+        <div id="mainContent">
+            <div class="cushion">
+                <h1 class="page-header">Contact Us</h1>
+                <div class="clearfix">
+                    <p>Please feel free to contact the Build It Green team if you have any questions about the program or require assistance with your rebate applications.</p>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style="width:100px">Phone:</td>
+                                <td>(510) 306-2272</td>
+                            </tr>
+                            <tr>
+                                <td>Email:</td>
+                                <td><a href="mailto:ACQualityCare@builditgreen.org">ACQualityCare@builditgreen.org</a></td>
+                            </tr>
+                            <tr>
+                                <td>Website:</td>
+                                <td><a href="http://www.acqualitycarerebate.com/contractors/contact">http://www.acqualitycarerebate.com/contractors/contact</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <c:BIGPortalFooter />
+        <c:BIGPortalAHUSurvey />
+    </div>
+</body>
+</html>
+</apex:page>
